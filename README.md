@@ -11,6 +11,6 @@ Cl3 is meant to be a [Linear](https://hackage.haskell.org/package/linear) killer
 Whereas [clifford](https://hackage.haskell.org/package/clifford) uses [Numeric Prelude](https://hackage.haskell.org/package/numeric-prelude), 
 Cl3 is an easy to use, high performance, library that is based on the standard Prelude.
 
-Whereas [clif](https://hackage.haskell.org/package/clif) is for symbolic computing with or symbolic and numeric computations
+Whereas [clif](https://hackage.haskell.org/package/clif) is for symbolic computing using symbolic and numeric computations
 with finite and infinite-dimensional Clifford algebras arising from arbitrary bilinear forms.  Cl3 is specialized to the
 Algebra of Physical Space, Cl3, using a high performance easy to use GADT interface.
