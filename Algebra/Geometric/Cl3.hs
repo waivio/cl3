@@ -269,7 +269,7 @@ instance Eq Cl3 where
 
   (APS a0 a1 a2 a3 a23 a31 a12 a123) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a0 == b0 && a1 == b1 && a2 == b2 && a3 == b3 && a23 == b23 
                                                                                       && a31 == b31 && a12 == b12 && a123 == b123
-  {-# INLINE (==) #-}
+  {-# INLINE [2] (==) #-}
 
 
 -- |Cl3 has a total preorder order in which all pairs are comparable by two real valued functions. 
@@ -288,7 +288,7 @@ instance Ord Cl3 where
                 in compare a0' b0'
           LT -> LT
           GT -> GT
-  {-# INLINE compare #-}
+  {-# INLINE [2] compare #-}
 
 
 -- |Cl3 has a "Num" instance.  "Num" is addition, geometric product, negation, 'abs' the largest 
@@ -450,7 +450,7 @@ instance Num Cl3 where
                                                                                 (a1 + b1) (a2 + b2) (a3 + b3) 
                                                                                 (a23 + b23) (a31 + b31) (a12 + b12)
                                                                                 (a123 + b123)
-  {-# INLINE (+) #-}
+  {-# INLINE [2] (+) #-}
 
   -- | Multiplication Instance implementing a Geometric Product
   (R a0) * (R b0) = R (a0*b0)
@@ -898,7 +898,7 @@ instance Num Cl3 where
                                                                                 (a0*b31 + a31*b0 - a1*b3 + a3*b1 + a2*b123 + a123*b2 + a23*b12 - a12*b23)
                                                                                 (a0*b12 + a12*b0 + a1*b2 - a2*b1 + a3*b123 + a123*b3 - a23*b31 + a31*b23)
                                                                                 (a0*b123 + a123*b0 + a1*b23 + a23*b1 + a2*b31 + a31*b2 + a3*b12 + a12*b3)
-  {-# INLINE (*) #-}
+  {-# INLINE [2] (*) #-}
 
 
   -- |'abs' is the spectral norm aka the spectral radius
@@ -920,7 +920,7 @@ instance Num Cl3 where
   abs (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 +
                                                     2 * sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + 
                                                               (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)))
-  {-# INLINE abs #-}
+  {-# INLINE [2] abs #-}
 
 
   -- |'signum' satisfies the equation "abs x * signum x == x"
@@ -930,12 +930,12 @@ instance Num Cl3 where
     | otherwise = 
         let (R mag) = abs cliffor
         in cliffor * R (recip mag)
-  {-# INLINE signum #-}
+  {-# INLINE [2] signum #-}
 
 
   -- |'fromInteger'
   fromInteger int = R (fromInteger int)
-  {-# INLINE fromInteger #-}
+  {-# INLINE [2] fromInteger #-}
 
 
   -- |'negate' simply distributes into the grade components
@@ -959,7 +959,7 @@ instance Num Cl3 where
                                                   (negate a1) (negate a2) (negate a3)
                                                   (negate a23) (negate a31) (negate a12)
                                                   (negate a123)
-  {-# INLINE negate #-}
+  {-# INLINE [2] negate #-}
 
 
 -- |Cl(3,0) has a Fractional instance
@@ -998,11 +998,11 @@ instance Fractional Cl3 where
     let mag = toR $! tpv * bar tpv
     in recip mag * bar tpv
   recip aps@APS{} = reduce $! spectraldcmp recip recip' aps
-  {-# INLINE recip #-}
+  {-# INLINE [2] recip #-}
 
   -- |'fromRational'
   fromRational rat = R (fromRational rat)
-
+  {-# INLINE [2] fromRational #-}
 
 
 -- |Cl(3,0) has a "Floating" instance.
@@ -1140,7 +1140,7 @@ lsv (TPV a23 a31 a12 a123) = R (sqrt (a23^2 + a31^2 + a12^2 + a123^2 - 2 * abs a
 lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 -
                                                   2 * sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + 
                                                             (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)))
-{-# INLINE lsv #-}
+{-# INLINE [2] lsv #-}
 
 
 
@@ -1189,7 +1189,7 @@ jordan :: (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> Cl3 -> Cl3
 jordan fun fun' cliffor = 
   let eigs = toC cliffor
   in fun eigs + fun' eigs * toBPV cliffor
-{-# INLINE jordan #-}
+{-# INLINE [2] jordan #-}
 
 -- | 'spectraldcmpSpecial' helper function for with specialization for real, imaginary, or complex eigenvalues.
 -- To specialize for Reals pass 'toR', to specialize for Imaginary pass 'toI', to specialize for Complex pass 'toC'
@@ -1200,7 +1200,7 @@ spectraldcmpSpecial toSpecial function cliffor =
       eig1 = 2 * (toSpecial $! p * cliffor * p)
       eig2 = 2 * (toSpecial $! p_bar * cliffor * p_bar)
   in function eig1 * p + function eig2 * p_bar
-{-# INLINE spectraldcmpSpecial #-}
+{-# INLINE [2] spectraldcmpSpecial #-}
 
 
 
@@ -1240,7 +1240,7 @@ eigvalsSpecial toSpecial cliffor =
       eig1 = 2 * (toSpecial $! p * cliffor * p)
       eig2 = 2 * (toSpecial $! p_bar * cliffor * p_bar)
   in (eig1,eig2)
-{-# INLINE eigvalsSpecial #-}
+{-# INLINE [2] eigvalsSpecial #-}
 
 
 
@@ -1292,7 +1292,7 @@ boost2colinear cliffor =
       boost_bar = bar boost
       d = boost_bar * cliffor * boost
   in (boost, d, boost_bar)
-{-# INLINE boost2colinear #-}
+{-# INLINE [2] boost2colinear #-}
 
 
 -- | 'isColinear' takes a Cliffor and determines if the vector part and the bivector part are
@@ -1300,7 +1300,7 @@ boost2colinear cliffor =
 isColinear :: Cl3 -> Bool
 isColinear cliffor = abs (toV3 cliffor) > tol && abs (mI * toBV cliffor) > tol &&           -- Non-Zero
                      abs (toBV $ signum (toV3 cliffor) * signum (mI * toBV cliffor)) < tol  -- Not Orthoganl
-{-# INLINE isColinear #-}
+{-# INLINE [2] isColinear #-}
 
 
 -- | 'hasNilpotent' takes a Cliffor and determines if the vector part and the bivector part are
@@ -1309,7 +1309,7 @@ hasNilpotent :: Cl3 -> Bool
 hasNilpotent cliffor = abs (toV3 cliffor) > tol && abs (mI * toBV cliffor) > tol &&             -- Non-Zero
                        abs (toR $ signum (toV3 cliffor) * signum (mI * toBV cliffor)) < tol &&  -- Orthoganl
                        abs (toV3 cliffor) - abs (toBV cliffor) < tol                            -- Equal Magnitude
-{-# INLINE hasNilpotent #-}
+{-# INLINE [2] hasNilpotent #-}
 
 
 
@@ -1390,7 +1390,7 @@ bar (BPV a1 a2 a3 a23 a31 a12) = BPV (negate a1) (negate a2) (negate a3) (negate
 bar (ODD a1 a2 a3 a123) = ODD (negate a1) (negate a2) (negate a3) a123
 bar (TPV a23 a31 a12 a123) = TPV (negate a23) (negate a31) (negate a12) a123
 bar (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS a0 (negate a1) (negate a2) (negate a3) (negate a23) (negate a31) (negate a12) a123
-{-# INLINE bar #-}
+{-# INLINE [2] bar #-}
 
 -- | 'dag' is the Complex Conjugate, the imaginary grades are negated
 dag :: Cl3 -> Cl3
@@ -1405,7 +1405,7 @@ dag (BPV a1 a2 a3 a23 a31 a12) = BPV a1 a2 a3 (negate a23) (negate a31) (negate 
 dag (ODD a1 a2 a3 a123) = ODD a1 a2 a3 (negate a123)
 dag (TPV a23 a31 a12 a123) = TPV (negate a23) (negate a31) (negate a12) (negate a123)
 dag (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS a0 a1 a2 a3 (negate a23) (negate a31) (negate a12) (negate a123)
-{-# INLINE dag #-}
+{-# INLINE [2] dag #-}
 
 ----------------------------------------------------------------------------------------------------------------
 -- the to... functions

@@ -13,9 +13,6 @@
 -- 
 -------------------------------------------------------------------
 
--- Slight ticks issue with GHC 8.0.1 use: ghc -O2 -fsimpl-tick-factor=894 tests/Cl3Tests.hs
--- After adding composition algebra tests it decreased: -fsimpl-tick-factor=865
-
 module Main (main) where
 
 import Test.QuickCheck (quickCheckWith, stdArgs, maxSuccess)
