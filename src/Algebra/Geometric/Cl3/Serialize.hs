@@ -1,4 +1,6 @@
 {-# LANGUAGE Unsafe #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fsimpl-tick-factor=130 #-}
 
 -------------------------------------------------------------------
 -- |
@@ -17,6 +19,7 @@
 --      Data.Serialize: Can't be safely imported!
 --      The module itself isn't safe.
 -- 
+-- Serialize orphan instance fails to compile with -O2 because it runs out of simplifier ticks.
 -- 
 -- This module is Unsafe because 'Data.Serialize' is Unsafe.  
 -- Use the "Data.Binary" instance of Cl3 instead for safe serialization.

@@ -1,5 +1,6 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -------------------------------------------------------------------
 -- |
@@ -52,6 +53,7 @@ instance Storable Cl3 where
         poke (offset 7) a123
           where
             offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+  poke _ _ = error "Serious Issues with poke in Cl3.Storable"
 
 dubbSize :: Int
 dubbSize = sizeOf (undefined :: Double)
