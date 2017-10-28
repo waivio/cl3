@@ -1,4 +1,5 @@
 {-# LANGUAGE Safe #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -------------------------------------------------------------------
 -- |
@@ -34,5 +35,6 @@ instance Arbitrary Cl3 where
             APS <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
             ]) `suchThat` lessThan15
 
+lessThan15 :: Cl3 -> Bool
 lessThan15 cliffor = abs cliffor <= 15
 

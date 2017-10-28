@@ -86,7 +86,7 @@ import Text.Printf (printf)
 ------------------------------------------------------------------- 
 
 main :: IO ()
-main = do n <- return 50000000
+main = do n <- return (50000000 :: Int)
           defaultMain [bgroup "nbodyBaseline" [ bench (show n) $ nfIO (nbodyBaseline n)],
                        bgroup "nbodyCl3" [ bench (show n) $ nfIO (nbodyCl3 n)],
                        bgroup "nbodyAPS" [ bench (show n) $ nfIO (nbodyAPS n)]
@@ -188,8 +188,8 @@ nbodyInitCl3 pPlanetsCl3 = do
         else return pCl3
   
   totalMomentum <- initCl3 (V3 0 0 0) 0
-  sun <- peek pPlanetsCl3
-  poke pPlanetsCl3 $ offsetMomentumCl3 sun totalMomentum
+  sun0 <- peek pPlanetsCl3
+  poke pPlanetsCl3 $ offsetMomentumCl3 sun0 totalMomentum
 -- end of nbodyInitCl3
 
 
@@ -203,8 +203,8 @@ nbodyInitAPS pPlanetsCl3 = do
         else return pCl3
   
   totalMomentum <- initCl3 (APS 0 0 0 0 0 0 0 0) 0
-  sun <- peek pPlanetsCl3
-  poke pPlanetsCl3 $ offsetMomentumAPS sun totalMomentum
+  sun0 <- peek pPlanetsCl3
+  poke pPlanetsCl3 $ offsetMomentumAPS sun0 totalMomentum
 -- end of nbodyInitAPS
 
 
@@ -245,7 +245,7 @@ energyCl3 pPlanetsCl3 = do
         if i < length planetsCl3
         then do
           p@(PlanetCl3 _ (toV3 -> vel1) (toR -> mass1)) <- peekElemOff pPlanetsCl3 i
-          let !ke = toR $ 0.5 * mass1 * toR (vel1^2)
+          let !ke = toR $ 0.5 * mass1 * toR (vel1^(2 :: Int))
           e1 <- energy'' p (i+1) e
           e2 <- energy' e (i+1)
           return $! e + ke + e1 + e2
@@ -274,7 +274,7 @@ energyAPS pPlanetsCl3 = do
           p <- peekElemOff pPlanetsCl3 i
           e1 <- energy'' p (i+1) e
           e2 <- energy' e (i+1)
-          return $! e + 0.5 * massCl3 p * (velCl3 p)^2 + e1 + e2
+          return $! e + 0.5 * massCl3 p * (velCl3 p)^(2 :: Int) + e1 + e2
         else return e
       
       energy'' p j e = 
@@ -343,7 +343,7 @@ advanceCl3 pPlanetsCl3 = do
                                     (PlanetCl3 (toV3 -> posj) (toV3 -> velj) (toR -> massj)) <- peekElemOff pPlanetsCl3 j
                                     let !dpos = posi - posj
                                         !(R dMag) = abs dpos
-                                        !mag = R (dt / (dMag^3))
+                                        !mag = R (dt / (dMag^(3 :: Int)))
                                         !veli' = veli - dpos * massj * mag
                                         !velj' = velj + dpos * massi * mag
                                     pokeVCl3 pPlanetsCl3 i (PlanetCl3 posi veli' massi)
@@ -498,7 +498,7 @@ daysPerYear :: Double
 daysPerYear = 365.24
 
 solarMass :: Double
-solarMass = 4 * pi^2
+solarMass = 4 * pi^(2 :: Int)
 dp :: Double
 dp = daysPerYear
 dt :: Double
