@@ -67,6 +67,7 @@ __e123__ is the trivector basis, and is formed by the wedge product of `__e1__ /
 
 
 The basis vectors multiply with the following multiplication table:
+
 |    Mult  |   __e0__ |   __e1__ |   __e2__ |   __e3__ |  __e23__ |  __e31__ |  __e12__ | __e123__ |
 |:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|
 |   __e0__ |   __e0__ |   __e1__ |   __e2__ |   __e3__ |  __e23__ |  __e31__ |  __e12__ | __e123__ |
@@ -80,6 +81,7 @@ The basis vectors multiply with the following multiplication table:
 
 
 The grade specialized type constructors multiply with the following multiplication table:
+
 | Mult |  R |  V3 |  BV |   I |  PV |   H |   C | BPV | ODD | TPV | APS |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |   R |   R |  V3 |  BV |   I |  PV |   H |   C | BPV | ODD | TPV | APS |
