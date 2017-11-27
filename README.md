@@ -61,40 +61,40 @@ Where __e0__ is the scalar basis frequently refered to as "1", in other texts.
 
 __e1__, __e2__, and __e3__ are the vector basis of 3 orthonormal vectors.
 
-__e23__, __e31__, and __e12__ are the bivector basis, these are formed by the outer product of two vector basis. For instance in the case of __e23__,the outer product, or wedge product, is `__e2__ /\ __e3__`, but because this can be simplified to the geometric product of `__e2__ * __e3__` because the scalar part is zero for orthoginal vector basis'.  The geometric product of the two basis vectors is further shortened for brevity to __e23__.
+__e23__, __e31__, and __e12__ are the bivector basis, these are formed by the outer product of two vector basis. For instance in the case of __e23__, the outer product, or wedge product, is __e2__ /\ __e3__, but because this can be simplified to the geometric product of __e2__ * __e3__ because the scalar part is zero for orthoginal vector basis'.  The geometric product of the two basis vectors is further shortened for brevity to __e23__.
 
-__e123__ is the trivector basis, and is formed by the wedge product of `__e1__ /\ __e2__ /\ __e3__`, and likewise shortened to __e123__
+__e123__ is the trivector basis, and is formed by the wedge product of __e1__ /\ __e2__ /\ __e3__, and likewise shortened to __e123__
 
 
 The basis vectors multiply with the following multiplication table:
 
-|    Mult  |   __e0__ |   __e1__ |   __e2__ |   __e3__ |  __e23__ |  __e31__ |  __e12__ | __e123__ |
-|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|
-|   __e0__ |   __e0__ |   __e1__ |   __e2__ |   __e3__ |  __e23__ |  __e31__ |  __e12__ | __e123__ |
-|   __e1__ |   __e1__ |   __e0__ |  __e12__ | __-e31__ | __e123__ |  __-e3__ |   __e2__ |  __e23__ |
-|   __e2__ |   __e2__ | __-e12__ |   __e0__ |  __e23__ |  __-e3__ | __e123__ |  __-e1__ |  __e31__ |
-|   __e3__ |   __e3__ |  __e31__ | __-e23__ |   __e0__ |  __-e2__ |   __e1__ | __e123__ |  __e12__ |
-|  __e23__ |  __e23__ | __e123__ |  __-e3__ |   __e2__ |  __-e0__ | __-e12__ |  __e31__ |  __-e1__ |
-|  __e31__ |  __e31__ |   __e3__ | __e123__ |  __-e1__ |  __e12__ |  __-e0__ | __-e23__ |  __-e2__ |
-|  __e12__ |  __e12__ |  __-e2__ |   __e1__ | __e123__ | __-e31__ |  __e23__ |  __-e0__ |  __-e3__ |
-| __e123__ | __e123__ |  __e23__ |  __e31__ |  __e12__ |  __-e1__ |  __-e2__ |  __-e3__ |  __-e0__ |
+|    Mult  |   e0 |   e1 |   e2 |   e3 |  e23 |  e31 |  e12 | e123 |
+|:--------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
+|   __e0__ |   e0 |   e1 |   e2 |   e3 |  e23 |  e31 |  e12 | e123 |
+|   __e1__ |   e1 |   e0 |  e12 | -e31 | e123 |  -e3 |   e2 |  e23 |
+|   __e2__ |   e2 | -e12 |   e0 |  e23 |   e3 | e123 |  -e1 |  e31 |
+|   __e3__ |   e3 |  e31 | -e23 |   e0 |  -e2 |   e1 | e123 |  e12 |
+|  __e23__ |  e23 | e123 |  -e3 |   e2 |  -e0 | -e12 |  e31 |  -e1 |
+|  __e31__ |  e31 |   e3 | e123 |  -e1 |  e12 |  -e0 | -e23 |  -e2 |
+|  __e12__ |  e12 |  -e2 |   e1 | e123 | -e31 |  e23 |  -e0 |  -e3 |
+| __e123__ | e123 |  e23 |  e31 |  e12 |  -e1 |  -e2 |  -e3 |  -e0 |
 
 
 The grade specialized type constructors multiply with the following multiplication table:
 
-| Mult |  R |  V3 |  BV |   I |  PV |   H |   C | BPV | ODD | TPV | APS |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|   R |   R |  V3 |  BV |   I |  PV |   H |   C | BPV | ODD | TPV | APS |
-|  V3 |  V3 |   H | ODD |  BV | APS | ODD | BPV | APS | ODD | APS | APS |
-|  BV |  BV | ODD |   H |  V3 | APS |   H | BPV | APS | ODD | APS | APS |
-|   I |   I |  BV |  V3 |   R | TPV | ODD |   C | BPV |   H |  PV | APS |
-|  PV |  PV | APS | APS | TPV | APS | APS | APS | APS | APS | APS | APS |
-|   H |   H | ODD |   H | ODD | APS |   H | APS | APS | ODD | APS | APS |
-|   C |   C | BPV | BPV |   C | APS | APS |   C | BPV | APS | APS | APS |
-| BPV | BPV | APS | ODD | BPV | APS | APS | BPV | APS | APS | APS | APS |
-| ODD | ODD | ODD | TPV |   H | APS | ODD | APS | APS |   H | APS | APS |
-| TPV | TPV | APS | APS |  PV | APS | APS | APS | APS | APS | APS | APS |
-| APS | APS | APS | APS | APS | APS | APS | APS | APS | APS | APS | APS |
+| Mult    |   R |  V3 |  BV |   I |  PV |   H |   C | BPV | ODD | TPV | APS |
+|:-------:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|   __R__ |   R |  V3 |  BV |   I |  PV |   H |   C | BPV | ODD | TPV | APS |
+|  __V3__ |  V3 |   H | ODD |  BV | APS | ODD | BPV | APS | ODD | APS | APS |
+|  __BV__ |  BV | ODD |   H |  V3 | APS |   H | BPV | APS | ODD | APS | APS |
+|   __I__ |   I |  BV |  V3 |   R | TPV | ODD |   C | BPV |   H |  PV | APS |
+|  __PV__ |  PV | APS | APS | TPV | APS | APS | APS | APS | APS | APS | APS |
+|   __H__ |   H | ODD |   H | ODD | APS |   H | APS | APS | ODD | APS | APS |
+|   __C__ |   C | BPV | BPV |   C | APS | APS |   C | BPV | APS | APS | APS |
+| __BPV__ | BPV | APS | ODD | BPV | APS | APS | BPV | APS | APS | APS | APS |
+| __ODD__ | ODD | ODD | TPV |   H | APS | ODD | APS | APS |   H | APS | APS |
+| __TPV__ | TPV | APS | APS |  PV | APS | APS | APS | APS | APS | APS | APS |
+| __APS__ | APS | APS | APS | APS | APS | APS | APS | APS | APS | APS | APS |
 
 
 # Design Philosophy
