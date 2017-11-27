@@ -61,9 +61,9 @@ Where __e0__ is the scalar basis frequently refered to as "1", in other texts.
 
 __e1__, __e2__, and __e3__ are the vector basis of 3 orthonormal vectors.
 
-__e23__, __e31__, and __e12__ are the bivector basis, these are formed by the outer product of two vector basis. For instance in the case of __e23__,the outer product, or wedge product, is `__e2__ /\ __e3__`, but because this can be simplified to the geometric product of `__e2__ * __e3__` because the scalar part is zero for orthoginal vector basis'.  The geometric product of the two basis vectors is further shortened for brevity to __e23__.
+__e23__, __e31__, and __e12__ are the bivector basis, these are formed by the outer product of two vector basis. For instance in the case of __e23__, the outer product, or wedge product, is __e2__ /\ __e3__, but because this can be simplified to the geometric product of __e2__ * __e3__ because the scalar part is zero for orthoginal vector basis'.  The geometric product of the two basis vectors is further shortened for brevity to __e23__.
 
-__e123__ is the trivector basis, and is formed by the wedge product of `__e1__ /\ __e2__ /\ __e3__`, and likewise shortened to __e123__
+__e123__ is the trivector basis, and is formed by the wedge product of __e1__ /\ __e2__ /\ __e3__, and likewise shortened to __e123__
 
 
 The basis vectors multiply with the following multiplication table:
@@ -72,7 +72,7 @@ The basis vectors multiply with the following multiplication table:
 |:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|
 |   __e0__ |   __e0__ |   __e1__ |   __e2__ |   __e3__ |  __e23__ |  __e31__ |  __e12__ | __e123__ |
 |   __e1__ |   __e1__ |   __e0__ |  __e12__ | __-e31__ | __e123__ |  __-e3__ |   __e2__ |  __e23__ |
-|   __e2__ |   __e2__ | __-e12__ |   __e0__ |  __e23__ |  __-e3__ | __e123__ |  __-e1__ |  __e31__ |
+|   __e2__ |   __e2__ | __-e12__ |   __e0__ |  __e23__ |   __e3__ | __e123__ |  __-e1__ |  __e31__ |
 |   __e3__ |   __e3__ |  __e31__ | __-e23__ |   __e0__ |  __-e2__ |   __e1__ | __e123__ |  __e12__ |
 |  __e23__ |  __e23__ | __e123__ |  __-e3__ |   __e2__ |  __-e0__ | __-e12__ |  __e31__ |  __-e1__ |
 |  __e31__ |  __e31__ |   __e3__ | __e123__ |  __-e1__ |  __e12__ |  __-e0__ | __-e23__ |  __-e2__ |
