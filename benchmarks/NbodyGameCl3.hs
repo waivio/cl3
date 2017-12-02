@@ -10,7 +10,7 @@
 -- 
 -- 
 -- 
--- This derivative work was derived from the exelent work of:
+-- This derivative work was derived from the excelent work of:
 -- Branimir Maksimovic.
 -- 
 -------------------------------------------------------------------
@@ -39,7 +39,9 @@ import Text.Printf (printf)
 -- program would not finish compiling (memory would grow to 54GB while compiling) before INLINE pragmas 
 -- were added to the Cl3 library.
 --
--- * Baseline 20171007: Initial Commit of the Code, GHC 8.0.2
+-- * Baseline 20171007: 
+-- 
+-- Initial Commit of the Code, GHC 8.0.2
 -- 
 -- >>> ./benchmarks/NbodyGameCl3
 -- benchmarking nbodyBaseline/50000000
@@ -61,7 +63,9 @@ import Text.Printf (printf)
 -- std dev              395.0 ms   (0.0 s .. 413.9 ms)
 -- variance introduced by outliers: 19% (moderately inflated)
 --
--- * 20171016: Change of INLINE phase control to fix ghc simplifier ticks issue, GHC 8.0.2
+-- * 20171016: 
+-- 
+-- Change of INLINE phase control to fix ghc simplifier ticks issue, GHC 8.0.2
 --
 -- >>> ./benchmarks/NbodyGameCl3
 -- benchmarking nbodyBaseline/50000000
@@ -81,6 +85,34 @@ import Text.Printf (printf)
 --                      1.000 R²   (0.999 R² .. 1.000 R²)
 -- mean                 177.1 s    (176.1 s .. 177.9 s)
 -- std dev              1.180 s    (0.0 s .. 1.316 s)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- 
+-- * 20171130: 
+-- 
+-- Though, thru, some unknown reason, an extreeme increase of performance has occured.
+-- Not sure what changed but a huge improvement, dev-lang/ghc-8.0.2, 
+-- upgraded sys-devel/gcc-6.4.0, sys-devel/llvm-3.9.1-r1, linux-4.12.12-gentoo?  
+-- Spooky thing is that the parent compiled executable from before that ran ~35.6 Sec
+-- is now ~10.7 Sec.
+--
+-- >>> ./benchmarks/NbodyGameCl3
+-- benchmarking nbodyBaseline/50000000
+-- time                 14.04 s    (13.67 s .. 14.60 s)
+--                      1.000 R²   (1.000 R² .. 1.000 R²)
+-- mean                 13.74 s    (13.59 s .. 13.85 s)
+-- std dev              168.6 ms   (0.0 s .. 190.4 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- benchmarking nbodyCl3/50000000
+-- time                 15.68 s    (14.80 s .. 16.12 s)
+--                      1.000 R²   (0.999 R² .. 1.000 R²)
+-- mean                 15.79 s    (15.64 s .. 15.88 s)
+-- std dev              141.7 ms   (0.0 s .. 161.5 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- benchmarking nbodyAPS/50000000
+-- time                 182.9 s    (182.4 s .. 183.5 s)
+--                      1.000 R²   (1.000 R² .. 1.000 R²)
+-- mean                 182.7 s    (182.5 s .. 182.8 s)
+-- std dev              162.1 ms   (0.0 s .. 183.2 ms)
 -- variance introduced by outliers: 19% (moderately inflated)
 -- 
 ------------------------------------------------------------------- 
