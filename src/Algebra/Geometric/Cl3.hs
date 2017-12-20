@@ -1,5 +1,5 @@
 {-# LANGUAGE Safe #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -1639,14 +1639,3 @@ acosh' x = recip $ sqrt (x - 1) * sqrt (x + 1)  -- pole at +/-1
 atanh' :: Cl3 -> Cl3
 atanh' x = recip $ 1 - (x * x)  -- pole at +/-1
 {-# INLINE atanh' #-}
-
-{-
--- | 'rotor' take two vectors and calculate the from -> to rotation
--- such that with "> let r = rotor from to" the rotation would be "> let to = r * from * dag r"
-rotor :: Cl3 -> Cl3 -> Cl3  -- V3 -> V3 -> H (wouldn't it be nice to have GADT sub-type-synonym)
-rotor from@V3{} to@V3{} =
-  let from_unit = signum from
-      to_unit = signum to
-  in sqrt $ to_unit * from_unit
-rotor _ _ = undefined -- why? what about some sort of GADT sub-type-synonym
--}
