@@ -25,7 +25,7 @@ Cl3 is a Haskell Library implementing standard functions for the [Algebra of Phy
 
 The goal of the Cl3 library is to provide a specialized, safe, high performance, Algebra of Physical Space implementaiton.
 This library is suitable for physics simulations.  The library integrates into Haskell's standard prelude and has few dependancies.
-The library uses a GADT to specialize to specific graded elements in the Algebra of Physical Space.
+The library uses a GADT Syntax to specialize to specific graded elements in the Algebra of Physical Space.
 
 ## How does this fit in with the existing Haskell ecosystem?
 Cl3 is meant to be a [Linear](https://hackage.haskell.org/package/linear) killer based on Geometric Algebra.  The linear package
@@ -36,9 +36,9 @@ Cl3 is an easy to use, high performance, library that is based on the standard P
 
 Whereas [clif](https://hackage.haskell.org/package/clif) is for symbolic computing using symbolic and numeric computations
 with finite and infinite-dimensional Clifford algebras arising from arbitrary bilinear forms.  Cl3 is specialized to the
-Algebra of Physical Space, Cl3, using a high performance easy to use GADT interface.
+Algebra of Physical Space, Cl3, using a high performance easy to use GADT Syntax interface.
 
-# GADT Interface
+# GADT Syntax Interface
 The constructors are specialized to single and double grade combinations and the general case of APS.
 Using the specialized constructors helps the complier to compile to code simular to that you would hand write.
 The constructors follow the following conventions for basis.
@@ -101,9 +101,9 @@ The grade specialized type constructors multiply with the following multiplicati
 The design space for Clifford Algebra libraries was explored quite a bit before the development of this library.  Initially the isomorphism of APS with 2x2 Complex Matrices was used, this had the draw back that multipling the scalar 2 * 2 would incur all of the computational cost of multipling two 2x2 complex matricies.
 Then the design was changed to lists that contained the basis' values, but lists are computationally slow and do not produce well optimised code.
 Then a single constructor data type for APS was developed, but this had all of the drawbacks of 2x2 complex matrices.
-The GADT version of the library was developed and it showed that it had some promise.
-More of the design space was explored, a version of the Cl3 library was developed using Multi-parameter Type Classes and Functional Dependancies, this didn't appear to have much gained over the GADT interface and it didn't use the standard Prelude classes like Num, Float, etc.  It was also difficult for me to figure out to code a `reduce` function. 
-So the GADT design of the Cl3 library was finished and released.
+The GADT Syntax version of the library was developed and it showed that it had some promise.
+More of the design space was explored, a version of the Cl3 library was developed using Multi-parameter Type Classes and Functional Dependancies, this didn't appear to have much gained over the GADT Syntax interface and it didn't use the standard Prelude classes like Num, Float, etc.  It was also difficult for me to figure out to code a `reduce` function. 
+So the GADT Syntax design of the Cl3 library was finished and released.
 
 
 # Usage
