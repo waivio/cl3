@@ -56,7 +56,6 @@ library
     Algebra.Geometric.Cl3.Arbitrary,
     Algebra.Geometric.Cl3.Binary,
     Algebra.Geometric.Cl3.Random,
-    Algebra.Geometric.Cl3.Serialize,
     Algebra.Geometric.Cl3.Storable
   
   -- Compiler options
@@ -69,7 +68,6 @@ library
     ViewPatterns,
     DeriveDataTypeable,
     DeriveGeneric,
-    Unsafe,
     BangPatterns
   
   -- Other library packages from which modules are imported.
@@ -77,7 +75,6 @@ library
     base >=4.8 && <5,
     binary >=0.8 && <1,
     random >=1.1 && <2,
-    cereal >=0.5 && <1,
     QuickCheck >=2.9 && <3
   
   -- Directories containing source files.
