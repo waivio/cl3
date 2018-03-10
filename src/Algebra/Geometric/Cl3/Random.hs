@@ -13,10 +13,10 @@
 -- 
 --
 -- Random helper functions will be based on the "abs x * signum x" decomposition
--- for the single grade elements. The "abs x" will be the random magnitude that 
--- is by the default [0,1), and the "signum x" part will be a random direction 
+-- for the single grade elements. The "abs x" will be the random magnitude that
+-- is by the default [0,1), and the "signum x" part will be a random direction
 -- of a vector or the sign of a scalar. The multi-grade elements will be constructed from
--- a combination of the single grade generators.  Each grade will be evenly 
+-- a combination of the single grade generators.  Each grade will be evenly
 -- distributed across the range.
 -- 
 -------------------------------------------------------------------
@@ -46,7 +46,7 @@ import System.Random (RandomGen, Random, randomR, random)
 
 -- | 'Random' instance for the 'System.Random' library
 instance Random Cl3 where
-  randomR (minAbs,maxAbs) g = 
+  randomR (minAbs,maxAbs) g =
              case randomR (fromEnum (minBound :: ConCl3), fromEnum (maxBound :: ConCl3)) g of
                (r, g') -> case toEnum r of
                             ConR -> rangeR (minAbs,maxAbs) g'
@@ -137,12 +137,12 @@ rangePV (lo, hi) g =
   in (r + v3, g'')
 
 
--- | 'randH' random Quarternion made from random Grade 0 and Grade 2 elements
+-- | 'randH' random Quaternion made from random Grade 0 and Grade 2 elements
 randH :: RandomGen g => g -> (Cl3, g)
 randH = rangeH (0,1)
 
 
--- | 'rangeH' random Quarternion made from random Grade 0 and Grade 2 elements within a range
+-- | 'rangeH' random Quaternion made from random Grade 0 and Grade 2 elements within a range
 rangeH :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
 rangeH (lo, hi) g =
   let (r, g') = rangeR (lo, hi) g
@@ -220,7 +220,7 @@ rangeAPS (lo, hi) g =
 -------------------------------------------------------------------
 -- | 'randUnitV3' a unit vector with a random direction
 randUnitV3 :: RandomGen g => g -> (Cl3, g)
-randUnitV3 g = 
+randUnitV3 g =
   let (theta, g') = randomR (0,pi) g
       (phi, g'') = randomR (0,2*pi) g'
   in (V3 (sin theta * cos phi) (sin theta * sin phi) (cos theta), g'')
@@ -267,4 +267,5 @@ vectorHelper con rng g =
       (theta, g'') = randomR (0,pi) g'
       (phi, g''') = randomR (0,2*pi) g''
   in (con (mag * sin theta * cos phi) (mag * sin theta * sin phi) (mag * cos theta), g''')
+
 

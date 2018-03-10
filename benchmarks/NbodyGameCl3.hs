@@ -2,22 +2,22 @@
 {-# LANGUAGE BangPatterns #-}
 
 ------------------------------------------------------------------
--- | 
+-- |
 -- Description: Benchmark for Algebra.Geometric.Cl3
 -- Uses standard "The Computer language Benchmarks Game" implementation
--- with Criterion to compare the performace difference between
+-- with Criterion to compare the performance difference between
 -- using the Cl3 library vs. the benchmarks implementation using doubles.
 -- 
 -- 
 -- 
--- This derivative work was derived from the excelent work of:
+-- This derivative work was derived from the excellent work of:
 -- Branimir Maksimovic.
 -- 
 -------------------------------------------------------------------
 
 module Main (main) where
 
-import Criterion.Main (defaultMain, bgroup, bench, nfIO)  -- To add Criternion to the benchmark
+import Criterion.Main (defaultMain, bgroup, bench, nfIO)  -- To add Criterion to the benchmark
 import Algebra.Geometric.Cl3 (Cl3(..), toR, toV3) -- To add Cl3
 import Algebra.Geometric.Cl3.Storable()  -- To add Storable Cl3
 
@@ -31,15 +31,15 @@ import Text.Printf (printf)
 -- |
 -- An n-body solver for the Sun and gas giants using the semi-implicit Euler method.
 -- The benchmark uses the Criterion tool to measure timing.
--- The benchmark advances 50 million steps.  
+-- The benchmark advances 50 million steps. 
 -- 
 -- The @nbodyBaseline@ is derived from Branimir Maksimovic's work with some changes suggested by @hlint@.
--- @nbodyCl3@ agressivly uses the "to" functions like 'toR' and 'toV3' to take advantage of the case of
--- known constructor optimisation.  @nbodyAPS@ does not make agressive use "to" functions.  The
--- program would not finish compiling (memory would grow to 54GB while compiling) before INLINE pragmas 
+-- @nbodyCl3@ aggressively uses the "to" functions like 'toR' and 'toV3' to take advantage of the case of
+-- known constructor optimization.  @nbodyAPS@ does not make aggressive use "to" functions.  The
+-- program would not finish compiling (memory would grow to 54GB while compiling) before INLINE pragmas
 -- were added to the Cl3 library.
 --
--- * Baseline 20171007: 
+-- * Baseline 20171007:
 -- 
 -- Initial Commit of the Code, GHC 8.0.2
 -- 
@@ -63,7 +63,7 @@ import Text.Printf (printf)
 -- std dev              395.0 ms   (0.0 s .. 413.9 ms)
 -- variance introduced by outliers: 19% (moderately inflated)
 --
--- * 20171016: 
+-- * 20171016:
 -- 
 -- Change of INLINE phase control to fix ghc simplifier ticks issue, GHC 8.0.2
 --
@@ -87,11 +87,11 @@ import Text.Printf (printf)
 -- std dev              1.180 s    (0.0 s .. 1.316 s)
 -- variance introduced by outliers: 19% (moderately inflated)
 -- 
--- * 20171130: 
+-- * 20171130:
 -- 
--- Though, thru, some unknown reason, an extreeme increase of performance has occured.
--- Not sure what changed but a huge improvement, dev-lang/ghc-8.0.2, 
--- upgraded sys-devel/gcc-6.4.0, sys-devel/llvm-3.9.1-r1, linux-4.12.12-gentoo?  
+-- Though, thru, some unknown reason, an extreme increase of performance has occurred.
+-- Not sure what changed but a huge improvement, dev-lang/ghc-8.0.2,
+-- upgraded sys-devel/gcc-6.4.0, sys-devel/llvm-3.9.1-r1, linux-4.12.12-gentoo? 
 -- Spooky thing is that the parent compiled executable from before that ran ~35.6 Sec
 -- is now ~10.7 Sec.
 --
@@ -114,8 +114,34 @@ import Text.Printf (printf)
 -- mean                 182.7 s    (182.5 s .. 182.8 s)
 -- std dev              162.1 ms   (0.0 s .. 183.2 ms)
 -- variance introduced by outliers: 19% (moderately inflated)
+--
+-- 20180309 :
+--
+-- Well, while correcting spelling I found several issues re: Ord;
+-- Ord is now more what you'd expect (now -2 is smaller than -1).
+-- It appears to have sped up the performance a bit.
 -- 
-------------------------------------------------------------------- 
+-- benchmarking nbodyBaseline/50000000
+-- time                 13.47 s    (12.95 s .. 13.89 s)
+--                      1.000 R²   (1.000 R² .. NaN R²)
+-- mean                 13.54 s    (13.42 s .. 13.59 s)
+-- std dev              98.11 ms   (0.0 s .. 103.4 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- benchmarking nbodyCl3/50000000
+-- time                 15.50 s    (15.45 s .. 15.59 s)
+--                      1.000 R²   (1.000 R² .. 1.000 R²)
+-- mean                 15.54 s    (15.52 s .. 15.56 s)
+-- std dev              27.35 ms   (0.0 s .. 30.00 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- benchmarking nbodyAPS/50000000
+-- time                 154.5 s    (149.7 s .. 159.5 s)
+--                      1.000 R²   (0.999 R² .. 1.000 R²)
+-- mean                 153.9 s    (152.8 s .. 154.6 s)
+-- std dev              1.119 s    (0.0 s .. 1.283 s)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- 
+-- 
+-------------------------------------------------------------------
 
 main :: IO ()
 main = do n <- return (50000000 :: Int)
@@ -131,7 +157,7 @@ nbodyBaseline n = do
   pPlanets <- fromList planets          -- load planets into a stack
   nbodyInit pPlanets                    -- initialize the system momentum
   energy pPlanets >>= printf "%.9f\n"   -- calculate and print out the initial energy of the system
-  run n pPlanets                        -- solve the initial value problem, incriment the system 'n' times
+  run n pPlanets                        -- solve the initial value problem, increment the system 'n' times
   energy pPlanets >>= printf "%.9f\n"   -- calculate and print out the final energy of the system
 
 
@@ -153,7 +179,7 @@ nbodyAPS n = do
   energyAPS pPlanetsAPS >>= print.toR -- printf "%0.9f\n"
 
 
--- | 'run' advances the system 'n' times by recursivly calling 'run'
+-- | 'run' advances the system 'n' times by recursively calling 'run'
 run :: (Eq t, Num t) => t -> Ptr Planet -> IO ()
 run 0 _ = return ()
 run i p = do
@@ -218,7 +244,7 @@ nbodyInitCl3 pPlanetsCl3 = do
             (PlanetCl3 _ (toV3 -> vel') (toR -> mass')) <- peekElemOff pPlanetsCl3 i
             initCl3 (toV3 $! pCl3 + vel' * mass') (i+1)
         else return pCl3
-  
+ 
   totalMomentum <- initCl3 (V3 0 0 0) 0
   sun0 <- peek pPlanetsCl3
   poke pPlanetsCl3 $ offsetMomentumCl3 sun0 totalMomentum
@@ -233,7 +259,7 @@ nbodyInitAPS pPlanetsCl3 = do
             p <- peekElemOff pPlanetsCl3 i
             initCl3 (pCl3 + velCl3 p * massCl3 p) (i+1)
         else return pCl3
-  
+ 
   totalMomentum <- initCl3 (APS 0 0 0 0 0 0 0 0) 0
   sun0 <- peek pPlanetsCl3
   poke pPlanetsCl3 $ offsetMomentumAPS sun0 totalMomentum
@@ -247,8 +273,8 @@ squared x' y' z' = x' * x' + y' * y' + z' * z'
 
 
 -- | 'energy' calculate the total energy of the system
--- this is the gravitational potential energy added to 
--- the kenetic energy of all of the planets.
+-- this is the gravitational potential energy added to
+-- the kinetic energy of all of the planets.
 energy :: Ptr Planet -> IO Double
 energy pPlanets = do
   let energy' e i = if i < length planets  -- ''
@@ -268,12 +294,12 @@ energy pPlanets = do
                               e1 <- energy'' p (j+1) e
                               return $ e - (mass p * mass pj) / distance + e1  -- requires mass and position
                        else return e
-  energy' 0.0 0  -- starts off the recursive calcuation of energy
+  energy' 0.0 0  -- starts off the recursive calculation of energy
 
 
 energyCl3 :: Ptr PlanetCl3 -> IO Cl3
 energyCl3 pPlanetsCl3 = do
-  let energy' e i = 
+  let energy' e i =
         if i < length planetsCl3
         then do
           p@(PlanetCl3 _ (toV3 -> vel1) (toR -> mass1)) <- peekElemOff pPlanetsCl3 i
@@ -282,8 +308,8 @@ energyCl3 pPlanetsCl3 = do
           e2 <- energy' e (i+1)
           return $! e + ke + e1 + e2
         else return e
-      
-      energy'' p@(PlanetCl3 (toV3 -> pos1) _ (toR -> mass1)) j e = 
+     
+      energy'' p@(PlanetCl3 (toV3 -> pos1) _ (toR -> mass1)) j e =
         if j < length planetsCl3
         then do
           (PlanetCl3 (toV3 -> pos2) _ (toR -> mass2)) <- peekElemOff pPlanetsCl3 j
@@ -293,14 +319,14 @@ energyCl3 pPlanetsCl3 = do
           e1 <- energy'' p (j+1) e
           return $! e - pe + e1  -- requires mass and position
         else return e
-  
-  energy' (R 0) 0  -- starts off the recursive calcuation of energy
+ 
+  energy' (R 0) 0  -- starts off the recursive calculation of energy
 -- end of energyCl3
 
 
 energyAPS :: Ptr PlanetCl3 -> IO Cl3
 energyAPS pPlanetsCl3 = do
-  let energy' e i = 
+  let energy' e i =
         if i < length planetsCl3
         then do
           p <- peekElemOff pPlanetsCl3 i
@@ -308,8 +334,8 @@ energyAPS pPlanetsCl3 = do
           e2 <- energy' e (i+1)
           return $! e + 0.5 * massCl3 p * (velCl3 p)^(2 :: Int) + e1 + e2
         else return e
-      
-      energy'' p j e = 
+     
+      energy'' p j e =
         if j < length planetsCl3
         then do
           pj <- peekElemOff pPlanetsCl3 j
@@ -318,13 +344,13 @@ energyAPS pPlanetsCl3 = do
           e1 <- energy'' p (j+1) e
           return $! e - (massCl3 p * massCl3 pj) / distance + e1
         else return e
-  
-  energy' (APS 0 0 0 0 0 0 0 0) 0  -- starts off the recursive calcuation of energy
+ 
+  energy' (APS 0 0 0 0 0 0 0 0) 0  -- starts off the recursive calculation of energy
 -- end of energyAPS
 
 
 
--- | 'advance' integrates the system of differential equasions using a 
+-- | 'advance' integrates the system of differential equations using a
 -- semi-implicit Euler method, also called symplectic Euler method.
 -- The first order method updates the velocities based on the acceleration
 -- calculation, then it updates the positions.  The velocity verlet
@@ -332,7 +358,7 @@ energyAPS pPlanetsCl3 = do
 -- symplectic integrator.
 advance :: Ptr Planet -> IO ()
 advance pPlanets = do
-  let advance' i = when (i < length planets) $ do  -- loops throught all the planets and updates the velocity
+  let advance' i = when (i < length planets) $ do  -- loops through all the planets and updates the velocity
                      let loop j = when (j < length planets) $ do
                                     ii <- peekElemOff pPlanets i
                                     jj <- peekElemOff pPlanets j
@@ -369,7 +395,7 @@ advance pPlanets = do
 
 advanceCl3 :: Ptr PlanetCl3 -> IO ()
 advanceCl3 pPlanetsCl3 = do
-  let advance' i = when (i < length planetsCl3) $ do  -- loops throught all the planets and updates the velocity
+  let advance' i = when (i < length planetsCl3) $ do  -- loops through all the planets and updates the velocity
                      let loop j = when (j < length planetsCl3) $ do
                                     (PlanetCl3 (toV3 -> posi) (toV3 -> veli) (toR -> massi)) <- peekElemOff pPlanetsCl3 i
                                     (PlanetCl3 (toV3 -> posj) (toV3 -> velj) (toR -> massj)) <- peekElemOff pPlanetsCl3 j
@@ -383,13 +409,13 @@ advanceCl3 pPlanetsCl3 = do
                                     loop (j+1)
                      loop (i+1)
                      advance' (i+1)
-      
+     
       advance'' i = when (i < length planetsCl3) $ do  -- loops through all of the planets and updates the position
                       (PlanetCl3 (toV3 -> posi) (toV3 -> veli) massi) <- peekElemOff pPlanetsCl3 i
                       let !posi' = posi + R dt * veli
                       pokeCCl3 pPlanetsCl3 i (PlanetCl3 posi' veli massi)
                       advance'' (i+1)
-  
+ 
   advance' 0   -- update all of the planets velocities
   advance'' 0  -- update all of the planets positions
 -- end of advanceCl3
@@ -397,7 +423,7 @@ advanceCl3 pPlanetsCl3 = do
 
 advanceAPS :: Ptr PlanetCl3 -> IO ()
 advanceAPS pPlanetsCl3 = do
-  let advance' i = when (i < length planetsCl3) $ do  -- loops throught all the planets and updates the velocity
+  let advance' i = when (i < length planetsCl3) $ do  -- loops through all the planets and updates the velocity
                             let loop j = when (j < length planetsCl3) $ do
                                       ii <- peekElemOff pPlanetsCl3 i
                                       jj <- peekElemOff pPlanetsCl3 j
@@ -409,12 +435,12 @@ advanceAPS pPlanetsCl3 = do
                                       loop (j+1)
                             loop (i+1)
                             advance' (i+1)
-      
+     
       advance'' i = when (i < length planetsCl3) $ do  -- loops through all of the planets and updates the position
                       p <- peekElemOff pPlanetsCl3 i
                       pokeCCl3 pPlanetsCl3 i p{posCl3 = posCl3 p + R dt * velCl3 p}
                       advance'' (i+1)
-  
+ 
   advance' 0   -- update all of the planets velocities
   advance'' 0  -- update all of the planets positions
 -- end of advanceAPS
@@ -463,8 +489,8 @@ sunMass :: Cl3
 sunMass = R solarMass
 
 
-jupiter :: Planet 
-jupiter = Planet 
+jupiter :: Planet
+jupiter = Planet
     {x = 4.84143144246472090e+00, y = -1.16032004402742839e+00, z= -1.03622044471123109e-01,
      vx = 1.66007664274403694e-03*dp, vy = 7.69901118419740425e-03*dp, vz = -6.90460016972063023e-05*dp,
      mass = 9.54791938424326609e-04 * solarMass
@@ -671,9 +697,9 @@ fromListCl3 l = do
 -- 
 -- > Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 -- 
--- > Neither the name of "The Computer Language Benchmarks Game" nor the name of "The Computer Language Shootout Benchmarks" nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. 
+-- > Neither the name of "The Computer Language Benchmarks Game" nor the name of "The Computer Language Shootout Benchmarks" nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 -- 
--- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+-- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -- 
 -- 
 -- 
@@ -683,3 +709,4 @@ fromListCl3 l = do
 -- Contributed by Branimir Maksimovic
 --
 -------------------------------------------------------------------
+

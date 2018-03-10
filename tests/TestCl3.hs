@@ -23,7 +23,7 @@ import Control.Applicative ((<*>))
 ------------------------------------------------------------------
 -- |
 -- This program verifies the approximate equality of various trig
--- identies to the with the following limitations:
+-- identities to the with the following limitations:
 -- 
 -- * The magnitude of the cliffor is limited in some cases.
 --
@@ -33,9 +33,9 @@ import Control.Applicative ((<*>))
 --
 -- * The poles of the derivatives of the functions are excluded when the cliffor is has a nilpotent component.
 --
--- * Approximate equivelance is tested due to limatations with respect to floating point math.
+-- * Approximate equivalence is tested due to limitations with respect to floating point math.
 --
--- * The implemenation of Arbitrary for Cl3 limits the arbitrary cliffor such that the absolute value of cliff is less than 15
+-- * The implementation of Arbitrary for Cl3 limits the arbitrary cliffor such that the absolute value of cliff is less than 15
 -- 
 -- The following properties are verified in this module:
 --
@@ -98,61 +98,61 @@ import Control.Applicative ((<*>))
 main :: IO ()
 main = do moduleTests
           print "Testing log.exp Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_LogExp
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_LogExp
           print "Testing exp.log Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_ExpLog
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_ExpLog
           print "Testing abs*signum law:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AbsSignum
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_AbsSignum
           print "Testing the definition of recip:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_RecipDef
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_RecipDef
           print "Testing recip.recip Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_RecipID
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_RecipID
           print "Testing sin.asin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinAsin
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_SinAsin
           print "Testing asin.sin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AsinSin
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_AsinSin
           print "Testing cos.acos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CosAcos
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_CosAcos
           print "Testing acos.cos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcosCos
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_AcosCos
           print "Testing sinh.asinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinhAsinh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_SinhAsinh
           print "Testing asinh.sinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AsinhSinh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_AsinhSinh
           print "Testing cosh.acosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CoshAcosh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_CoshAcosh
           print "Testing acosh.cosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcoshCosh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_AcoshCosh
           print "Testing acosh.cosh Identity2:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcoshCosh2
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_AcoshCosh2
           print "Testing Double Sin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubSin
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_DubSin
           print "Testing Double Cos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubCos
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_DubCos
           print "Testing Double Tan Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubTan
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_DubTan
           print "Testing Double Sinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubSinh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_DubSinh
           print "Testing Double Cosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubCosh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_DubCosh
           print "Testing Double Tanh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubTanh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_DubTanh
           print "Testing Positive Sin Shift Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_PosSinShift
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_PosSinShift
           print "Testing Negative Sin Shift Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_NegSinShift
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_NegSinShift
           print "Testing sin^2+cos^2 Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinSqCosSq
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_SinSqCosSq
           print "Testing cosh^2-sinh^2 Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CoshSqmSinhSq
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_CoshSqmSinhSq
           print "Testing Symmetry of Cosh:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SymCosh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_SymCosh
           print "Testing Symmetry of Sinh:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SymSinh
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_SymSinh
           print "Testing Double I Sin:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DoubleISin
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_DoubleISin
           print "Is has Composition Sub-Algebras:"
-          quickCheckWith stdArgs { maxSuccess = 50000} prop_CompAlg
+          quickCheckWith stdArgs { maxSuccess = 3000000 } prop_CompAlg
 
 
 
@@ -192,22 +192,22 @@ inputs = [R 0
          ]
 
 -- | 'tests' is a list of tests
--- The out of bounds can be the poles of the function or if the cliffor has 
--- nilpotent content then the poles of the dirivitave as well as the function
+-- The out of bounds can be the poles of the function or if the cliffor has
+-- nilpotent content then the poles of the derivative as well as the function
 tests :: [Cl3 -> IO()]
 tests = [runTest "Log.Exp Identity" (log.exp) id (const False)
         ,runTest "Exp.Log Identity" (exp.log) id (\z -> lsv z < tol) -- singular inputs are out of bounds
         ,runTest "Abs*Signum Identity" (\x->abs x * signum x) id (const False)
         ,runTest "Reciprical Identity" (recip.recip) id (\z -> lsv z < tol) -- singular inputs are out of bounds
         ,runTest "sin.asin" (sin.asin) id (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
-        ,runTest "asin.sin" (asin.sin) (\z -> negate (I 1) * log (0.5 * (exp (I 1 * z) - exp (I (-1) * z)) + 
+        ,runTest "asin.sin" (asin.sin) (\z -> negate (I 1) * log (0.5 * (exp (I 1 * z) - exp (I (-1) * z)) +
                                                                   sqrt (1+0.25*(exp (I (-1) * z) - exp (I 1 * z))^2))) (const False)
         ,runTest "cos.acos" (cos.acos) id (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
         ,runTest "acos.cos" (acos.cos) (\z -> 0.5 * (pi - 2 * asin(cos z))) (\z -> hasNilpotent z && poles [R 0, pi, negate pi] z)
         ,runTest "sinh.asinh" (sinh.asinh) id (const False)
         ,runTest "asinh.sinh" (asinh.sinh) (\z -> log (0.5*(exp z - exp (negate z)) + sqrt (0.25 * (exp z - exp (negate z))^2 + 1))) (const False)
         ,runTest "cosh.acosh" (cosh.acosh) id (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
-        ,runTest "acosh.cosh" (acosh.cosh) (\z -> log (0.5*(exp z + exp (negate z)) + 
+        ,runTest "acosh.cosh" (acosh.cosh) (\z -> log (0.5*(exp z + exp (negate z)) +
                                                  sqrt (0.5*(exp z + exp (negate z)) - 1) * sqrt (0.5*(exp z + exp (negate z)) + 1))) (const False)
         ,runTest "Double Angle sin" (\z -> sin (2 * z)) (\z -> 2 * sin z * cos z) (const False)
         ,runTest "Double Angle cos" (\z -> cos (2 * z)) (\z -> cos z ^ 2 - sin z ^ 2) (const False)
@@ -233,7 +233,7 @@ tests = [runTest "Log.Exp Identity" (log.exp) id (const False)
 prop_LogExp :: Cl3 -> Bool
 prop_LogExp cliffor = (abs cliffor > 10) || (
   let cliffor' = unWrapIPartEigs cliffor  -- imaginary part of log.exp repeats
--- roundoff errors get large for exp larger than 5 use spectproj (log.exp) for accuracy
+-- round off errors get large for exp larger than 5 use spectproj (log.exp) for accuracy
   in log (exp cliffor') ≈≈ cliffor')
 
 -- log 0 is -Inf, Infinite vectors don't play nice
@@ -257,11 +257,11 @@ prop_SinAsin cliffor = if hasNilpotent cliffor
                        else sin (asin cliffor) ≈≈ cliffor
 
 prop_AsinSin :: Cl3 -> Bool
-prop_AsinSin cliffor = (abs cliffor > 10) || (asin (sin cliffor) ≈≈ (I (-1) * log (0.5 * (exp (I 1 * cliffor) - exp (I (-1) * cliffor)) + 
+prop_AsinSin cliffor = (abs cliffor > 10) || (asin (sin cliffor) ≈≈ (I (-1) * log (0.5 * (exp (I 1 * cliffor) - exp (I (-1) * cliffor)) +
                                                                                    sqrt (1+0.25*(exp (I (-1) * cliffor) - exp (I 1 * cliffor))^2))))
 
 prop_CosAcos :: Cl3 -> Bool
-prop_CosAcos cliffor = if hasNilpotent cliffor 
+prop_CosAcos cliffor = if hasNilpotent cliffor
                        then poles [R 1, R (-1)] cliffor || (cos (acos cliffor) ≈≈ cliffor)
                        else cos (acos cliffor) ≈≈ cliffor
 
@@ -274,7 +274,7 @@ prop_SinhAsinh :: Cl3 -> Bool
 prop_SinhAsinh cliffor = sinh (asinh cliffor) ≈≈ cliffor
 
 prop_AsinhSinh :: Cl3 -> Bool
-prop_AsinhSinh cliffor = (abs cliffor > 10) || (asinh (sinh cliffor) ≈≈ log (0.5*(exp cliffor - exp (negate cliffor)) + 
+prop_AsinhSinh cliffor = (abs cliffor > 10) || (asinh (sinh cliffor) ≈≈ log (0.5*(exp cliffor - exp (negate cliffor)) +
                                                                              sqrt (0.25 * (exp cliffor - exp (negate cliffor))^2 + 1)))
 
 prop_CoshAcosh :: Cl3 -> Bool
@@ -284,7 +284,7 @@ prop_CoshAcosh cliffor = if hasNilpotent cliffor
 
 prop_AcoshCosh :: Cl3 -> Bool
 prop_AcoshCosh cliffor = acosh (cosh cliffor) ≈≈ log (0.5*(exp cliffor + exp (negate cliffor)) +
-                                                      sqrt (0.5*(exp cliffor + exp (negate cliffor)) - 1) * 
+                                                      sqrt (0.5*(exp cliffor + exp (negate cliffor)) - 1) *
                                                       sqrt (0.5*(exp cliffor + exp (negate cliffor)) + 1))
 
 prop_AcoshCosh2 :: Cl3 -> Bool
@@ -356,10 +356,10 @@ prop_CompAlg (cliffor, cliffor') = abs ( cliffor * cliffor') ≈≈ abs cliffor 
 
 
 -- Run the test
--- compare the function under test (fUT) to a golden test funcion (gTF) 
+-- compare the function under test (fUT) to a golden test funcion (gTF)
 -- if the input is within bounds
 runTest :: String -> (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> (Cl3 -> Bool) -> Cl3 -> IO()
-runTest testName fUT gTF outOB iVal = 
+runTest testName fUT gTF outOB iVal =
   let f = fUT iVal
       g = gTF iVal
   in if outOB iVal
@@ -374,7 +374,7 @@ runTest testName fUT gTF outOB iVal =
 
 -- | '≈≈' aproximately equal
 (≈≈) :: Cl3 -> Cl3 -> Bool
-(reduce -> clifforA) ≈≈ (reduce -> clifforB) = 
+(reduce -> clifforA) ≈≈ (reduce -> clifforB) =
   let ave = (abs clifforA + abs clifforB) / 2
   in abs (clifforA - clifforB) <= 1e-5*ave + tol
 infix 4 ≈≈
@@ -399,3 +399,4 @@ unWrapIPartEigs cliffor = reduce $ spectraldcmp unWrapI id cliffor
         unWrapI _ = error "unWrapI should only be unWrapping R I and C"
 
 ----------------------------------------------------------
+
