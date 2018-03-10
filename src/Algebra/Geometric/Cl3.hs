@@ -26,7 +26,7 @@ module Algebra.Geometric.Cl3
  bar, dag,
  -- * The littlest singular value
  lsv,
- -- * Constructor Selectors - For optimizing and simplifing calculations
+ -- * Constructor Selectors - For optimizing and simplifying calculations
  toR, toV3, toBV, toI,
  toPV, toH, toC,
  toBPV, toODD, toTPV,
@@ -46,9 +46,9 @@ import GHC.Generics (Generic)
 
 
 -- | Cl3 provides specialized constructors for sub-algebras and other geometric objects
--- contained in the algebra.  Cl(3,0), abreviated to Cl3, is a Geometric Algebra
--- of 3 dimensional space known as the Algebra of Physical Space (APS).  Geometric Algebras are Real 
--- Clifford Algebras, double precision floats are used to approximate real numbers in this 
+-- contained in the algebra.  Cl(3,0), abbreviated to Cl3, is a Geometric Algebra
+-- of 3 dimensional space known as the Algebra of Physical Space (APS).  Geometric Algebras are Real
+-- Clifford Algebras, double precision floats are used to approximate real numbers in this
 -- library.  Single and Double grade combinations are specialized and live within the APS.
 --
 --   * 'R' is the constructor for the Real Scalar Sub-algebra Grade-0
@@ -61,7 +61,7 @@ import GHC.Generics (Generic)
 --
 --   * 'PV' is the Paravector constructor with Grade-0 and Grade-1 elements
 --
---   * 'H' is the Quarternion constructor it is the Even Sub-algebra with Grade-0 and Grade-2 elements
+--   * 'H' is the Quaternion constructor it is the Even Sub-algebra with Grade-0 and Grade-2 elements
 --
 --   * 'C' is the Complex constructor it is the Scalar Sub-algebra with Grade-0 and Grade-3 elements
 --
@@ -79,7 +79,7 @@ data Cl3 where
   BV  :: !Double -> !Double -> !Double -> Cl3 -- Bivectors (G2)
   I   :: !Double -> Cl3 -- Trivector Imaginary Pseudo-Scalar (G3)
   PV  :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Paravector (G0 + G1)
-  H   :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Quarternion Even Sub-algebra (G0 + G2)
+  H   :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Quaternion Even Sub-algebra (G0 + G2)
   C   :: !Double -> !Double -> Cl3 -- Complex Sub-algebra (G0 + G3)
   BPV :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3 -- Biparavector (G1 + G2)
   ODD :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Odd (G1 + G3)
@@ -94,7 +94,7 @@ data Cl3 where
 -- 
 -- > e0 = [1,0;0,1]; e1=[0,1;1,0]; e2=[0,-i;i,0]; e3=[1,0;0,-1];
 --
--- This allows one to take advatage of the isomorphism between Cl3 and M(2,C)
+-- This allows one to take advantage of the isomorphism between Cl3 and M(2,C)
 showOctave :: Cl3 -> String
 showOctave (R a0) = show a0 ++ "*e0"
 showOctave (V3 a1 a2 a3) = show a1 ++ "*e1 + " ++ show a2 ++ "*e2 + " ++ show a3 ++ "*e3"
@@ -111,7 +111,7 @@ showOctave (APS a0 a1 a2 a3 a23 a31 a12 a123) = show a0 ++ "*e0 + " ++ show a1 +
                                                 show a23 ++ "i*e1 + " ++ show a31 ++ "i*e2 + " ++ show a12 ++ "i*e3 + " ++ show a123 ++ "i*e0"
 
 
--- |Cl(3,0) has the property of equivelance.  "Eq" is "True" when all of the grade elements are equivelent.
+-- |Cl(3,0) has the property of equivalence.  "Eq" is "True" when all of the grade elements are equivalent.
 instance Eq Cl3 where
   (R a0) == (R b0) = a0 == b0
 
@@ -185,11 +185,11 @@ instance Eq Cl3 where
   (I a123) == (H b0 b23 b31 b12) = a123 == 0 && b0 == 0 && b23 == 0 && b31 == 0 && b12 == 0
   (I a123) == (C b0 b123) = a123 == b123 && b0 == 0
   (I a123) == (BPV b1 b2 b3 b23 b31 b12) = a123 == 0 && b1 == 0 && b2 == 0 && b3 == 0 && b23 == 0 && b31 == 0 && b12 == 0
-  (I a123) == (ODD b1 b2 b3 b123) = a123 == b123 && b1 == 0 && b2 == 0 && b3 == 0 
+  (I a123) == (ODD b1 b2 b3 b123) = a123 == b123 && b1 == 0 && b2 == 0 && b3 == 0
   (I a123) == (TPV b23 b31 b12 b123) = a123 == b123 && b23 == 0 && b31 == 0 && b12 == 0
   (I a123) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a123 == b123 && b0 == 0 && b1 == 0 && b2 == 0 && b3 == 0 && b23 == 0 && b31 == 0 && b12 == 0
 
-  (PV a0 a1 a2 a3) == (I b123) = b123 == 0 && a0 == 0 && a1 == 0 && a2 == 0 && a3 == 0 
+  (PV a0 a1 a2 a3) == (I b123) = b123 == 0 && a0 == 0 && a1 == 0 && a2 == 0 && a3 == 0
   (H a0 a23 a31 a12) == (I b123) = b123 == 0 && a0 == 0 && a23 == 0 && a31 == 0 && a12 == 0
   (C a0 a123) == (I b123) = a123 == b123 && a0 == 0
   (BPV a1 a2 a3 a23 a31 a12) == (I b123) = b123 == 0 && a1 == 0 && a2 == 0 && a3 == 0 && a23 == 0 && a31 == 0 && a12 == 0
@@ -219,7 +219,7 @@ instance Eq Cl3 where
   (H a0 a23 a31 a12) == (BPV b1 b2 b3 b23 b31 b12) = a0 == 0 && a23 == b23 && a31 == b31 && a12 == b12 && b1 == 0 && b2 == 0 && b3 == 0
   (H a0 a23 a31 a12) == (ODD b1 b2 b3 b123) = a0 == 0 && b1 == 0 && b2 == 0 && b3 == 0 && a23 == 0 && a31 == 0 && a12 == 0 && b123 == 0
   (H a0 a23 a31 a12) == (TPV b23 b31 b12 b123) = a0 == 0 && a23 == b23 && a31 == b31 && a12 == b12 && b123 == 0
-  (H a0 a23 a31 a12) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a0 == b0 && a23 == b23 && a31 == b31 && a12 == b12 && b1 == 0 && b2 == 0 && b3 == 0 && b123 == 0 
+  (H a0 a23 a31 a12) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a0 == b0 && a23 == b23 && a31 == b31 && a12 == b12 && b1 == 0 && b2 == 0 && b3 == 0 && b123 == 0
 
   (C a0 a123) == (H b0 b23 b31 b12) = a0 == b0 && a123 == 0 && b23 == 0 && b31 == 0 && b12 == 0
   (BPV a1 a2 a3 a23 a31 a12) == (H b0 b23 b31 b12) = a1 == 0 && a2 == 0 && a3 == 0 && a23 == b23 && a31 == b31 && a12 == b12 && b0 == 0
@@ -243,12 +243,12 @@ instance Eq Cl3 where
 
   (BPV a1 a2 a3 a23 a31 a12) == (ODD b1 b2 b3 b123) = a1 == b1 && a2 == b2 && a3 == b3 && b123 == 0 && a23 == 0 && a31 == 0 && a12 == 0
   (BPV a1 a2 a3 a23 a31 a12) == (TPV b23 b31 b12 b123) = a23 == b23 && a31 == b31 && a12 == b12 && b123 == 0 && a1 == 0 && a2 == 0 && a3 == 0
-  (BPV a1 a2 a3 a23 a31 a12) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a1 == b1 && a2 == b2 && a3 == b3 && a23 == b23 && a31 == b31 && a12 == b12 
+  (BPV a1 a2 a3 a23 a31 a12) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a1 == b1 && a2 == b2 && a3 == b3 && a23 == b23 && a31 == b31 && a12 == b12
                                                                               && b0 == 0 && b123 == 0
 
   (ODD a1 a2 a3 a123) == (BPV b1 b2 b3 b23 b31 b12) = a1 == b1 && a2 == b2 && a3 == b3 && a123 == 0 && b23 == 0 && b31 == 0 && b12 == 0
   (TPV a23 a31 a12 a123) == (BPV b1 b2 b3 b23 b31 b12) = a23 == b23 && a31 == b31 && a12 == b12 && a123 == 0 && b1 == 0 && b2 == 0 && b3 == 0
-  (APS a0 a1 a2 a3 a23 a31 a12 a123) == (BPV b1 b2 b3 b23 b31 b12) = a0 == 0 && a1 == b1 && a2 == b2 && a3 == b3 && a23 == b23 && a31 == b31 
+  (APS a0 a1 a2 a3 a23 a31 a12 a123) == (BPV b1 b2 b3 b23 b31 b12) = a0 == 0 && a1 == b1 && a2 == b2 && a3 == b3 && a23 == b23 && a31 == b31
                                                                              && a12 == b12 && a123 == 0
 
   (ODD a1 a2 a3 a123) == (ODD b1 b2 b3 b123) = a1 == b1 && a2 == b2 && a3 == b3 && a123 == b123
@@ -261,23 +261,28 @@ instance Eq Cl3 where
 
   (TPV a23 a31 a12 a123) == (TPV b23 b31 b12 b123) = a23 == b23 && a31 == b31 && a12 == b12 && a123 == b123
 
-  (TPV a23 a31 a12 a123) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a23 == b23 && a31 == b31 && a12 == b12 && a123 == b123 
+  (TPV a23 a31 a12 a123) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a23 == b23 && a31 == b31 && a12 == b12 && a123 == b123
                                                                             && b0 == 0 && b1 == 0 && b2 == 0 && b3 == 0
 
-  (APS a0 a1 a2 a3 a23 a31 a12 a123) == (TPV b23 b31 b12 b123) = a23 == b23 && a31 == b31 && a12 == b12 && a123 == b123 
+  (APS a0 a1 a2 a3 a23 a31 a12 a123) == (TPV b23 b31 b12 b123) = a23 == b23 && a31 == b31 && a12 == b12 && a123 == b123
                                                                             && a0 == 0 && a1 == 0 && a2 == 0 && a3 == 0
 
-  (APS a0 a1 a2 a3 a23 a31 a12 a123) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a0 == b0 && a1 == b1 && a2 == b2 && a3 == b3 && a23 == b23 
+  (APS a0 a1 a2 a3 a23 a31 a12 a123) == (APS b0 b1 b2 b3 b23 b31 b12 b123) = a0 == b0 && a1 == b1 && a2 == b2 && a3 == b3 && a23 == b23
                                                                                       && a31 == b31 && a12 == b12 && a123 == b123
 
 
--- |Cl3 has a total preorder order in which all pairs are comparable by two real valued functions. 
--- The Ord instance is based on the singular values because this Ordering compares the largest 
--- singular value 'abs' and then the other singular value 'lsv'. Some arbitrary cliffors may 
--- return EQ for Ord but not be exactly '==' equivelant, but they are related by a right and left 
--- multiplication of two unitary elements.  For instance for the Cliffors A and B, A == B is 
--- False, but compare A B is EQ, because A * V = U * B, where V and U are unitary.
+-- |Cl3 has a total preorder order in which all pairs are comparable by two real valued functions.
+-- Comparison of two reals is just the typical real compare function.  When reals are compared to
+-- anything else it will compare the absolute value of the reals to the magnitude of the other cliffor.
+-- Compare of two complex values compares the polar magnitude of the complex numbers.  Compare of 
+-- two vectors compares the vector magnitudes.  The Ord instance for the general case is based on 
+-- the singular values of each cliffor and this Ordering compares the largest singular value 'abs' 
+-- and then the littlest singular value 'lsv'.  Some arbitrary cliffors may return EQ for Ord but not be 
+-- exactly '==' equivalent, but they are related by a right and left multiplication of two unitary 
+-- elements.  For instance for the Cliffors A and B, A == B could be False, but compare A B is EQ, 
+-- because A * V = U * B, where V and U are unitary.  
 instance Ord Cl3 where
+  compare (R a0) (R b0) = compare a0 b0
   compare cliffor1 cliffor2 =
      let (R a0) = abs cliffor1
          (R b0) = abs cliffor2
@@ -289,7 +294,7 @@ instance Ord Cl3 where
           GT -> GT
 
 
--- |Cl3 has a "Num" instance.  "Num" is addition, geometric product, negation, 'abs' the largest 
+-- |Cl3 has a "Num" instance.  "Num" is addition, geometric product, negation, 'abs' the largest
 -- singular value, and 'signum' like a unit vector of sorts.
 -- 
 instance Num Cl3 where
@@ -445,7 +450,7 @@ instance Num Cl3 where
   (APS a0 a1 a2 a3 a23 a31 a12 a123) + (TPV b23 b31 b12 b123) = APS a0 a1 a2 a3 (a23 + b23) (a31 + b31) (a12 + b12) (a123 + b123)
 
   (APS a0 a1 a2 a3 a23 a31 a12 a123) + (APS b0 b1 b2 b3 b23 b31 b12 b123) = APS (a0 + b0)
-                                                                                (a1 + b1) (a2 + b2) (a3 + b3) 
+                                                                                (a1 + b1) (a2 + b2) (a3 + b3)
                                                                                 (a23 + b23) (a31 + b31) (a12 + b12)
                                                                                 (a123 + b123)
 
@@ -507,7 +512,7 @@ instance Num Cl3 where
   (V3 a1 a2 a3) * (C b0 b123) = BPV (a1*b0) (a2*b0) (a3*b0)
                                     (a1*b123) (a2*b123) (a3*b123)
   (V3 a1 a2 a3) * (BPV b1 b2 b3 b23 b31 b12) = APS (a1*b1 + a2*b2 + a3*b3)
-                                                   (a3*b31 - a2*b12) (a1*b12 - a3*b23) (a2*b23 - a1*b31) 
+                                                   (a3*b31 - a2*b12) (a1*b12 - a3*b23) (a2*b23 - a1*b31)
                                                    (a2*b3 - a3*b2) (a3*b1 - a1*b3) (a1*b2 - a2*b1)
                                                    (a1*b23 + a2*b31 + a3*b12)
   (V3 a1 a2 a3) * (ODD b1 b2 b3 b123) = H (a1*b1 + a2*b2 + a3*b3)
@@ -516,7 +521,7 @@ instance Num Cl3 where
                                                (a3*b31 - a2*b12) (a1*b12 - a3*b23) (a2*b23 - a1*b31)
                                                (a1*b123) (a2*b123) (a3*b123)
                                                (a1*b23 + a2*b31 + a3*b12)
-  (V3 a1 a2 a3) * (APS b0 b1 b2 b3 b23 b31 b12 b123) = APS (a1*b1 + a2*b2 + a3*b3) 
+  (V3 a1 a2 a3) * (APS b0 b1 b2 b3 b23 b31 b12 b123) = APS (a1*b1 + a2*b2 + a3*b3)
                                                            (a1*b0 - a2*b12 + a3*b31) (a2*b0 + a1*b12 - a3*b23) (a3*b0 - a1*b31 + a2*b23)
                                                            (a1*b123 + a2*b3 - a3*b2) (a3*b1 - a1*b3 + a2*b123) (a1*b2 - a2*b1 + a3*b123)
                                                            (a1*b23 + a2*b31 + a3*b12)
@@ -533,7 +538,7 @@ instance Num Cl3 where
   (C a0 a123) * (V3 b1 b2 b3) = BPV (a0*b1) (a0*b2) (a0*b3)
                                     (a123*b1) (a123*b2) (a123*b3)
   (BPV a1 a2 a3 a23 a31 a12) * (V3 b1 b2 b3) = APS (a1*b1 + a2*b2 + a3*b3)
-                                                   (a12*b2 - a31*b3) (a23*b3 - a12*b1) (a31*b1 - a23*b2) 
+                                                   (a12*b2 - a31*b3) (a23*b3 - a12*b1) (a31*b1 - a23*b2)
                                                    (a2*b3 - a3*b2) (a3*b1 - a1*b3) (a1*b2 - a2*b1)
                                                    (a23*b1 + a31*b2 + a12*b3)
   (ODD a1 a2 a3 a123) * (V3 b1 b2 b3) = H (a1*b1 + a2*b2 + a3*b3)
@@ -542,18 +547,18 @@ instance Num Cl3 where
                                                (a12*b2 - a31*b3) (a23*b3 - a12*b1) (a31*b1 - a23*b2)
                                                (a123*b1) (a123*b2) (a123*b3)
                                                (a23*b1 + a31*b2 + a12*b3)
-  (APS a0 a1 a2 a3 a23 a31 a12 a123) * (V3 b1 b2 b3) = APS (a1*b1 + a2*b2 + a3*b3) 
-                                                           (a0*b1 + a12*b2 - a31*b3) (a0*b2 - a12*b1 + a23*b3) (a0*b3 + a31*b1 - a23*b2) 
-                                                           (a123*b1 + a2*b3 - a3*b2) (a3*b1 - a1*b3 + a123*b2) (a1*b2 - a2*b1 + a123*b3) 
+  (APS a0 a1 a2 a3 a23 a31 a12 a123) * (V3 b1 b2 b3) = APS (a1*b1 + a2*b2 + a3*b3)
+                                                           (a0*b1 + a12*b2 - a31*b3) (a0*b2 - a12*b1 + a23*b3) (a0*b3 + a31*b1 - a23*b2)
+                                                           (a123*b1 + a2*b3 - a3*b2) (a3*b1 - a1*b3 + a123*b2) (a1*b2 - a2*b1 + a123*b3)
                                                            (a23*b1 + a31*b2 + a12*b3)
 
-  (BV a23 a31 a12) * (BV b23 b31 b12) = H (negate $ a23*b23 + a31*b31 + a12*b12) 
+  (BV a23 a31 a12) * (BV b23 b31 b12) = H (negate $ a23*b23 + a31*b31 + a12*b12)
                                           (a12*b31 - a31*b12) (a23*b12 - a12*b23) (a31*b23 - a23*b31)
 
   (BV a23 a31 a12) * (I b123) = V3 (negate $ a23*b123) (negate $ a31*b123) (negate $ a12*b123)
   (BV a23 a31 a12) * (PV b0 b1 b2 b3) = APS 0
                                             (a12*b2 - a31*b3) (a23*b3 - a12*b1) (a31*b1 - a23*b2)
-                                            (a23*b0) (a31*b0) (a12*b0) 
+                                            (a23*b0) (a31*b0) (a12*b0)
                                             (a23*b1 + a31*b2 + a12*b3)
   (BV a23 a31 a12) * (H b0 b23 b31 b12) = H (negate $ a23*b23 + a31*b31 + a12*b12)
                                             (a23*b0 - a31*b12 + a12*b31) (a31*b0 + a23*b12 - a12*b23) (a12*b0 - a23*b31 + a31*b23)
@@ -569,7 +574,7 @@ instance Num Cl3 where
                                                   (negate $ a23*b123) (negate $ a31*b123) (negate $ a12*b123)
                                                   (a12*b31 - a31*b12) (a23*b12 - a12*b23) (a31*b23 - a23*b31)
                                                   0
-  (BV a23 a31 a12) * (APS b0 b1 b2 b3 b23 b31 b12 b123) = APS (negate $ a23*b23 + a31*b31 + a12*b12) 
+  (BV a23 a31 a12) * (APS b0 b1 b2 b3 b23 b31 b12 b123) = APS (negate $ a23*b23 + a31*b31 + a12*b12)
                                                               (a12*b2 - a31*b3 - a23*b123) (a23*b3 - a31*b123 - a12*b1) (a31*b1 - a23*b2 - a12*b123)
                                                               (a23*b0 - a31*b12 + a12*b31) (a31*b0 + a23*b12 - a12*b23) (a12*b0 - a23*b31 + a31*b23)
                                                               (a23*b1 + a31*b2 + a12*b3)
@@ -578,12 +583,12 @@ instance Num Cl3 where
   (PV a0 a1 a2 a3) * (BV b23 b31 b12) = APS 0
                                             (a3*b31 - a2*b12) (a1*b12 - a3*b23) (a2*b23 - a1*b31)
                                             (a0*b23) (a0*b31) (a0*b12)
-                                            (a1*b23 + a2*b31 + a3*b12) 
+                                            (a1*b23 + a2*b31 + a3*b12)
   (H a0 a23 a31 a12) * (BV b23 b31 b12) = H (negate $ a23*b23 + a31*b31 + a12*b12)
                                             (a0*b23 - a31*b12 + a12*b31) (a0*b31 + a23*b12 - a12*b23) (a0*b12 - a23*b31 + a31*b23)
   (C a0 a123) * (BV b23 b31 b12) = BPV (negate $ a123*b23) (negate $ a123*b31) (negate $ a123*b12)
                                        (a0*b23) (a0*b31) (a0*b12)
-  (BPV a1 a2 a3 a23 a31 a12) * (BV b23 b31 b12) = APS (negate $ a23*b23 + a31*b31 + a12*b12) 
+  (BPV a1 a2 a3 a23 a31 a12) * (BV b23 b31 b12) = APS (negate $ a23*b23 + a31*b31 + a12*b12)
                                                       (a3*b31 - a2*b12) (a1*b12 - a3*b23) (a2*b23 - a1*b31)    
                                                       (a12*b31 - a31*b12) (a23*b12 - a12*b23) (a31*b23 - a23*b31)
                                                       (a1*b23 + a2*b31 + a3*b12)
@@ -707,7 +712,7 @@ instance Num Cl3 where
                                               (a0*b31 + a31*b0 + a23*b12 - a12*b23)
                                               (a0*b12 + a12*b0 - a23*b31 + a31*b23)
 
-  (H a0 a23 a31 a12) * (C b0 b123) = APS (a0*b0) 
+  (H a0 a23 a31 a12) * (C b0 b123) = APS (a0*b0)
                                          (negate $ a23*b123) (negate $ a31*b123) (negate $ a12*b123)
                                          (a23*b0) (a31*b0) (a12*b0)
                                          (a0*b123)
@@ -791,7 +796,7 @@ instance Num Cl3 where
                                                          (a0*b123 + a123*b0)
 
   (BPV a1 a2 a3 a23 a31 a12) * (BPV b1 b2 b3 b23 b31 b12) = APS (a1*b1 + a2*b2 + a3*b3 - a23*b23 - a31*b31 - a12*b12)
-                                                                (a12*b2 - a2*b12 + a3*b31 - a31*b3) 
+                                                                (a12*b2 - a2*b12 + a3*b31 - a31*b3)
                                                                 (a1*b12 - a12*b1 - a3*b23 + a23*b3)
                                                                 (a31*b1 - a1*b31 + a2*b23 - a23*b2)
                                                                 (a2*b3 - a3*b2 - a31*b12 + a12*b31)
@@ -909,12 +914,12 @@ instance Num Cl3 where
   abs (PV a0 a1 a2 a3) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + 2 * abs a0 * sqrt (a1^2 + a2^2 + a3^2)))
   abs (H a0 a23 a31 a12) = R (sqrt (a0^2 + a23^2 + a31^2 + a12^2)) -- largest singular value
   abs (C a0 a123) = R (sqrt (a0^2 + a123^2)) -- magnitude of a complex number
-  abs (BPV a1 a2 a3 a23 a31 a12) = R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + 
+  abs (BPV a1 a2 a3 a23 a31 a12) = R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 +
                                              2 * sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2)))
   abs (ODD a1 a2 a3 a123) = R (sqrt (a1^2 + a2^2 + a3^2 + a123^2))
   abs (TPV a23 a31 a12 a123) = R (sqrt (a23^2 + a31^2 + a12^2 + a123^2 + 2 * abs a123 * sqrt (a23^2 + a31^2 + a12^2)))
   abs (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 +
-                                                    2 * sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + 
+                                                    2 * sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
                                                               (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)))
 
 
@@ -922,7 +927,7 @@ instance Num Cl3 where
   -- kind of cool: signum of a vector is the unit vector.
   signum cliffor
     | abs cliffor == 0 = 0  -- initially this was abs cliffor < tol, but this caused problems with 'spectraldcmp'
-    | otherwise = 
+    | otherwise =
         let (R mag) = abs cliffor
         in cliffor * R (recip mag)
 
@@ -958,15 +963,15 @@ instance Num Cl3 where
 instance Fractional Cl3 where
   -- |Some of the sub algebras are division algebras but APS is not a division algebra
   recip (R a0) = R (recip a0)   -- R is a division algebra
-  recip v@(V3 a1 a2 a3) = 
+  recip v@(V3 a1 a2 a3) =
     let (R mag) = abs v
         sqmag = mag * mag :: Double
     in V3 (a1 / sqmag) (a2 / sqmag) (a3 / sqmag)
-  recip bv@(BV a23 a31 a12) = 
+  recip bv@(BV a23 a31 a12) =
     let (R mag) = abs bv
         sqmag = mag * mag  :: Double
     in BV (negate $ a23 / sqmag) (negate $ a31 / sqmag) (negate $ a12 / sqmag)
-  recip i@(I a123) = 
+  recip i@(I a123) =
     let (R mag) = abs i
         sqmag = mag * mag  :: Double
     in I (negate $! a123 / sqmag)
@@ -982,7 +987,7 @@ instance Fractional Cl3 where
         sqmag = mag * mag  :: Double
     in C (a0 / sqmag) (negate $ a123 / sqmag)
   recip bpv@BPV{} = reduce $! spectraldcmp recip recip' bpv
-  recip od@(ODD a1 a2 a3 a123) = 
+  recip od@(ODD a1 a2 a3 a123) =
     let (R mag) = abs od
         sqmag = mag * mag  :: Double
     in ODD (a1 / sqmag) (a2 / sqmag) (a3 / sqmag) (negate $ a123 / sqmag)
@@ -1002,7 +1007,7 @@ instance Floating Cl3 where
   --
   exp (R a0) = R (exp a0)
   exp (I a123) = C (cos a123) (sin a123)
-  exp (C a0 a123) = 
+  exp (C a0 a123) =
     let expa0 = exp a0
     in C (expa0 * cos a123) (expa0 * sin a123)
   exp cliffor = reduce $! spectraldcmp exp exp' cliffor
@@ -1052,7 +1057,7 @@ instance Floating Cl3 where
   asin (R a0) = if (-1) <= a0 && a0 <= 1 then R (asin a0) else asin $ C a0 0
   asin (I a123) = I (asinh a123)
   asin (C a0 a123) = C a123' (-a0')
-                       where  (C a0' a123') = toC $ log (C (-a123) a0 + sqrt (1 - C a0 a123 * C a0 a123)) -- check this 
+                       where  (C a0' a123') = toC $ log (C (-a123) a0 + sqrt (1 - C a0 a123 * C a0 a123)) -- check this
   asin cliffor = reduce $! spectraldcmp asin asin' cliffor
 
   --
@@ -1123,12 +1128,12 @@ lsv (PV a0 a1 a2 a3) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 -
                                 2 * abs a0 * sqrt (a1^2 + a2^2 + a3^2)))
 lsv (H a0 a23 a31 a12) = R (sqrt (a0^2 + a23^2 + a31^2 + a12^2))
 lsv (C a0 a123) = R (sqrt (a0^2 + a123^2)) -- magnitude of a complex number
-lsv (BPV a1 a2 a3 a23 a31 a12) = R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 - 
+lsv (BPV a1 a2 a3 a23 a31 a12) = R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 -
                                           2 * sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2)))
 lsv (ODD a1 a2 a3 a123) = R (sqrt (a1^2 + a2^2 + a3^2 + a123^2))
-lsv (TPV a23 a31 a12 a123) = R (sqrt (a23^2 + a31^2 + a12^2 + a123^2 - 2 * abs a123 * sqrt (a23^2 + a31^2 + a12^2)))
+lsv (TPV a23 a31 a12 a123) = R (sqrt (a23^2 + a31^2 + a12^2 + a123^2 - (abs a123 + abs a123) * sqrt (a23^2 + a31^2 + a12^2)))
 lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 -
-                                                  2 * sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + 
+                                                  2 * sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
                                                             (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)))
 
 
@@ -1141,7 +1146,7 @@ lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a2
 -- It may be possible to add in the future a RULES pragma like:
 --
 -- > "spectral decomposition function composition"
--- > forall f f' g g' cliff. 
+-- > forall f f' g g' cliff.
 -- > spectraldcmp f f' (spectraldcmp g g' cliff) = spectraldcmp (f.g) (f'.g') cliff
 -- 
 -- 
@@ -1162,7 +1167,7 @@ spectraldcmp fun fun' (reduce -> bpv@BPV{})
 spectraldcmp fun _ (reduce -> od@ODD{}) = spectraldcmpSpecial toC fun od -- spectprojC fun od
 spectraldcmp fun _ (reduce -> tpv@TPV{}) = spectraldcmpSpecial toI fun tpv -- spectprojI fun tpv
 spectraldcmp fun fun' (reduce -> aps@APS{})
-  | hasNilpotent aps = jordan fun fun' aps  -- jordan normal form Cl3 style 
+  | hasNilpotent aps = jordan fun fun' aps  -- jordan normal form Cl3 style
   | isColinear aps = spectraldcmpSpecial toC fun aps -- spectprojC fun aps
   | otherwise =                          -- transform it so it will be colinear
       let (v,d,v_bar) = boost2colinear aps
@@ -1175,7 +1180,7 @@ spectraldcmp _ _ _ = error "Major problems with 'spectraldcmp' or 'reduce'"
 -- It is a helper function for 'spectproj'.  It is fortunate because eigen decomposition doesn't
 -- work with elements with nilpotent content, so it fills the gap.
 jordan :: (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> Cl3 -> Cl3
-jordan fun fun' cliffor = 
+jordan fun fun' cliffor =
   let eigs = toC cliffor
   in fun eigs + fun' eigs * toBPV cliffor
 
@@ -1242,7 +1247,7 @@ project (reduce -> pv@PV{}) = 0.5 * (1 + signum (toV3 pv))
 project (reduce -> h@H{}) = 0.5 * (1 + signum (toV3 $ mI * toBV h))
 project (reduce -> C{}) = PV 0.5 0 0 0.5   -- default to e3 direction
 project (reduce -> bpv@BPV{})
-  | abs (toV3 bpv + toV3 (mI * toBV bpv)) < tol = 0.5 * (1 + signum (toV3 bpv))  -- gaurd for equal and opposite
+  | abs (toV3 bpv + toV3 (mI * toBV bpv)) <= tol = 0.5 * (1 + signum (toV3 bpv))  -- gaurd for equal and opposite
   | otherwise = 0.5 * (1 + signum (toV3 bpv + toV3 (mI * toBV bpv)))
 project (reduce -> od@ODD{}) = 0.5 * (1 + signum (toV3 od))
 project (reduce -> tpv@TPV{}) = 0.5 * (1 + signum (toV3 $ mI * toBV tpv))
@@ -1283,16 +1288,16 @@ boost2colinear cliffor =
 -- | 'isColinear' takes a Cliffor and determines if the vector part and the bivector part are
 -- not at all orthoganl and non-zero.
 isColinear :: Cl3 -> Bool
-isColinear cliffor = abs (toV3 cliffor) > tol && abs (mI * toBV cliffor) > tol &&           -- Non-Zero
-                     abs (toBV $ signum (toV3 cliffor) * signum (mI * toBV cliffor)) < tol  -- Not Orthoganl
+isColinear cliffor = abs (toV3 cliffor) /= 0 && abs (mI * toBV cliffor) /= 0 &&              -- Non-Zero
+                     abs (toBV $ signum (toV3 cliffor) * signum (mI * toBV cliffor)) <= tol  -- Not Orthoganl
 
 
 -- | 'hasNilpotent' takes a Cliffor and determines if the vector part and the bivector part are
 -- orthoganl and equal in magnitude, i.e. that it is simular to a nilpotent BPV.
 hasNilpotent :: Cl3 -> Bool
-hasNilpotent cliffor = abs (toV3 cliffor) > tol && abs (mI * toBV cliffor) > tol &&             -- Non-Zero
-                       abs (toR $ signum (toV3 cliffor) * signum (mI * toBV cliffor)) < tol &&  -- Orthoganl
-                       abs (toV3 cliffor) - abs (toBV cliffor) < tol                            -- Equal Magnitude
+hasNilpotent cliffor = abs (toV3 cliffor) /= 0 && abs (mI * toBV cliffor) /= 0 &&                -- Non-Zero
+                       abs (toR $ signum (toV3 cliffor) * signum (mI * toBV cliffor)) <= tol &&  -- Orthoganl
+                       abs (abs (toV3 cliffor) - abs (toBV cliffor)) <= tol                      -- Equal Magnitude
 
 
 
@@ -1300,52 +1305,52 @@ hasNilpotent cliffor = abs (toV3 cliffor) > tol && abs (mI * toBV cliffor) > tol
 reduce :: Cl3 -> Cl3
 reduce r@R{} = r
 reduce v@V3{}  
-  | abs v < tol = R 0
+  | abs v <= tol = R 0
   | otherwise = v
 reduce bv@BV{}
-  | abs bv < tol = R 0
+  | abs bv <= tol = R 0
   | otherwise = bv
 reduce i@I{}
-  | abs i < tol = R 0
+  | abs i <= tol = R 0
   | otherwise = i
 reduce pv@PV{}
-  | abs pv < tol = R 0
-  | abs (toR pv) < tol = toV3 pv
-  | abs (toV3 pv) < tol = toR pv
+  | abs pv <= tol = R 0
+  | abs (toR pv) <= tol = toV3 pv
+  | abs (toV3 pv) <= tol = toR pv
   | otherwise = pv
 reduce h@H{}
-  | abs h < tol = R 0
-  | abs (toR h) < tol = toBV h
-  | abs (toBV h) < tol = toR h
+  | abs h <= tol = R 0
+  | abs (toR h) <= tol = toBV h
+  | abs (toBV h) <= tol = toR h
   | otherwise = h
 reduce c@C{}
-  | abs c < tol = R 0
-  | abs (toR c) < tol = toI c
-  | abs (toI c) < tol = toR c  
+  | abs c <= tol = R 0
+  | abs (toR c) <= tol = toI c
+  | abs (toI c) <= tol = toR c  
   | otherwise = c
-reduce bpv@BPV{} 
-  | abs bpv < tol = R 0
-  | abs (toV3 bpv) < tol = toBV bpv
-  | abs (toBV bpv) < tol = toV3 bpv
+reduce bpv@BPV{}
+  | abs bpv <= tol = R 0
+  | abs (toV3 bpv) <= tol = toBV bpv
+  | abs (toBV bpv) <= tol = toV3 bpv
   | otherwise = bpv
 reduce od@ODD{}
-  | abs od < tol = R 0
-  | abs (toV3 od) < tol = toI od
-  | abs (toI od) < tol = toV3 od
+  | abs od <= tol = R 0
+  | abs (toV3 od) <= tol = toI od
+  | abs (toI od) <= tol = toV3 od
   | otherwise = od
 reduce tpv@TPV{}
-  | abs tpv < tol = R 0
-  | abs (toBV tpv) < tol = toI tpv
-  | abs (toI tpv) < tol = toBV tpv
+  | abs tpv <= tol = R 0
+  | abs (toBV tpv) <= tol = toI tpv
+  | abs (toI tpv) <= tol = toBV tpv
   | otherwise = tpv
 reduce aps@APS{}
-  | abs aps < tol = R 0
-  | abs (toC aps) < tol = reduce (toBPV aps)
-  | abs (toBPV aps) < tol = reduce (toC aps)
-  | abs (toH aps) < tol = reduce (toODD aps)
-  | abs (toODD aps) < tol = reduce (toH aps)
-  | abs (toPV aps) < tol = reduce (toTPV aps)
-  | abs (toTPV aps) < tol = reduce (toPV aps)
+  | abs aps <= tol = R 0
+  | abs (toC aps) <= tol = reduce (toBPV aps)
+  | abs (toBPV aps) <= tol = reduce (toC aps)
+  | abs (toH aps) <= tol = reduce (toODD aps)
+  | abs (toODD aps) <= tol = reduce (toH aps)
+  | abs (toPV aps) <= tol = reduce (toTPV aps)
+  | abs (toTPV aps) <= tol = reduce (toPV aps)
   | otherwise = aps
 
 -- | 'mI' negative i
@@ -1547,7 +1552,7 @@ toAPS (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS a0 a1 a2 a3 a23 a31 a12 a123
 
 -- derivatives of the functions in the Fractional Class for use in Jordan NF functon implemetnation
 recip' :: Cl3 -> Cl3
-recip' x = negate.recip $ x * x   -- pole at 0 
+recip' x = negate.recip $ x * x   -- pole at 0
 
 exp' :: Cl3 -> Cl3
 exp' = exp
@@ -1593,3 +1598,4 @@ acosh' x = recip $ sqrt (x - 1) * sqrt (x + 1)  -- pole at +/-1
 
 atanh' :: Cl3 -> Cl3
 atanh' x = recip $ 1 - (x * x)  -- pole at +/-1
+
