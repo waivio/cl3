@@ -8,7 +8,7 @@
 
 --------------------------------------------------------------------------------------------
 -- |
--- Copyright   :  (C) 2017 Nathan Waivio
+-- Copyright   :  (C) 2018 Nathan Waivio
 -- License     :  BSD3
 -- Maintainer  :  Nathan Waivio <nathan.waivio@gmail.com>
 -- Stability   :  Stable
@@ -37,7 +37,7 @@ module Algebra.Geometric.Cl3
  reduce, tol,
  -- * Helpful Functions
  eigvals, hasNilpotent,
- spectraldcmp
+ spectraldcmp, project
 ) where
 
 
@@ -271,7 +271,7 @@ instance Eq Cl3 where
                                                                                       && a31 == b31 && a12 == b12 && a123 == b123
 
 
--- |Cl3 has a total preorder order in which all pairs are comparable by two real valued functions.
+-- |Cl3 has a total preorder ordering in which all pairs are comparable by two real valued functions.
 -- Comparison of two reals is just the typical real compare function.  When reals are compared to
 -- anything else it will compare the absolute value of the reals to the magnitude of the other cliffor.
 -- Compare of two complex values compares the polar magnitude of the complex numbers.  Compare of 
@@ -923,7 +923,7 @@ instance Num Cl3 where
                                                               (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)))
 
 
-  -- |'signum' satisfies the equation "abs x * signum x == x"
+  -- |'signum' satisfies the Law "abs x * signum x == x"
   -- kind of cool: signum of a vector is the unit vector.
   signum cliffor
     | abs cliffor == 0 = 0  -- initially this was abs cliffor < tol, but this caused problems with 'spectraldcmp'
@@ -1143,7 +1143,7 @@ lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a2
 -- If multiple functions are being composed, its best to pass the composition of the funcitons
 -- to this function and the derivative to this function.  Any function with a Taylor Series
 -- approximation should be able to be used.
--- It may be possible to add in the future a RULES pragma like:
+-- It may be possible to add, in the future, a RULES pragma like:
 --
 -- > "spectral decomposition function composition"
 -- > forall f f' g g' cliff.
@@ -1188,10 +1188,7 @@ jordan fun fun' cliffor =
 -- To specialize for Reals pass 'toR', to specialize for Imaginary pass 'toI', to specialize for Complex pass 'toC'
 spectraldcmpSpecial :: (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> Cl3 -> Cl3
 spectraldcmpSpecial toSpecial function cliffor =
-  let p = project cliffor
-      p_bar = bar p
-      eig1 = 2 * (toSpecial $! p * cliffor * p)
-      eig2 = 2 * (toSpecial $! p_bar * cliffor * p_bar)
+  let (p,p_bar,eig1,eig2) = projEigs toSpecial cliffor
   in function eig1 * p + function eig2 * p_bar
 
 
@@ -1224,20 +1221,15 @@ eigvals (reduce -> aps@APS{})
 eigvals _ = error "Major issues with 'eigvals' or 'reduce'"
 --
 
--- | 'eigvalsSpecial' helper function to calculate real eigenvalues
+-- | 'eigvalsSpecial' helper function to calculate Eigenvalues
 eigvalsSpecial :: (Cl3 -> Cl3) -> Cl3 -> (Cl3,Cl3)
 eigvalsSpecial toSpecial cliffor =
-  let p = project cliffor
-      p_bar = bar p
-      eig1 = 2 * (toSpecial $! p * cliffor * p)
-      eig2 = 2 * (toSpecial $! p_bar * cliffor * p_bar)
+  let (_,_,eig1,eig2) = projEigs toSpecial cliffor
   in (eig1,eig2)
 
 
-
--- | 'project' makes a projector based off of the vector content of the cliffor.
--- We have safty problem with unreduced values, so it calls reduce first, as view pattern.
--- This causes this function to be branchy, and not condusive to inlining.
+-- | 'project' makes a projector based off of the vector content of the Cliffor.
+-- We have safty problem with unreduced values, so it calls reduce first, as a view pattern.
 project :: Cl3 -> Cl3
 project (reduce -> R{}) = PV 0.5 0 0 0.5   -- default to e3 direction
 project (reduce -> v@V3{}) = 0.5 * (1 + signum v)
@@ -1300,8 +1292,18 @@ hasNilpotent cliffor = abs (toV3 cliffor) /= 0 && abs (mI * toBV cliffor) /= 0 &
                        abs (abs (toV3 cliffor) - abs (toBV cliffor)) <= tol                      -- Equal Magnitude
 
 
+-- | 'projEigs' function returns complementary projectors and eigenvalues for a Cliffor with specialization.
+-- The Cliffor at this point is allready colinear and the Eigenvalue is known to be real, imaginary, or complex.
+projEigs :: (Cl3 -> Cl3) -> Cl3 -> (Cl3,Cl3,Cl3,Cl3)
+projEigs toSpecial cliffor =
+  let p = project cliffor
+      p_bar = bar p
+      eig1 = 2 * (toSpecial $! p * cliffor * p)
+      eig2 = 2 * (toSpecial $! p_bar * cliffor * p_bar)
+  in (p,p_bar,eig1,eig2)
 
--- | 'reduce' function reduces the number of grades if some are zero
+
+-- | 'reduce' function reduces the number of grades in a specialized Cliffor if some are zero
 reduce :: Cl3 -> Cl3
 reduce r@R{} = r
 reduce v@V3{}  
@@ -1394,9 +1396,9 @@ dag (TPV a23 a31 a12 a123) = TPV (negate a23) (negate a31) (negate a12) (negate 
 dag (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS a0 a1 a2 a3 (negate a23) (negate a31) (negate a12) (negate a123)
 
 ----------------------------------------------------------------------------------------------------------------
--- the to... functions
+-- the to... functions provide a lossy cast from one Cliffor to another
 ---------------------------------------------------------------------------------------------------------------
--- | 'toR' takes any cliffor and returns the R portion
+-- | 'toR' takes any Cliffor and returns the R portion
 toR :: Cl3 -> Cl3
 toR (R a0) = R a0
 toR V3{} = R 0
@@ -1410,7 +1412,7 @@ toR ODD{} = R 0
 toR TPV{} = R 0
 toR (APS a0 _ _ _ _ _ _ _) = R a0
 
--- | 'toV3' takes any cliffor and returns the V3 portion
+-- | 'toV3' takes any Cliffor and returns the V3 portion
 toV3 :: Cl3 -> Cl3
 toV3 R{} = V3 0 0 0
 toV3 (V3 a1 a2 a3) = V3 a1 a2 a3
@@ -1424,7 +1426,7 @@ toV3 (ODD a1 a2 a3 _) = V3 a1 a2 a3
 toV3 TPV{} = V3 0 0 0
 toV3 (APS _ a1 a2 a3 _ _ _ _) = V3 a1 a2 a3
 
--- | 'toBV' takes any cliffor and returns the BV portion
+-- | 'toBV' takes any Cliffor and returns the BV portion
 toBV :: Cl3 -> Cl3
 toBV R{} = BV 0 0 0
 toBV V3{} = BV 0 0 0
@@ -1438,7 +1440,7 @@ toBV ODD{} = BV 0 0 0
 toBV (TPV a23 a31 a12 _) = BV a23 a31 a12
 toBV (APS _ _ _ _ a23 a31 a12 _) = BV a23 a31 a12
 
--- | 'toI' takes any cliffor and returns the I portion
+-- | 'toI' takes any Cliffor and returns the I portion
 toI :: Cl3 -> Cl3
 toI R{} = I 0
 toI V3{} = I 0
@@ -1452,7 +1454,7 @@ toI (ODD _ _ _ a123) = I a123
 toI (TPV _ _ _ a123) = I a123
 toI (APS _ _ _ _ _ _ _ a123) = I a123
 
--- | 'toPV' takes any cliffor and returns the PV poriton
+-- | 'toPV' takes any Cliffor and returns the PV poriton
 toPV :: Cl3 -> Cl3
 toPV (R a0) = PV a0 0 0 0
 toPV (V3 a1 a2 a3) = PV 0 a1 a2 a3
@@ -1466,7 +1468,7 @@ toPV (ODD a1 a2 a3 _) = PV a1 a2 a3 0
 toPV TPV{} = PV 0 0 0 0
 toPV (APS a0 a1 a2 a3 _ _ _ _) = PV a0 a1 a2 a3
 
--- | 'toH' takes any cliffor and returns the H portion
+-- | 'toH' takes any Cliffor and returns the H portion
 toH :: Cl3 -> Cl3
 toH (R a0) = H a0 0 0 0
 toH V3{} = H 0 0 0 0
@@ -1480,7 +1482,7 @@ toH ODD{} = H 0 0 0 0
 toH (TPV a23 a31 a12 _) = H 0 a23 a31 a12
 toH (APS a0 _ _ _ a23 a31 a12 _) = H a0 a23 a31 a12
 
--- | 'toC' takes any cliffor and returns the C portion
+-- | 'toC' takes any Cliffor and returns the C portion
 toC :: Cl3 -> Cl3
 toC (R a0) = C a0 0
 toC V3{} = C 0 0
@@ -1494,7 +1496,7 @@ toC (ODD _ _ _ a123) = C 0 a123
 toC (TPV _ _ _ a123) = C 0 a123
 toC (APS a0 _ _ _ _ _ _ a123) = C a0 a123
 
--- | 'toBPV' takes any cliffor and returns the BPV portion
+-- | 'toBPV' takes any Cliffor and returns the BPV portion
 toBPV :: Cl3 -> Cl3
 toBPV R{} = BPV 0 0 0 0 0 0
 toBPV (V3 a1 a2 a3) = BPV a1 a2 a3 0 0 0
@@ -1508,7 +1510,7 @@ toBPV (ODD a1 a2 a3 _) = BPV a1 a2 a3 0 0 0
 toBPV (TPV a23 a31 a12 _) = BPV 0 0 0 a23 a31 a12
 toBPV (APS _ a1 a2 a3 a23 a31 a12 _) = BPV a1 a2 a3 a23 a31 a12
 
--- | 'toODD' takes any cliffor and returns the ODD portion
+-- | 'toODD' takes any Cliffor and returns the ODD portion
 toODD :: Cl3 -> Cl3
 toODD R{} = ODD 0 0 0 0
 toODD (V3 a1 a2 a3) = ODD a1 a2 a3 0
@@ -1522,7 +1524,7 @@ toODD (ODD a1 a2 a3 a123) = ODD a1 a2 a3 a123
 toODD (TPV _ _ _ a123) = ODD 0 0 0 a123
 toODD (APS _ a1 a2 a3 _ _ _ a123) = ODD a1 a2 a3 a123
 
--- | 'toTPV' takes any cliffor and returns the TPV portion
+-- | 'toTPV' takes any Cliffor and returns the TPV portion
 toTPV :: Cl3 -> Cl3
 toTPV R{} = TPV 0 0 0 0
 toTPV V3{} = TPV 0 0 0 0
@@ -1536,7 +1538,7 @@ toTPV (ODD _ _ _ a123) = TPV 0 0 0 a123
 toTPV (TPV a23 a31 a12 a123) = TPV a23 a31 a12 a123
 toTPV (APS _ _ _ _ a23 a31 a12 a123) = TPV a23 a31 a12 a123
 
--- | 'toAPS' takes any cliffor and returns the APS portion
+-- | 'toAPS' takes any Cliffor and returns the APS portion
 toAPS :: Cl3 -> Cl3
 toAPS (R a0) = APS a0 0 0 0 0 0 0 0
 toAPS (V3 a1 a2 a3) = APS 0 a1 a2 a3 0 0 0 0
