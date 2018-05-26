@@ -19,7 +19,7 @@ module Main (main) where
 
 import Criterion.Main (defaultMain, bgroup, bench, nfIO)  -- To add Criterion to the benchmark
 import Algebra.Geometric.Cl3 (Cl3(..), toR, toV3) -- To add Cl3
-import Algebra.Geometric.Cl3.Storable()  -- To add Storable Cl3
+
 
 import Foreign.Ptr (Ptr, castPtr, plusPtr)
 import Foreign.Storable (Storable(..))
@@ -140,6 +140,34 @@ import Text.Printf (printf)
 -- std dev              1.119 s    (0.0 s .. 1.283 s)
 -- variance introduced by outliers: 19% (moderately inflated)
 -- 
+-- 20180518:
+-- 
+-- Submitted the library to review on Haskell :: Reddit, implemented
+-- several suggestions, the main one that may affect performance
+-- would be removing the orphan instances and moving the instances
+-- to Cl3 and using CPP gating of the optional instances.
+-- Performance seems to stay the same.
+-- 
+-- benchmarking nbodyBaseline/50000000
+-- time                 13.38 s    (12.37 s .. 14.02 s)
+--                      0.999 R²   (0.998 R² .. 1.000 R²)
+-- mean                 13.35 s    (13.23 s .. 13.52 s)
+-- std dev              167.1 ms   (45.82 ms .. 225.3 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- 
+-- benchmarking nbodyCl3/50000000
+-- time                 15.67 s    (15.58 s .. 15.72 s)
+--                      1.000 R²   (1.000 R² .. 1.000 R²)
+-- mean                 15.73 s    (15.70 s .. 15.79 s)
+-- std dev              60.02 ms   (583.2 μs .. 70.85 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- 
+-- benchmarking nbodyAPS/50000000
+-- time                 156.2 s    (154.5 s .. 159.3 s)
+--                      1.000 R²   (1.000 R² .. 1.000 R²)
+-- mean                 155.1 s    (154.8 s .. 155.7 s)
+-- std dev              560.8 ms   (88.83 ms .. 714.2 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
 -- 
 -------------------------------------------------------------------
 

@@ -53,11 +53,7 @@ library
   -- Modules exported by the library.
   exposed-modules:
     Algebra.Geometric.Cl3,
-    Algebra.Geometric.Cl3.Arbitrary,
-    Algebra.Geometric.Cl3.Binary,
-    Algebra.Geometric.Cl3.JonesCalculus,
-    Algebra.Geometric.Cl3.Random,
-    Algebra.Geometric.Cl3.Storable
+    Algebra.Geometric.Cl3.JonesCalculus
   
   -- Compiler options
   ghc-options: -Wall -O2
@@ -74,9 +70,7 @@ library
   -- Other library packages from which modules are imported.
   build-depends:       
     base >=4.8 && <5,
-    binary >=0.8 && <1,
-    random >=1.1 && <2,
-    QuickCheck >=2.9 && <3
+    random >=1.0 && <2
   
   -- Directories containing source files.
   hs-source-dirs:      src
