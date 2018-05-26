@@ -1,5 +1,6 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 --------------------------------------------------------------------------------------------
 -- |
@@ -37,25 +38,34 @@
 
 module Algebra.Geometric.Cl3.JonesCalculus
 (
+ -- * Jones Vectors
  hpv, vpv,
  dpv, apv,
  rpv, lpv,
  jv,
+ -- * Jones Matrices
  hpm, vpm,
  dpm, apm,
  rpm, lpm,
  jm,
  hpmRot,
+ -- * Wave Plates
  qwp, hwp,
  qwpRot, hwpRot,
  wp,
  wpRot,
+ -- * Reflection
  refl,
- normalize
+ -- * Random Jones Vectors
+ randJonesVec,
+ randOrthogonalJonesVec,
+ -- * Normalization Factorization
+ factorize
 ) where
 
 
-import Algebra.Geometric.Cl3 (Cl3(..), dag, bar, toR, toV3, toC, project)
+import safe Algebra.Geometric.Cl3 (Cl3(..), dag, bar, toR, toV3, toC, project, randUnitV3)
+import System.Random (RandomGen)
 
 
 e0 = R 1
@@ -167,11 +177,11 @@ wpRot (toR -> phi) (toR -> theta) =
 refl = e3
 
 
--- | 'normalize' is a function that takes an Jones Vector after transformation by an 
+-- | 'factorize' is a function that takes an Jones Vector after transformation by an 
 -- optical chain, and returns the amplitude (amp), phase (phi), and normalized Jones 
 -- Vector (vec), by the factorization of the input such that: @__amp * exp (i*phi/2) * vec__@
-normalize :: Cl3 -> (Cl3,Cl3,Cl3)
-normalize jonesVec = 
+factorize :: Cl3 -> (Cl3,Cl3,Cl3)
+factorize jonesVec = 
   let c = toC jonesVec
       jonesVec' = recip c * jonesVec
       ampC = abs c
@@ -182,3 +192,21 @@ normalize jonesVec =
       phi = 2 * (-i) * log normC
   in (amp, phi, normJonesVec)
 
+-------------------------------------------------------------------
+--
+--  Random Jones Vectors
+--
+-------------------------------------------------------------------
+
+-- | 'randJonesVec' a Random Jones Vector.
+randJonesVec :: RandomGen g => g -> (Cl3, g)
+randJonesVec g =
+  let (v3, g') = randUnitV3 g
+  in (jv v3,g')
+
+-- | 'randOrthogonalJonesVec' a Random Orthogonal "Complementary" pair of Jones
+-- Vectors.
+randOrthogonalJonesVec :: RandomGen g => g -> ((Cl3, Cl3), g)
+randOrthogonalJonesVec g = 
+  let (v3, g') = randUnitV3 g
+  in ((jv v3, jv (bar v3)),g')
