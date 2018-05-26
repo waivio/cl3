@@ -119,13 +119,17 @@ The grade specialized type constructors multiply with the following multiplicati
 | __APS__ | APS | APS | APS | APS | APS | APS | APS | APS | APS | APS | APS |
 
 
+# Performace Benchmarking
+A benchmark has been developed based on the Haskell entry for the N-Body Benchmark in the [The Computer Language Benchmarks Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) with some modifications to run with [Criterion](https://hackage.haskell.org/package/criterion).
+On my machine the current fastest implementation completes 50M steps with a mean time of 13.35 seconds.  The benchmark uses a hand rolled implementation of vector math.  The Cl3 implementation completes 50M steps with a mean time of 15.73 seconds.  This 2.38 second difference amounts to a 23.8 ns difference in the inner loop.
+
 # Design Philosophy
 The design space for Clifford Algebra libraries was explored quite a bit before the development of this library.  Initially the isomorphism of APS with 2x2 Complex Matrices was used, this had the draw back that multiplying the scalar 2 * 2 would incur all of the computational cost of multiplying two 2x2 complex matrices.
 Then the design was changed to lists that contained the basis' values, but lists are computationally slow and do not produce well optimized code.
 Then a single constructor data type for APS was developed, but this had all of the drawbacks of 2x2 complex matrices.
-The ADT Constructor version of the library was developed and it showed that it had some promise.
-More of the design space was explored, a version of the Cl3 library was developed using Multi-parameter Type Classes and Functional Dependencies, this didn't appear to have much gained over the ADT Syntax interface and it didn't use the standard Prelude classes like Num, Float, etc.  It was also difficult for me to figure out how to code a `reduce` function.
-So the ADT Constructor design of the Cl3 library was finished and released.
+The specialized ADT Constructor version of the library was developed and it showed that it had some promise.
+More of the design space was explored, a version of the Cl3 library was developed using Multi-parameter Type Classes and Functional Dependencies, this didn't appear to have much gained over the specialized ADT Syntax interface and it didn't use the standard Prelude classes like Num, Float, etc.  It was also difficult for me to figure out how to code a `reduce` function.
+So the specialized ADT Constructor design of the Cl3 library was finished and released.
 
 # How does this fit in with the existing Haskell ecosystem?
 Cl3 is meant to be a [Linear](https://hackage.haskell.org/package/linear) killer based on Geometric Algebra.  The linear package
@@ -136,9 +140,3 @@ for a Clifford Algebra of arbitrary signature that stores multivector blades in 
 
 The [clif](https://hackage.haskell.org/package/clif) is for symbolic computing using symbolic and numeric computations
 with finite and infinite-dimensional Clifford algebras arising from arbitrary bilinear forms.  The libraries representation of a Cliffor also makes use of lists.
-
-# Performace Benchmarking
-A benchmark has been developed based on the Haskell entry for the N-Body Benchmark in the [The Computer Language Benchmarks Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) with some modifications to run with [Criterion](https://hackage.haskell.org/package/criterion).
-On my machine the current fastest implementation completes 50M steps with a mean time of 13.35 seconds.  The benchmark uses a hand rolled implementation of vector math.  The Cl3 implementation completes 50M steps with a mean time of 15.73 seconds.  This 2.38 second difference amounts to a 23.8 ns difference in the inner loop.
-
-
