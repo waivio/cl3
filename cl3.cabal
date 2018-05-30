@@ -21,6 +21,8 @@ description:         Haskell Library implementing standard functions for the Alg
 -- URL for the project homepage or repository.
 homepage:            https://github.com/waivio/cl3
 
+bug-reports:         https://github.com/waivio/cl3/issues
+
 -- The license under which the package is released.
 license:             BSD3
 
@@ -32,10 +34,10 @@ author:              Nathan Waivio
 
 -- An email address to which users can send suggestions, bug reports, and 
 -- patches.
-maintainer:          nathan.waivio@gmail.com
+maintainer:          Nathan Waivio <nathan.waivio@gmail.com>
 
 -- A copyright notice.
--- copyright:           
+copyright:           Copyright (C) 2017-2018 Nathan Waivio
 
 category:            Math, Algebra
 
@@ -48,6 +50,9 @@ extra-source-files:  ChangeLog.md, README.md
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       >=1.10
 
+source-repository head
+  type:     git
+  location: https://github.com/waivio/cl3.git
 
 library
   -- Modules exported by the library.
