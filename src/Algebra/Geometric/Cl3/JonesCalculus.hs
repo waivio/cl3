@@ -204,7 +204,7 @@ randJonesVec g =
   let (v3, g') = randUnitV3 g
   in (jv v3,g')
 
--- | 'randOrthogonalJonesVec' a Random Orthogonal "Complementary" pair of Jones
+-- | 'randOrthogonalJonesVec' a Random Orthogonal Complementary pair of Jones
 -- Vectors.
 randOrthogonalJonesVec :: RandomGen g => g -> ((Cl3, Cl3), g)
 randOrthogonalJonesVec g = 
