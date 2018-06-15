@@ -4,7 +4,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-{-# OPTIONS_GHC -fno-warn-unused-top-binds #-}
+
 
 
 --------------------------------------------------------------------------------------------
@@ -1161,7 +1161,9 @@ lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a2
 -- This function requires the desired function to be calculated and it's derivative.
 -- If multiple functions are being composed, its best to pass the composition of the funcitons
 -- to this function and the derivative to this function.  Any function with a Taylor Series
--- approximation should be able to be used.
+-- approximation should be able to be used.  A real, imaginary, and complex version of the function to be decomposed
+-- must be provided and spectraldcmp will handle the case for an arbitrary Cliffor.
+-- 
 -- It may be possible to add, in the future, a RULES pragma like:
 --
 -- > "spectral decomposition function composition"
