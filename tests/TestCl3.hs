@@ -18,7 +18,7 @@ module Main (main) where
 
 import Test.QuickCheck (Arbitrary, arbitrary, oneof, suchThat, quickCheckWith, stdArgs, maxSuccess)
 import Algebra.Geometric.Cl3
-import Control.Applicative ((<*>))
+import Control.Applicative ((<*>), (<$>))
 
 
 ------------------------------------------------------------------
