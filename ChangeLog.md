@@ -1,8 +1,10 @@
 # Revision history for cl3
 
-## 1.0.0.0  -- 2017-10-28
+## 1.0.0.2  -- 2018-06-19
 
-* First version. Released on an unsuspecting world.
+* Tested with GHC 7.8.4 and 8.4.2
+* Lowered version bounds to support lts-2.22, base >= 4.7, QuickCheck >= 2.7
+* Explicitly imported <$> from Control.Applicative to support the earlier versions of Base & GHC for the tests
 
 ## 1.0.0.1  -- 2018-06-10
 
@@ -10,4 +12,8 @@
 * Removed {-# OPTIONS_GHC -fno-warn-unused-top-binds #-} from Cl3.hs to better support earlier versions of GHC, and it was no longer needed.
 * Loosened version bound for QuickCheck to work better with earlier versions of Stackage LTS snapshots.
 * Improved spectraldcmp's documentation to clairify that spectraldcmp requires an implementation of the real, imaginary, and complex implememtation of the function.
+
+## 1.0.0.0  -- 2017-10-28
+
+* First version. Released on an unsuspecting world.
 
