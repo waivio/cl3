@@ -167,6 +167,31 @@ import Text.Printf (printf)
 --                      1.000 R²   (1.000 R² .. 1.000 R²)
 -- mean                 155.1 s    (154.8 s .. 155.7 s)
 -- std dev              560.8 ms   (88.83 ms .. 714.2 ms)
+-- variance introduced by outliers: 19% (moderately inflatemarking nbodyBaseline/50000000
+-- 
+-- 20180816: cl3-1.0.0.3
+-- 
+-- Modified code to use ghc-8.4.2, ghc greater than 8.0 require -fno-worker-wrapper 
+-- to compile within reasonable time and space constraints.
+-- 
+-- time                 9.271 s    (9.231 s .. 9.344 s)
+--                      1.000 R²   (1.000 R² .. 1.000 R²)
+-- mean                 9.495 s    (9.407 s .. 9.636 s)
+-- std dev              133.9 ms   (53.72 ms .. 174.3 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- 
+-- benchmarking nbodyCl3/50000000
+-- time                 10.10 s    (9.797 s .. 10.30 s)
+--                      1.000 R²   (NaN R² .. 1.000 R²)
+-- mean                 10.10 s    (10.05 s .. 10.16 s)
+-- std dev              58.98 ms   (28.18 ms .. 72.96 ms)
+-- variance introduced by outliers: 19% (moderately inflated)
+-- 
+-- benchmarking nbodyAPS/50000000
+-- time                 178.6 s    (NaN s .. 181.1 s)
+--                      1.000 R²   (1.000 R² .. 1.000 R²)
+-- mean                 177.2 s    (175.5 s .. 178.2 s)
+-- std dev              1.670 s    (618.8 ms .. 2.283 s)
 -- variance introduced by outliers: 19% (moderately inflated)
 -- 
 -------------------------------------------------------------------

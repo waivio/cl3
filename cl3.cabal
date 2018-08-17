@@ -10,7 +10,7 @@ name:                cl3
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             1.0.0.2
+version:             1.0.0.3
 
 -- A short (one-line) description of the package.
 synopsis:            Clifford Algebra of three dimensional space.
@@ -69,7 +69,7 @@ library
     Algebra.Geometric.Cl3.JonesCalculus
   
   -- Compiler options
-  ghc-options: -Wall -O2
+  ghc-options: -Wall -O2 -fno-worker-wrapper
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:
