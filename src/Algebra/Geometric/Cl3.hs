@@ -1172,28 +1172,29 @@ lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a2
 -- 
 -- 
 spectraldcmp :: (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> Cl3 -> Cl3
-spectraldcmp fun _ (reduce -> r@R{}) = fun r
-spectraldcmp fun _ (reduce -> v@V3{}) = spectraldcmpSpecial toR fun v -- spectprojR fun v
-spectraldcmp fun _ (reduce -> bv@BV{}) = spectraldcmpSpecial toI fun bv -- spectprojI fun bv
-spectraldcmp fun _ (reduce -> i@I{}) = fun i
-spectraldcmp fun _ (reduce -> pv@PV{}) = spectraldcmpSpecial toR fun pv -- spectprojR fun pv
-spectraldcmp fun _ (reduce -> h@H{}) = spectraldcmpSpecial toC fun h -- spectprojC fun h
-spectraldcmp fun _ (reduce -> c@C{}) = fun c
-spectraldcmp fun fun' (reduce -> bpv@BPV{})
-  | hasNilpotent bpv = jordan fun fun' bpv  -- jordan normal form Cl3 style
-  | isColinear bpv = spectraldcmpSpecial toC fun bpv -- spectprojC fun bpv
-  | otherwise =                          -- transform it so it will be colinear
-      let (v,d,v_bar) = boost2colinear bpv
-      in v * spectraldcmpSpecial toC fun d * v_bar -- v * spectprojC fun d * v_bar
-spectraldcmp fun _ (reduce -> od@ODD{}) = spectraldcmpSpecial toC fun od -- spectprojC fun od
-spectraldcmp fun _ (reduce -> tpv@TPV{}) = spectraldcmpSpecial toI fun tpv -- spectprojI fun tpv
-spectraldcmp fun fun' (reduce -> aps@APS{})
-  | hasNilpotent aps = jordan fun fun' aps  -- jordan normal form Cl3 style
-  | isColinear aps = spectraldcmpSpecial toC fun aps -- spectprojC fun aps
-  | otherwise =                          -- transform it so it will be colinear
-      let (v,d,v_bar) = boost2colinear aps
-      in v * spectraldcmpSpecial toC fun d * v_bar -- v * spectprojC fun d * v_bar
-spectraldcmp _ _ _ = error "Major problems with 'spectraldcmp' or 'reduce'"
+spectraldcmp fun fun' (reduce -> cliffor) = dcmp cliffor
+  where
+    dcmp (r@R{}) = fun r
+    dcmp (v@V3{}) = spectraldcmpSpecial toR fun v -- spectprojR fun v
+    dcmp (bv@BV{}) = spectraldcmpSpecial toI fun bv -- spectprojI fun bv
+    dcmp (i@I{}) = fun i
+    dcmp (pv@PV{}) = spectraldcmpSpecial toR fun pv -- spectprojR fun pv
+    dcmp (h@H{}) = spectraldcmpSpecial toC fun h -- spectprojC fun h
+    dcmp (c@C{}) = fun c
+    dcmp (bpv@BPV{})
+      | hasNilpotent bpv = jordan fun fun' bpv  -- jordan normal form Cl3 style
+      | isColinear bpv = spectraldcmpSpecial toC fun bpv -- spectprojC fun bpv
+      | otherwise =                          -- transform it so it will be colinear
+          let (v,d,v_bar) = boost2colinear bpv
+          in v * spectraldcmpSpecial toC fun d * v_bar -- v * spectprojC fun d * v_bar
+    dcmp (od@ODD{}) = spectraldcmpSpecial toC fun od -- spectprojC fun od
+    dcmp (tpv@TPV{}) = spectraldcmpSpecial toI fun tpv -- spectprojI fun tpv
+    dcmp (aps@APS{})
+      | hasNilpotent aps = jordan fun fun' aps  -- jordan normal form Cl3 style
+      | isColinear aps = spectraldcmpSpecial toC fun aps -- spectprojC fun aps
+      | otherwise =                          -- transform it so it will be colinear
+          let (v,d,v_bar) = boost2colinear aps
+          in v * spectraldcmpSpecial toC fun d * v_bar -- v * spectprojC fun d * v_bar
 --
 
 -- | 'jordan' does a Cl(3,0) version of the decomposition into Jordan Normal Form and Matrix Function Calculation
@@ -1218,28 +1219,29 @@ spectraldcmpSpecial toSpecial function cliffor =
 -- This is useful for determining if a cliffor is the pole
 -- of a function.
 eigvals :: Cl3 -> (Cl3,Cl3)
-eigvals (reduce -> r@R{}) = (r,r)
-eigvals (reduce -> v@V3{}) = eigvalsSpecial toR v -- eigvalsR v
-eigvals (reduce -> bv@BV{}) = eigvalsSpecial toI bv -- eigvalsI bv
-eigvals (reduce -> i@I{}) = (i,i)
-eigvals (reduce -> pv@PV{}) = eigvalsSpecial toR pv -- eigvalsR pv
-eigvals (reduce -> h@H{}) = eigvalsSpecial toC h -- eigvalsC h
-eigvals (reduce -> c@C{}) = (c,c)
-eigvals (reduce -> bpv@BPV{})
-  | hasNilpotent bpv = (0,0)  -- this case is actually nilpotent
-  | isColinear bpv = eigvalsSpecial toC bpv -- eigvalsC bpv
-  | otherwise =                          -- transform it so it will be colinear
-      let (_,d,_) = boost2colinear bpv
-      in eigvalsSpecial toC d -- eigvalsC d
-eigvals (reduce -> od@ODD{}) = eigvalsSpecial toC od -- eigvalsC od
-eigvals (reduce -> tpv@TPV{}) = eigvalsSpecial toI tpv -- eigvalsI tpv
-eigvals (reduce -> aps@APS{})
-  | hasNilpotent aps = (toC aps,toC aps)  -- a scalar plus nilpotent
-  | isColinear aps = eigvalsSpecial toC aps -- eigvalsC aps
-  | otherwise =                          -- transform it so it will be colinear
-      let (_,d,_) = boost2colinear aps
-      in eigvalsSpecial toC d -- eigvalsC d
-eigvals _ = error "Major issues with 'eigvals' or 'reduce'"
+eigvals (reduce -> cliffor) = eigv cliffor
+  where
+    eigv (r@R{}) = (r,r)
+    eigv (v@V3{}) = eigvalsSpecial toR v -- eigvalsR v
+    eigv (bv@BV{}) = eigvalsSpecial toI bv -- eigvalsI bv
+    eigv (i@I{}) = (i,i)
+    eigv (pv@PV{}) = eigvalsSpecial toR pv -- eigvalsR pv
+    eigv (h@H{}) = eigvalsSpecial toC h -- eigvalsC h
+    eigv (c@C{}) = (c,c)
+    eigv (bpv@BPV{})
+      | hasNilpotent bpv = (0,0)  -- this case is actually nilpotent
+      | isColinear bpv = eigvalsSpecial toC bpv -- eigvalsC bpv
+      | otherwise =                          -- transform it so it will be colinear
+          let (_,d,_) = boost2colinear bpv
+          in eigvalsSpecial toC d -- eigvalsC d
+    eigv (od@ODD{}) = eigvalsSpecial toC od -- eigvalsC od
+    eigv (tpv@TPV{}) = eigvalsSpecial toI tpv -- eigvalsI tpv
+    eigv (aps@APS{})
+      | hasNilpotent aps = (toC aps,toC aps)  -- a scalar plus nilpotent
+      | isColinear aps = eigvalsSpecial toC aps -- eigvalsC aps
+      | otherwise =                          -- transform it so it will be colinear
+          let (_,d,_) = boost2colinear aps
+          in eigvalsSpecial toC d -- eigvalsC d
 --
 
 -- | 'eigvalsSpecial' helper function to calculate Eigenvalues
@@ -1252,20 +1254,22 @@ eigvalsSpecial toSpecial cliffor =
 -- | 'project' makes a projector based off of the vector content of the Cliffor.
 -- We have safty problem with unreduced values, so it calls reduce first, as a view pattern.
 project :: Cl3 -> Cl3
-project (reduce -> R{}) = PV 0.5 0 0 0.5   -- default to e3 direction
-project (reduce -> v@V3{}) = 0.5 * (1 + signum v)
-project (reduce -> bv@BV{}) = 0.5 * (1 + signum (toV3 $ mI * toBV bv))
-project (reduce -> I{}) = PV 0.5 0 0 0.5   -- default to e3 direction
-project (reduce -> pv@PV{}) = 0.5 * (1 + signum (toV3 pv))
-project (reduce -> h@H{}) = 0.5 * (1 + signum (toV3 $ mI * toBV h))
-project (reduce -> C{}) = PV 0.5 0 0 0.5   -- default to e3 direction
-project (reduce -> bpv@BPV{})
-  | abs (toV3 bpv + toV3 (mI * toBV bpv)) <= tol = 0.5 * (1 + signum (toV3 bpv))  -- gaurd for equal and opposite
-  | otherwise = 0.5 * (1 + signum (toV3 bpv + toV3 (mI * toBV bpv)))
-project (reduce -> od@ODD{}) = 0.5 * (1 + signum (toV3 od))
-project (reduce -> tpv@TPV{}) = 0.5 * (1 + signum (toV3 $ mI * toBV tpv))
-project (reduce -> aps@APS{}) = project.toBPV $ aps
-project (reduce -> _) = error "Error: Got some serious issues with 'project' and/or 'reduce'.  Please Fix."
+project (reduce -> cliffor) = proj cliffor
+  where
+    proj (R{}) = PV 0.5 0 0 0.5   -- default to e3 direction
+    proj (v@V3{}) = 0.5 * (1 + signum v)
+    proj (bv@BV{}) = 0.5 * (1 + signum (toV3 $ mI * toBV bv))
+    proj (I{}) = PV 0.5 0 0 0.5   -- default to e3 direction
+    proj (pv@PV{}) = 0.5 * (1 + signum (toV3 pv))
+    proj (h@H{}) = 0.5 * (1 + signum (toV3 $ mI * toBV h))
+    proj (C{}) = PV 0.5 0 0 0.5   -- default to e3 direction
+    proj (bpv@BPV{})
+      | abs (toV3 bpv + toV3 (mI * toBV bpv)) <= tol = 0.5 * (1 + signum (toV3 bpv))  -- gaurd for equal and opposite
+      | otherwise = 0.5 * (1 + signum (toV3 bpv + toV3 (mI * toBV bpv)))
+    proj (od@ODD{}) = 0.5 * (1 + signum (toV3 od))
+    proj (tpv@TPV{}) = 0.5 * (1 + signum (toV3 $ mI * toBV tpv))
+    proj (aps@APS{}) = project.toBPV $ aps
+
 
 -- | 'boost2colinear' calculates a boost that is perpendicular to both the vector and bivector
 -- components, that will mix the vector and bivector parts such that the vector and bivector
