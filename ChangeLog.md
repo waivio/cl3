@@ -1,5 +1,10 @@
 # Revision history for cl3
 
+## 1.0.0.3  -- 2018-08-16
+
+* Factored out the view pattern (reduce -> cliffor) on several functions so it wasn't repeated in every pattern match
+* Added -fno-worker-wrapper to work around the compile time and space issues in ghc > 8.0
+
 ## 1.0.0.2  -- 2018-06-19
 
 * Tested with GHC 7.8.4 and 8.4.2
