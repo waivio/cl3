@@ -1,5 +1,12 @@
 # Revision history for cl3
 
+## 1.0.0.4  -- 2018-10-18
+
+* Found various improvements while preparing for NPFL specialized Jordan for BPV and APS
+* Removed all $! and replaced with $, found that this resolved compile time and space issues updated ghc track #15304
+* Removed -fno-worker-wrapper from the cabal file
+* Greatly simplified the implementation of boost2colinear also discovered while preparing for NPFL
+
 ## 1.0.0.3  -- 2018-08-16
 
 * Factored out the view pattern (reduce -> cliffor) on several functions so it wasn't repeated in every pattern match

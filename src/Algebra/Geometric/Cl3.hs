@@ -993,27 +993,27 @@ instance Fractional Cl3 where
   recip i@(I a123) =
     let (R mag) = abs i
         sqmag = mag * mag  :: Double
-    in I (negate $! a123 / sqmag)
+    in I (negate $ a123 / sqmag)
   recip pv@PV{} =
-    let mag = toR $! pv * bar pv
+    let mag = toR $ pv * bar pv
     in recip mag * bar pv
   recip h@(H a0 a23 a31 a12) =   -- H is a division algebra
     let (R mag) = abs h
         sqmag = mag * mag  :: Double
-    in H (a0 / sqmag) (negate $! a23 / sqmag) (negate $! a31 / sqmag) (negate $! a12 / sqmag)
+    in H (a0 / sqmag) (negate $ a23 / sqmag) (negate $ a31 / sqmag) (negate $ a12 / sqmag)
   recip z@(C a0 a123) =   -- C is a division algebra
     let (R mag) = abs z
         sqmag = mag * mag  :: Double
     in C (a0 / sqmag) (negate $ a123 / sqmag)
-  recip bpv@BPV{} = reduce $! spectraldcmp recip recip' bpv
+  recip bpv@BPV{} = reduce $ spectraldcmp recip recip' bpv
   recip od@(ODD a1 a2 a3 a123) =
     let (R mag) = abs od
         sqmag = mag * mag  :: Double
     in ODD (a1 / sqmag) (a2 / sqmag) (a3 / sqmag) (negate $ a123 / sqmag)
   recip tpv@TPV{} =
-    let mag = toR $! tpv * bar tpv
+    let mag = toR $ tpv * bar tpv
     in recip mag * bar tpv
-  recip aps@APS{} = reduce $! spectraldcmp recip recip' aps
+  recip aps@APS{} = reduce $ spectraldcmp recip recip' aps
 
   -- |'fromRational'
   fromRational rat = R (fromRational rat)
@@ -1029,14 +1029,14 @@ instance Floating Cl3 where
   exp (C a0 a123) =
     let expa0 = exp a0
     in C (expa0 * cos a123) (expa0 * sin a123)
-  exp cliffor = reduce $! spectraldcmp exp exp' cliffor
+  exp cliffor = reduce $ spectraldcmp exp exp' cliffor
 
   --
   log (R a0) | a0 >= 0 = R (log a0)
              | otherwise = C (log (negate a0)) pi
   log (I a123) = C (log (abs a123)) (signum a123 * (pi/2))
   log (C a0 a123) = C (log (sqrt (a0^2 + a123^2))) (atan2 a123 a0)
-  log cliffor = reduce $! spectraldcmp log log' cliffor
+  log cliffor = reduce $ spectraldcmp log log' cliffor
 
   --
   sqrt (R a0) | a0 >= 0 = R (sqrt a0)
@@ -1048,19 +1048,19 @@ instance Floating Cl3 where
                        where (u,v) = if a0 < 0 then (v',u') else (u',v')
                              v'    = if u' < tol' then  0 else abs a123 / (u'*2)
                              u'    = sqrt ((sqrt (a0^2 + a123^2) + abs a0) / 2)
-  sqrt cliffor = reduce $! spectraldcmp sqrt sqrt' cliffor
+  sqrt cliffor = reduce $ spectraldcmp sqrt sqrt' cliffor
 
   --
   sin (R a0) = R (sin a0)
   sin (I a123) = I (sinh a123)
   sin (C a0 a123) = C (sin a0 * cosh a123) (cos a0 * sinh a123)
-  sin cliffor = reduce $! spectraldcmp sin sin' cliffor
+  sin cliffor = reduce $ spectraldcmp sin sin' cliffor
 
   --
   cos (R a0) = R (cos a0)
   cos (I a123) = R (cosh a123)
   cos (C a0 a123) = C (cos a0 * cosh a123) (negate $ sin a0 * sinh a123)
-  cos cliffor = reduce $! spectraldcmp cos cos' cliffor
+  cos cliffor = reduce $ spectraldcmp cos cos' cliffor
 
   --
   tan (R a0) = R (tan a0)
@@ -1070,14 +1070,14 @@ instance Floating Cl3 where
                              cosx  = cos a0
                              sinhy = sinh a123
                              coshy = cosh a123
-  tan cliffor = reduce $! spectraldcmp tan tan' cliffor
+  tan cliffor = reduce $ spectraldcmp tan tan' cliffor
 
   --
   asin (R a0) = if (-1) <= a0 && a0 <= 1 then R (asin a0) else asin $ C a0 0
   asin (I a123) = I (asinh a123)
   asin (C a0 a123) = C a123' (-a0')
                        where  (C a0' a123') = toC $ log (C (-a123) a0 + sqrt (1 - C a0 a123 * C a0 a123)) -- check this
-  asin cliffor = reduce $! spectraldcmp asin asin' cliffor
+  asin cliffor = reduce $ spectraldcmp asin asin' cliffor
 
   --
   acos (R a0) = if (-1) <= a0 && a0 <= 1 then R (acos a0) else acos $ C a0 0
@@ -1085,7 +1085,7 @@ instance Floating Cl3 where
   acos (C a0 a123) = C a123'' (-a0'')
                where (C a0'' a123'') = log (C a0 a123 + C (-a123') a0')  -- check this
                      (C a0' a123')   = sqrt (1 - C a0 a123 * C a0 a123)  -- check this
-  acos cliffor = reduce $! spectraldcmp acos acos' cliffor
+  acos cliffor = reduce $ spectraldcmp acos acos' cliffor
 
   --  
   atan (R a0) = R (atan a0)
@@ -1093,19 +1093,19 @@ instance Floating Cl3 where
                        where (C a0' a123') = toC.log $ ( R (1-a123) / sqrt (R (1 - a123^2)))  -- check this
   atan (C a0 a123) = C a123' (-a0')
                        where (C a0' a123') = toC $ log (C (1-a123) a0 / sqrt (1 + C a0 a123 * C a0 a123))  -- check this
-  atan cliffor = reduce $! spectraldcmp atan atan' cliffor
+  atan cliffor = reduce $ spectraldcmp atan atan' cliffor
 
   --
   sinh (R a0) = R (sinh a0)
   sinh (I a123) = I (sin a123)
   sinh (C a0 a123) = C (cos a123 * sinh a0) (sin a123 * cosh a0)
-  sinh cliffor = reduce $! spectraldcmp sinh sinh' cliffor
+  sinh cliffor = reduce $ spectraldcmp sinh sinh' cliffor
 
   --
   cosh (R a0) = R (cosh a0)
   cosh (I a123) = R (cos a123)
   cosh (C a0 a123) = C (cos a123 * cosh a0) (sin a123 * sinh a0)
-  cosh cliffor = reduce $! spectraldcmp cosh cosh' cliffor
+  cosh cliffor = reduce $ spectraldcmp cosh cosh' cliffor
 
   --
   tanh (R a0) = R (tanh a0)
@@ -1115,25 +1115,25 @@ instance Floating Cl3 where
                               cosy  = cos a123
                               sinhx = sinh a0
                               coshx = cosh a0
-  tanh cliffor = reduce $! spectraldcmp tanh tanh' cliffor
+  tanh cliffor = reduce $ spectraldcmp tanh tanh' cliffor
 
   --
   asinh (R a0) = R (asinh a0)
   asinh (I a123) = log (I a123 + sqrt (R (1 - a123^2)))
   asinh (C a0 a123) = log (C a0 a123 + sqrt (1 + C a0 a123 * C a0 a123))
-  asinh cliffor = reduce $! spectraldcmp asinh asinh' cliffor
+  asinh cliffor = reduce $ spectraldcmp asinh asinh' cliffor
 
   --
   acosh (R a0) = log (R a0 + sqrt(R a0 - 1) * sqrt(R a0 + 1))
   acosh (I a123) = log (I a123 + sqrt(I a123 - 1) * sqrt(I a123 + 1))
   acosh (C a0 a123) = log (C a0 a123 + sqrt(C a0 a123 - 1) * sqrt(C a0 a123 + 1))
-  acosh cliffor = reduce $! spectraldcmp acosh acosh' cliffor
+  acosh cliffor = reduce $ spectraldcmp acosh acosh' cliffor
 
   --
   atanh (R a0) = 0.5 * log (1 + R a0) - 0.5 * log (1 - R a0)
   atanh (I a123) = 0.5 * log (1 + I a123) - 0.5 * log (1 - I a123)
   atanh (C a0 a123) = 0.5 * log (1 + C a0 a123) - 0.5 * log (1 - C a0 a123)
-  atanh cliffor = reduce $! spectraldcmp atanh atanh' cliffor
+  atanh cliffor = reduce $ spectraldcmp atanh atanh' cliffor
 
 
 
@@ -1182,7 +1182,7 @@ spectraldcmp fun fun' (reduce -> cliffor) = dcmp cliffor
     dcmp (h@H{}) = spectraldcmpSpecial toC fun h -- spectprojC fun h
     dcmp (c@C{}) = fun c
     dcmp (bpv@BPV{})
-      | hasNilpotent bpv = jordan fun fun' bpv  -- jordan normal form Cl3 style
+      | hasNilpotent bpv = jordan toR fun fun' bpv  -- jordan normal form Cl3 style
       | isColinear bpv = spectraldcmpSpecial toC fun bpv -- spectprojC fun bpv
       | otherwise =                          -- transform it so it will be colinear
           let (v,d,v_bar) = boost2colinear bpv
@@ -1190,7 +1190,7 @@ spectraldcmp fun fun' (reduce -> cliffor) = dcmp cliffor
     dcmp (od@ODD{}) = spectraldcmpSpecial toC fun od -- spectprojC fun od
     dcmp (tpv@TPV{}) = spectraldcmpSpecial toI fun tpv -- spectprojI fun tpv
     dcmp (aps@APS{})
-      | hasNilpotent aps = jordan fun fun' aps  -- jordan normal form Cl3 style
+      | hasNilpotent aps = jordan toC fun fun' aps  -- jordan normal form Cl3 style
       | isColinear aps = spectraldcmpSpecial toC fun aps -- spectprojC fun aps
       | otherwise =                          -- transform it so it will be colinear
           let (v,d,v_bar) = boost2colinear aps
@@ -1201,9 +1201,9 @@ spectraldcmp fun fun' (reduce -> cliffor) = dcmp cliffor
 -- The intended use is for calculating functions for cliffors with vector parts simular to Nilpotent.
 -- It is a helper function for 'spectproj'.  It is fortunate because eigen decomposition doesn't
 -- work with elements with nilpotent content, so it fills the gap.
-jordan :: (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> Cl3 -> Cl3
-jordan fun fun' cliffor =
-  let eigs = toC cliffor
+jordan :: (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> Cl3 -> Cl3
+jordan toSpecial fun fun' cliffor =
+  let eigs = toSpecial cliffor
   in fun eigs + fun' eigs * toBPV cliffor
 
 -- | 'spectraldcmpSpecial' helper function for with specialization for real, imaginary, or complex eigenvalues.
@@ -1280,23 +1280,9 @@ project (reduce -> cliffor) = proj cliffor
 boost2colinear :: Cl3 -> (Cl3, Cl3, Cl3)
 boost2colinear cliffor =
   let v = toV3 cliffor  -- extract the vector
-      bv = toV3 $ mI * toBV cliffor  -- extract the bivector and turn it into a vector
-      -- Find an orthonormal basis natural to the cliffor (eigen basis)
-      sum_direction = signum $ v + bv  -- the natural basis is the sum of the vector and bivector
-      orthogonal_direction = signum.toV3 $ mI * toBV (v * bv)  -- the natural basis is perpedicualr to both the vector and bivector
-      other_direction = signum.toV3 $ mI * toBV (sum_direction * orthogonal_direction)  -- the natural basis is orthoganl to both the sum and ortho basis
-      -- Decompose the cliffor in our new basis via dot product
-      -- this decpomosition is in the plane of the biparavector
-      (C a1 a23) = toC $ other_direction * cliffor
-      (C a3 a12) = toC $ sum_direction * cliffor
-      -- Find the boost to make the vector and bivector parts colinear (a two page derivation)
-      sum_sq = a1^2 + a3^2 + a23^2 + a12^2
-      numerator = 2 * (a1 * a12 - a3 * a23)
-      tanh4eta = numerator / sum_sq
-      _4eta = atanh tanh4eta
-      eta = _4eta / 4
-      boost = exp (R eta * orthogonal_direction)
-      -- calculate the returned values
+      bv = mI * toBV cliffor  -- extract the bivector and turn it into a vector
+      invariant = (2 * mI * toBV (v * bv)) / toR (v^2 + bv^2)
+      boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
       boost_bar = bar boost
       d = boost_bar * cliffor * boost
   in (boost, d, boost_bar)
@@ -1323,8 +1309,8 @@ projEigs :: (Cl3 -> Cl3) -> Cl3 -> (Cl3,Cl3,Cl3,Cl3)
 projEigs toSpecial cliffor =
   let p = project cliffor
       p_bar = bar p
-      eig1 = 2 * (toSpecial $! p * cliffor * p)
-      eig2 = 2 * (toSpecial $! p_bar * cliffor * p_bar)
+      eig1 = 2 * (toSpecial $ p * cliffor * p)
+      eig2 = 2 * (toSpecial $ p_bar * cliffor * p_bar)
   in (p,p_bar,eig1,eig2)
 
 
