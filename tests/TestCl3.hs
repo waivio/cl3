@@ -99,61 +99,61 @@ import Control.Applicative ((<*>), (<$>))
 main :: IO ()
 main = do moduleTests
           print "Testing log.exp Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_LogExp
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_LogExp
           print "Testing exp.log Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_ExpLog
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_ExpLog
           print "Testing abs*signum law:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_AbsSignum
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AbsSignum
           print "Testing the definition of recip:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_RecipDef
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_RecipDef
           print "Testing recip.recip Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_RecipID
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_RecipID
           print "Testing sin.asin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_SinAsin
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinAsin
           print "Testing asin.sin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_AsinSin
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AsinSin
           print "Testing cos.acos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_CosAcos
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CosAcos
           print "Testing acos.cos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_AcosCos
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcosCos
           print "Testing sinh.asinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_SinhAsinh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinhAsinh
           print "Testing asinh.sinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_AsinhSinh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AsinhSinh
           print "Testing cosh.acosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_CoshAcosh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CoshAcosh
           print "Testing acosh.cosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_AcoshCosh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcoshCosh
           print "Testing acosh.cosh Identity2:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_AcoshCosh2
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcoshCosh2
           print "Testing Double Sin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_DubSin
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubSin
           print "Testing Double Cos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_DubCos
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubCos
           print "Testing Double Tan Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_DubTan
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubTan
           print "Testing Double Sinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_DubSinh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubSinh
           print "Testing Double Cosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_DubCosh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubCosh
           print "Testing Double Tanh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_DubTanh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubTanh
           print "Testing Positive Sin Shift Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_PosSinShift
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_PosSinShift
           print "Testing Negative Sin Shift Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_NegSinShift
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_NegSinShift
           print "Testing sin^2+cos^2 Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_SinSqCosSq
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinSqCosSq
           print "Testing cosh^2-sinh^2 Identity:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_CoshSqmSinhSq
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CoshSqmSinhSq
           print "Testing Symmetry of Cosh:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_SymCosh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SymCosh
           print "Testing Symmetry of Sinh:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_SymSinh
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SymSinh
           print "Testing Double I Sin:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_DoubleISin
-          print "Is has Composition Sub-Algebras:"
-          quickCheckWith stdArgs { maxSuccess = 30000 } prop_CompAlg
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DoubleISin
+          print "It has Composition Sub-Algebras:"
+          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CompAlg
 
 
 
@@ -201,8 +201,8 @@ tests = [runTest "Log.Exp Identity" (log.exp) id (const False)
         ,runTest "Abs*Signum Identity" (\x->abs x * signum x) id (const False)
         ,runTest "Reciprical Identity" (recip.recip) id (\z -> lsv z < tol) -- singular inputs are out of bounds
         ,runTest "sin.asin" (sin.asin) id (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
-        ,runTest "asin.sin" (asin.sin) (\z -> negate (I 1) * log (0.5 * (exp (I 1 * z) - exp (I (-1) * z)) +
-                                                                  sqrt (1+0.25*(exp (I (-1) * z) - exp (I 1 * z))^2))) (const False)
+        ,runTest "asin.sin" (asin.sin) (\z -> mIx.log $ (0.5 * (exp (I 1 * z) - exp (mIx z)) +
+                                                                  sqrt (1+0.25*(exp (mIx z) - exp (I 1 * z))^2))) (const False)
         ,runTest "cos.acos" (cos.acos) id (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
         ,runTest "acos.cos" (acos.cos) (\z -> 0.5 * (pi - 2 * asin(cos z))) (\z -> hasNilpotent z && poles [R 0, pi, negate pi] z)
         ,runTest "sinh.asinh" (sinh.asinh) id (const False)
@@ -258,8 +258,8 @@ prop_SinAsin (Arb cliffor) = if hasNilpotent cliffor
                              else sin (asin cliffor) ≈≈ cliffor
 
 prop_AsinSin :: ArbCl3 -> Bool
-prop_AsinSin (Arb cliffor) = (abs cliffor > 10) || (asin (sin cliffor) ≈≈ (I (-1) * log (0.5 * (exp (I 1 * cliffor) - exp (I (-1) * cliffor)) +
-                                                                                         sqrt (1+0.25*(exp (I (-1) * cliffor) - exp (I 1 * cliffor))^2))))
+prop_AsinSin (Arb cliffor) = (abs cliffor > 10) || (asin (sin cliffor) ≈≈ (I (-1) * log (0.5 * (exp (I 1 * cliffor) - exp (mIx cliffor)) +
+                                                                                         sqrt (1+0.25*(exp (mIx cliffor) - exp (I 1 * cliffor))^2))))
 
 prop_CosAcos :: ArbCl3 -> Bool
 prop_CosAcos (Arb cliffor) = if hasNilpotent cliffor
@@ -328,7 +328,7 @@ prop_SymSinh :: ArbCl3 -> Bool
 prop_SymSinh (Arb cliffor) = sinh (negate cliffor) ≈≈ negate (sinh cliffor)
 
 prop_DoubleISin :: ArbCl3 -> Bool
-prop_DoubleISin (Arb cliffor) = 2 * I 1 * sin cliffor ≈≈ exp(I 1 * cliffor) - exp (I (-1) * cliffor)
+prop_DoubleISin (Arb cliffor) = 2 * I 1 * sin cliffor ≈≈ exp(I 1 * cliffor) - exp (mIx cliffor)
 
 -- | Composition Sub-Algebras have a distributive norm over multiplication, like this:
 -- 

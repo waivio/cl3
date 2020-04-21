@@ -10,7 +10,7 @@ name:                cl3
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             1.0.0.4
+version:             2.0.0.0
 
 -- A short (one-line) description of the package.
 synopsis:            Clifford Algebra of three dimensional space.
@@ -37,7 +37,7 @@ author:              Nathan Waivio
 maintainer:          Nathan Waivio <nathan.waivio@gmail.com>
 
 -- A copyright notice.
-copyright:           Copyright (C) 2017-2018 Nathan Waivio
+copyright:           Copyright (C) 2017-2020 Nathan Waivio
 
 category:            Math, Algebra
 
@@ -47,7 +47,10 @@ tested-with:         GHC == 7.8.4,
                      GHC == 7.10.3,
                      GHC == 8.0.2,
                      GHC == 8.2.2,
-                     GHC == 8.4.2
+                     GHC == 8.4.2,
+                     GHC == 8.4.4,
+                     GHC == 8.6.5,
+                     GHC == 8.8.3
 
 -- Extra files to be distributed with the package, such as examples or a 
 -- README.
@@ -77,8 +80,7 @@ library
     GADTSyntax,
     ViewPatterns,
     DeriveDataTypeable,
-    DeriveGeneric,
-    BangPatterns
+    DeriveGeneric
   
   -- Other library packages from which modules are imported.
   build-depends:       
