@@ -53,7 +53,7 @@ module Algebra.Geometric.Cl3
  randNilpotent,
  -- * Helpful Functions
  eigvals, hasNilpotent,
- spectraldcmp, project
+ spectraldcmp, project, mIx
 ) where
 
 
@@ -301,16 +301,18 @@ instance Eq Cl3 where
 -- elements.  For instance for the Cliffors A and B, A == B could be False, but compare A B is EQ, 
 -- because A * V = U * B, where V and U are unitary.  
 instance Ord Cl3 where
-  compare (R a0) (R b0) = compare a0 b0
+  compare (R a0) (R b0) = compare a0 b0 -- Real Numbers have a total order
+  compare (I a123) (I b123) = compare a123 b123 -- Imaginary Numbers have a total order
   compare cliffor1 cliffor2 =
      let (R a0) = abs cliffor1
          (R b0) = abs cliffor2
+         (R a0') = lsv cliffor1
+         (R b0') = lsv cliffor2
      in case compare a0 b0 of
-          EQ -> let (R a0') = lsv cliffor1
-                    (R b0') = lsv cliffor2
-                in compare a0' b0'
           LT -> LT
           GT -> GT
+          EQ -> compare a0' b0'
+
 
 
 -- |Cl3 has a "Num" instance.  "Num" is addition, geometric product, negation, 'abs' the largest
@@ -930,16 +932,24 @@ instance Num Cl3 where
   abs (V3 a1 a2 a3) = R (sqrt (a1^2 + a2^2 + a3^2)) -- magnitude of a vector
   abs (BV a23 a31 a12) = R (sqrt (a23^2 + a31^2 + a12^2)) -- magnitude of a bivector
   abs (I a123) = R (abs a123) -- magnitude of a Imaginary number
-  abs (PV a0 a1 a2 a3) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + 2 * abs a0 * sqrt (a1^2 + a2^2 + a3^2)))
+  abs (PV a0 a1 a2 a3) =
+    let sumsqs = a1^2 + a2^2 + a3^2
+        x = abs a0 * sqrt sumsqs
+    in R (sqrt (a0^2 + sumsqs + x + x))
   abs (H a0 a23 a31 a12) = R (sqrt (a0^2 + a23^2 + a31^2 + a12^2)) -- largest singular value
   abs (C a0 a123) = R (sqrt (a0^2 + a123^2)) -- magnitude of a complex number
-  abs (BPV a1 a2 a3 a23 a31 a12) = R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 +
-                                             2 * sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2)))
+  abs (BPV a1 a2 a3 a23 a31 a12) =
+    let x = sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
+    in R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x))
   abs (ODD a1 a2 a3 a123) = R (sqrt (a1^2 + a2^2 + a3^2 + a123^2))
-  abs (TPV a23 a31 a12 a123) = R (sqrt (a23^2 + a31^2 + a12^2 + a123^2 + 2 * abs a123 * sqrt (a23^2 + a31^2 + a12^2)))
-  abs (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 +
-                                                    2 * sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
-                                                              (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)))
+  abs (TPV a23 a31 a12 a123) =
+    let sumsqs = a23^2 + a31^2 + a12^2
+        x = abs a123 * sqrt sumsqs
+    in R (sqrt (sumsqs + a123^2 + x + x))
+  abs (APS a0 a1 a2 a3 a23 a31 a12 a123) =
+    let x = sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
+                  (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
+    in R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x))
 
 
   -- |'signum' satisfies the Law "abs x * signum x == x"
@@ -982,38 +992,22 @@ instance Num Cl3 where
 instance Fractional Cl3 where
   -- |Some of the sub algebras are division algebras but APS is not a division algebra
   recip (R a0) = R (recip a0)   -- R is a division algebra
-  recip v@(V3 a1 a2 a3) =
-    let (R mag) = abs v
-        sqmag = mag * mag :: Double
-    in V3 (a1 / sqmag) (a2 / sqmag) (a3 / sqmag)
-  recip bv@(BV a23 a31 a12) =
-    let (R mag) = abs bv
-        sqmag = mag * mag  :: Double
-    in BV (negate $ a23 / sqmag) (negate $ a31 / sqmag) (negate $ a12 / sqmag)
-  recip i@(I a123) =
-    let (R mag) = abs i
-        sqmag = mag * mag  :: Double
-    in I (negate $ a123 / sqmag)
-  recip pv@PV{} =
-    let mag = toR $ pv * bar pv
-    in recip mag * bar pv
-  recip h@(H a0 a23 a31 a12) =   -- H is a division algebra
-    let (R mag) = abs h
-        sqmag = mag * mag  :: Double
-    in H (a0 / sqmag) (negate $ a23 / sqmag) (negate $ a31 / sqmag) (negate $ a12 / sqmag)
-  recip z@(C a0 a123) =   -- C is a division algebra
-    let (R mag) = abs z
-        sqmag = mag * mag  :: Double
-    in C (a0 / sqmag) (negate $ a123 / sqmag)
-  recip bpv@BPV{} = reduce $ spectraldcmp recip recip' bpv
-  recip od@(ODD a1 a2 a3 a123) =
-    let (R mag) = abs od
-        sqmag = mag * mag  :: Double
-    in ODD (a1 / sqmag) (a2 / sqmag) (a3 / sqmag) (negate $ a123 / sqmag)
-  recip tpv@TPV{} =
-    let mag = toR $ tpv * bar tpv
-    in recip mag * bar tpv
-  recip aps@APS{} = reduce $ spectraldcmp recip recip' aps
+  recip cliff = 
+    let (R mag) = abs cliff
+        recipsqmag = recip mag^2
+        negrecipsqmag = negate recipsqmag
+        recipmag2 = recip.toR $ cliff * bar cliff
+        go_recip (V3 a1 a2 a3) = V3 (recipsqmag * a1) (recipsqmag * a2) (recipsqmag * a3)
+        go_recip (BV a23 a31 a12) = BV (negrecipsqmag * a23) (negrecipsqmag * a31) (negrecipsqmag * a12)
+        go_recip (I a123) = I (negrecipsqmag * a123)
+        go_recip (H a0 a23 a31 a12) = H (recipsqmag * a0) (negrecipsqmag * a23) (negrecipsqmag * a31) (negrecipsqmag * a12)  -- H is a division algebra
+        go_recip (C a0 a123) = C (recipsqmag * a0) (negrecipsqmag * a123)   -- C is a division algebra
+        go_recip (ODD a1 a2 a3 a123) = ODD (recipsqmag * a1) (recipsqmag * a2) (recipsqmag * a3) (negrecipsqmag * a123)
+        go_recip pv@PV{} = recipmag2 * bar pv
+        go_recip tpv@TPV{} = recipmag2 * bar tpv
+        go_recip cliffor = reduce $ spectraldcmp recip recip' cliffor
+    in go_recip cliff
+
 
   -- |'fromRational'
   fromRational rat = R (fromRational rat)
@@ -1042,11 +1036,11 @@ instance Floating Cl3 where
   sqrt (R a0) | a0 >= 0 = R (sqrt a0)
               | otherwise = I (sqrt $ negate a0)
   sqrt (I a123) = C u (if a123 < 0 then -v else v)
-                       where v = if u < tol' then 0 else abs a123 / (2 * u)
+                       where v = if u < tol' then 0 else abs a123 / (u + u)
                              u = sqrt (abs a123 / 2)
   sqrt (C a0 a123) = C u (if a123 < 0 then -v else v)
                        where (u,v) = if a0 < 0 then (v',u') else (u',v')
-                             v'    = if u' < tol' then  0 else abs a123 / (u'*2)
+                             v'    = if u' < tol' then  0 else abs a123 / (u' + u')
                              u'    = sqrt ((sqrt (a0^2 + a123^2) + abs a0) / 2)
   sqrt cliffor = reduce $ spectraldcmp sqrt sqrt' cliffor
 
@@ -1065,8 +1059,13 @@ instance Floating Cl3 where
   --
   tan (R a0) = R (tan a0)
   tan (I a123) = I (tanh a123)
-  tan (C a0 a123) = C (sinx*coshy) (cosx*sinhy) / C (cosx*coshy) (negate $ sinx*sinhy)
-                       where sinx  = sin a0
+  tan (C a0 a123) = C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
+                       where m = x2^2 + y2^2
+                             x1 = sinx*coshy
+                             y1 = cosx*sinhy
+                             x2 = cosx*coshy
+                             y2 = negate $ sinx*sinhy
+                             sinx  = sin a0
                              cosx  = cos a0
                              sinhy = sinh a123
                              coshy = cosh a123
@@ -1075,24 +1074,21 @@ instance Floating Cl3 where
   --
   asin (R a0) = if (-1) <= a0 && a0 <= 1 then R (asin a0) else asin $ C a0 0
   asin (I a123) = I (asinh a123)
-  asin (C a0 a123) = C a123' (-a0')
-                       where  (C a0' a123') = toC $ log (C (-a123) a0 + sqrt (1 - C a0 a123 * C a0 a123)) -- check this
+  asin (C a0 a123) = mIx.toC $ log (C (-a123) a0 + sqrt (C (a123^2 - a0^2 +1) (-2*a0*a123))) -- check this
   asin cliffor = reduce $ spectraldcmp asin asin' cliffor
 
   --
   acos (R a0) = if (-1) <= a0 && a0 <= 1 then R (acos a0) else acos $ C a0 0
   acos (I a123) = C (pi/2) (negate $ asinh a123)
-  acos (C a0 a123) = C a123'' (-a0'')
-               where (C a0'' a123'') = log (C a0 a123 + C (-a123') a0')  -- check this
-                     (C a0' a123')   = sqrt (1 - C a0 a123 * C a0 a123)  -- check this
+  acos (C a0 a123) = mIx.log $ C (a0-a123') (a123+a0')  -- check this
+               where
+                (C a0' a123')   = sqrt (C (a123^2 - a0^2 +1) (-2*a0*a123))  -- check this
   acos cliffor = reduce $ spectraldcmp acos acos' cliffor
 
   --  
   atan (R a0) = R (atan a0)
-  atan (I a123) = C a123' (-a0')
-                       where (C a0' a123') = toC.log $ ( R (1-a123) / sqrt (R (1 - a123^2)))  -- check this
-  atan (C a0 a123) = C a123' (-a0')
-                       where (C a0' a123') = toC $ log (C (1-a123) a0 / sqrt (1 + C a0 a123 * C a0 a123))  -- check this
+  atan (I a123) = mIx.toC.log $ R (1-a123) * (recip.sqrt.R $ (1 - a123^2))  -- check this
+  atan (C a0 a123) = mIx.toC.log $ (C (1-a123) a0 / sqrt (C (a0^2 - a123^2 +1) (2*a0*a123)))  -- check this
   atan cliffor = reduce $ spectraldcmp atan atan' cliffor
 
   --
@@ -1110,8 +1106,13 @@ instance Floating Cl3 where
   --
   tanh (R a0) = R (tanh a0)
   tanh (I a123) = I (tan a123)
-  tanh (C a0 a123) = C (cosy*sinhx) (siny*coshx) / C (cosy*coshx) (siny*sinhx)
-                        where siny  = sin a123
+  tanh (C a0 a123) = C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
+                        where m = x2^2 + y2^2
+                              x1 = cosy*sinhx
+                              y1 = siny*coshx
+                              x2 = cosy*coshx
+                              y2 = siny*sinhx
+                              siny  = sin a123
                               cosy  = cos a123
                               sinhx = sinh a0
                               coshx = cosh a0
@@ -1120,19 +1121,19 @@ instance Floating Cl3 where
   --
   asinh (R a0) = R (asinh a0)
   asinh (I a123) = log (I a123 + sqrt (R (1 - a123^2)))
-  asinh (C a0 a123) = log (C a0 a123 + sqrt (1 + C a0 a123 * C a0 a123))
+  asinh (C a0 a123) = log (C a0 a123 + sqrt (C (a0^2 - a123^2 +1) (2*a0*a123)))
   asinh cliffor = reduce $ spectraldcmp asinh asinh' cliffor
 
   --
-  acosh (R a0) = log (R a0 + sqrt(R a0 - 1) * sqrt(R a0 + 1))
-  acosh (I a123) = log (I a123 + sqrt(I a123 - 1) * sqrt(I a123 + 1))
-  acosh (C a0 a123) = log (C a0 a123 + sqrt(C a0 a123 - 1) * sqrt(C a0 a123 + 1))
+  acosh (R a0) = log (R a0 + sqrt(R (a0+1)) * sqrt(R (a0-1)))
+  acosh (I a123) = log (I a123 + sqrt(C 1 a123) * sqrt(C (-1) a123))
+  acosh (C a0 a123) = log (C a0 a123 + sqrt(C (a0+1) a123) * sqrt(C (a0-1) a123))
   acosh cliffor = reduce $ spectraldcmp acosh acosh' cliffor
 
   --
-  atanh (R a0) = 0.5 * log (1 + R a0) - 0.5 * log (1 - R a0)
-  atanh (I a123) = 0.5 * log (1 + I a123) - 0.5 * log (1 - I a123)
-  atanh (C a0 a123) = 0.5 * log (1 + C a0 a123) - 0.5 * log (1 - C a0 a123)
+  atanh (R a0) = 0.5 * (log (R (1+a0)) - log (R (1-a0)))
+  atanh (I a123) = 0.5 * (log (C 1 a123) - log (C 1 (-a123)))
+  atanh (C a0 a123) = 0.5 * (log (C (1+a0) a123) - log (C (1-a0) (-a123)))
   atanh cliffor = reduce $ spectraldcmp atanh atanh' cliffor
 
 
@@ -1143,17 +1144,24 @@ lsv (R a0) = R (abs a0) -- absolute value of a real number
 lsv (V3 a1 a2 a3) = R (sqrt (a1^2 + a2^2 + a3^2)) -- magnitude of a vector
 lsv (BV a23 a31 a12) = R (sqrt (a23^2 + a31^2 + a12^2)) -- magnitude of a bivector
 lsv (I a123) = R (abs a123)
-lsv (PV a0 a1 a2 a3) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 -
-                                2 * abs a0 * sqrt (a1^2 + a2^2 + a3^2)))
+lsv (PV a0 a1 a2 a3) =
+  let sumsqs = a1^2 + a2^2 + a3^2
+      x = negate $ abs a0 * sqrt sumsqs
+  in R (sqrt (a0^2 + sumsqs + x + x))
 lsv (H a0 a23 a31 a12) = R (sqrt (a0^2 + a23^2 + a31^2 + a12^2))
 lsv (C a0 a123) = R (sqrt (a0^2 + a123^2)) -- magnitude of a complex number
-lsv (BPV a1 a2 a3 a23 a31 a12) = R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 -
-                                          2 * sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2)))
+lsv (BPV a1 a2 a3 a23 a31 a12) =
+  let x = negate $ sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
+  in R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x))
 lsv (ODD a1 a2 a3 a123) = R (sqrt (a1^2 + a2^2 + a3^2 + a123^2))
-lsv (TPV a23 a31 a12 a123) = R (sqrt (a23^2 + a31^2 + a12^2 + a123^2 - (abs a123 + abs a123) * sqrt (a23^2 + a31^2 + a12^2)))
-lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 -
-                                                  2 * sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
-                                                            (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)))
+lsv (TPV a23 a31 a12 a123) =
+  let sumsqs = a23^2 + a31^2 + a12^2
+      x = negate $ abs a123 * sqrt sumsqs
+  in R (sqrt (sumsqs + a123^2 + x + x))
+lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) =
+  let x = negate $ sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
+                         (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
+  in R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x))
 
 
 
@@ -1174,22 +1182,22 @@ lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) = R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a2
 spectraldcmp :: (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> Cl3 -> Cl3
 spectraldcmp fun fun' (reduce -> cliffor) = dcmp cliffor
   where
-    dcmp (r@R{}) = fun r
-    dcmp (v@V3{}) = spectraldcmpSpecial toR fun v -- spectprojR fun v
-    dcmp (bv@BV{}) = spectraldcmpSpecial toI fun bv -- spectprojI fun bv
-    dcmp (i@I{}) = fun i
-    dcmp (pv@PV{}) = spectraldcmpSpecial toR fun pv -- spectprojR fun pv
-    dcmp (h@H{}) = spectraldcmpSpecial toC fun h -- spectprojC fun h
-    dcmp (c@C{}) = fun c
-    dcmp (bpv@BPV{})
+    dcmp r@R{} = fun r
+    dcmp v@V3{} = spectraldcmpSpecial toR fun v -- spectprojR fun v
+    dcmp bv@BV{} = spectraldcmpSpecial toI fun bv -- spectprojI fun bv
+    dcmp i@I{} = fun i
+    dcmp pv@PV{} = spectraldcmpSpecial toR fun pv -- spectprojR fun pv
+    dcmp h@H{} = spectraldcmpSpecial toC fun h -- spectprojC fun h
+    dcmp c@C{} = fun c
+    dcmp bpv@BPV{}
       | hasNilpotent bpv = jordan toR fun fun' bpv  -- jordan normal form Cl3 style
       | isColinear bpv = spectraldcmpSpecial toC fun bpv -- spectprojC fun bpv
       | otherwise =                          -- transform it so it will be colinear
           let (v,d,v_bar) = boost2colinear bpv
           in v * spectraldcmpSpecial toC fun d * v_bar -- v * spectprojC fun d * v_bar
-    dcmp (od@ODD{}) = spectraldcmpSpecial toC fun od -- spectprojC fun od
-    dcmp (tpv@TPV{}) = spectraldcmpSpecial toI fun tpv -- spectprojI fun tpv
-    dcmp (aps@APS{})
+    dcmp od@ODD{} = spectraldcmpSpecial toC fun od -- spectprojC fun od
+    dcmp tpv@TPV{} = spectraldcmpSpecial toI fun tpv -- spectprojI fun tpv
+    dcmp aps@APS{}
       | hasNilpotent aps = jordan toC fun fun' aps  -- jordan normal form Cl3 style
       | isColinear aps = spectraldcmpSpecial toC fun aps -- spectprojC fun aps
       | otherwise =                          -- transform it so it will be colinear
@@ -1221,22 +1229,22 @@ spectraldcmpSpecial toSpecial function cliffor =
 eigvals :: Cl3 -> (Cl3,Cl3)
 eigvals (reduce -> cliffor) = eigv cliffor
   where
-    eigv (r@R{}) = (r,r)
-    eigv (v@V3{}) = eigvalsSpecial toR v -- eigvalsR v
-    eigv (bv@BV{}) = eigvalsSpecial toI bv -- eigvalsI bv
-    eigv (i@I{}) = (i,i)
-    eigv (pv@PV{}) = eigvalsSpecial toR pv -- eigvalsR pv
-    eigv (h@H{}) = eigvalsSpecial toC h -- eigvalsC h
-    eigv (c@C{}) = (c,c)
-    eigv (bpv@BPV{})
+    eigv r@R{} = (r,r)
+    eigv v@V3{} = eigvalsSpecial toR v -- eigvalsR v
+    eigv bv@BV{} = eigvalsSpecial toI bv -- eigvalsI bv
+    eigv i@I{} = (i,i)
+    eigv pv@PV{} = eigvalsSpecial toR pv -- eigvalsR pv
+    eigv h@H{} = eigvalsSpecial toC h -- eigvalsC h
+    eigv c@C{} = (c,c)
+    eigv bpv@BPV{}
       | hasNilpotent bpv = (0,0)  -- this case is actually nilpotent
       | isColinear bpv = eigvalsSpecial toC bpv -- eigvalsC bpv
       | otherwise =                          -- transform it so it will be colinear
           let (_,d,_) = boost2colinear bpv
           in eigvalsSpecial toC d -- eigvalsC d
-    eigv (od@ODD{}) = eigvalsSpecial toC od -- eigvalsC od
-    eigv (tpv@TPV{}) = eigvalsSpecial toI tpv -- eigvalsI tpv
-    eigv (aps@APS{})
+    eigv od@ODD{} = eigvalsSpecial toC od -- eigvalsC od
+    eigv tpv@TPV{} = eigvalsSpecial toI tpv -- eigvalsI tpv
+    eigv aps@APS{}
       | hasNilpotent aps = (toC aps,toC aps)  -- a scalar plus nilpotent
       | isColinear aps = eigvalsSpecial toC aps -- eigvalsC aps
       | otherwise =                          -- transform it so it will be colinear
@@ -1256,19 +1264,19 @@ eigvalsSpecial toSpecial cliffor =
 project :: Cl3 -> Cl3
 project (reduce -> cliffor) = proj cliffor
   where
-    proj (R{}) = PV 0.5 0 0 0.5   -- default to e3 direction
-    proj (v@V3{}) = 0.5 * (1 + signum v)
-    proj (bv@BV{}) = 0.5 * (1 + signum (toV3 $ mI * toBV bv))
-    proj (I{}) = PV 0.5 0 0 0.5   -- default to e3 direction
-    proj (pv@PV{}) = 0.5 * (1 + signum (toV3 pv))
-    proj (h@H{}) = 0.5 * (1 + signum (toV3 $ mI * toBV h))
-    proj (C{}) = PV 0.5 0 0 0.5   -- default to e3 direction
-    proj (bpv@BPV{})
-      | abs (toV3 bpv + toV3 (mI * toBV bpv)) <= tol = 0.5 * (1 + signum (toV3 bpv))  -- gaurd for equal and opposite
-      | otherwise = 0.5 * (1 + signum (toV3 bpv + toV3 (mI * toBV bpv)))
-    proj (od@ODD{}) = 0.5 * (1 + signum (toV3 od))
-    proj (tpv@TPV{}) = 0.5 * (1 + signum (toV3 $ mI * toBV tpv))
-    proj (aps@APS{}) = project.toBPV $ aps
+    proj R{} = PV 0.5 0 0 0.5   -- default to e3 direction
+    proj v@V3{} = 0.5 + 0.5*signum v
+    proj bv@BV{} = 0.5 + 0.5*(mIx.signum $ bv)
+    proj I{} = PV 0.5 0 0 0.5   -- default to e3 direction
+    proj pv@PV{} = 0.5 + 0.5*(signum.toV3 $ pv)
+    proj h@H{} = 0.5 + 0.5*(mIx.signum.toBV $ h)
+    proj C{} = PV 0.5 0 0 0.5   -- default to e3 direction
+    proj bpv@BPV{}
+      | abs (toV3 bpv + (mIx.toBV $ bpv)) <= tol = 0.5 + 0.5*(signum.toV3 $ bpv)  -- gaurd for equal and opposite
+      | otherwise = 0.5 + 0.5*signum (toV3 bpv + (mIx.toBV $ bpv))
+    proj od@ODD{} = 0.5 + 0.5*(signum.toV3 $ od)
+    proj tpv@TPV{} = 0.5 + 0.5*(mIx.signum.toBV $ tpv)
+    proj aps@APS{} = project.toBPV $ aps
 
 
 -- | 'boost2colinear' calculates a boost that is perpendicular to both the vector and bivector
@@ -1280,8 +1288,9 @@ project (reduce -> cliffor) = proj cliffor
 boost2colinear :: Cl3 -> (Cl3, Cl3, Cl3)
 boost2colinear cliffor =
   let v = toV3 cliffor  -- extract the vector
-      bv = mI * toBV cliffor  -- extract the bivector and turn it into a vector
-      invariant = (2 * mI * toBV (v * bv)) / toR (v^2 + bv^2)
+      bv = mIx.toBV $ cliffor  -- extract the bivector and turn it into a vector
+      x = mIx.toBV $ v * bv  -- cross product
+      invariant = (x + x) / (toR (v^2) + toR (bv^2))
       boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
       boost_bar = bar boost
       d = boost_bar * cliffor * boost
@@ -1291,17 +1300,62 @@ boost2colinear cliffor =
 -- | 'isColinear' takes a Cliffor and determines if the vector part and the bivector part are
 -- not at all orthoganl and non-zero.
 isColinear :: Cl3 -> Bool
-isColinear cliffor = abs (toV3 cliffor) /= 0 && abs (mI * toBV cliffor) /= 0 &&              -- Non-Zero
-                     abs (toBV $ signum (toV3 cliffor) * signum (mI * toBV cliffor)) <= tol  -- Not Orthoganl
+isColinear R{} = True
+isColinear V3{} = True
+isColinear BV{} = True
+isColinear I{} = True
+isColinear PV{} = True
+isColinear H{} = True
+isColinear C{} = True
+isColinear bpv@BPV{} = hasit bpv
+  where
+    hasit :: Cl3 -> Bool
+    hasit cliffor =
+      let (magV3,magBV) = vMagHelper cliffor
+          v3 = toV3 cliffor
+          bv = mIx.toBV $ cliffor
+          (R crss) = abs.toBV $ v3 * bv  -- we used to have signum for each vector but that made the function too large
+      in magV3 /= 0 &&     -- Non-Zero
+         magBV /= 0 &&   -- Non-Zero
+         crss <= tol'    -- Not Orthoganl
+isColinear ODD{} = True
+isColinear TPV{} = True
+isColinear aps@APS{} = isColinear.toBPV $ aps
 
 
 -- | 'hasNilpotent' takes a Cliffor and determines if the vector part and the bivector part are
 -- orthoganl and equal in magnitude, i.e. that it is simular to a nilpotent BPV.
 hasNilpotent :: Cl3 -> Bool
-hasNilpotent cliffor = abs (toV3 cliffor) /= 0 && abs (mI * toBV cliffor) /= 0 &&                -- Non-Zero
-                       abs (toR $ signum (toV3 cliffor) * signum (mI * toBV cliffor)) <= tol &&  -- Orthoganl
-                       abs (abs (toV3 cliffor) - abs (toBV cliffor)) <= tol                      -- Equal Magnitude
+hasNilpotent R{} = False
+hasNilpotent V3{} = False
+hasNilpotent BV{} = False
+hasNilpotent I{} = False
+hasNilpotent PV{} = False
+hasNilpotent H{} = False
+hasNilpotent C{} = False
+hasNilpotent bpv@BPV{} = hasit bpv
+  where
+    hasit :: Cl3 -> Bool
+    hasit cliffor =
+      let (magV3,magBV) = vMagHelper cliffor
+          magDiff = abs (magV3 - magBV)
+          (R sqMag) = abs.(^2) $ cliffor
+      in magV3 /= 0 &&          -- Non-Zero Vector Part
+         magBV /= 0 &&        -- Non-Zero Bivector Part
+         magDiff <= tol' &&   -- Vector and Bivector are Equal Magnitude
+         sqMag <= tol'        -- It's non-zero but squares to zero
+hasNilpotent ODD{} = False
+hasNilpotent TPV{} = False
+hasNilpotent aps@APS{} = hasNilpotent.toBPV $ aps
 
+
+vMagHelper :: Cl3 -> (Double, Double)
+vMagHelper cliffor =
+  let v3 = toV3 cliffor
+      (R magV3) = abs v3
+      bv = toBV cliffor
+      (R magBV) = abs bv
+  in (magV3,magBV)
 
 -- | 'projEigs' function returns complementary projectors and eigenvalues for a Cliffor with specialization.
 -- The Cliffor at this point is allready colinear and the Eigenvalue is known to be real, imaginary, or complex.
@@ -1309,73 +1363,82 @@ projEigs :: (Cl3 -> Cl3) -> Cl3 -> (Cl3,Cl3,Cl3,Cl3)
 projEigs toSpecial cliffor =
   let p = project cliffor
       p_bar = bar p
-      eig1 = 2 * (toSpecial $ p * cliffor * p)
-      eig2 = 2 * (toSpecial $ p_bar * cliffor * p_bar)
+      e1 = toSpecial $ p * cliffor * p
+      e2 = toSpecial $ p_bar * cliffor * p_bar
+      eig1 = e1 + e1
+      eig2 = e2 + e2
   in (p,p_bar,eig1,eig2)
 
 
 -- | 'reduce' function reduces the number of grades in a specialized Cliffor if some are zero
 reduce :: Cl3 -> Cl3
-reduce r@R{} = r
-reduce v@V3{}  
-  | abs v <= tol = R 0
-  | otherwise = v
-reduce bv@BV{}
-  | abs bv <= tol = R 0
-  | otherwise = bv
-reduce i@I{}
-  | abs i <= tol = R 0
-  | otherwise = i
-reduce pv@PV{}
-  | abs pv <= tol = R 0
-  | abs (toR pv) <= tol = toV3 pv
-  | abs (toV3 pv) <= tol = toR pv
-  | otherwise = pv
-reduce h@H{}
-  | abs h <= tol = R 0
-  | abs (toR h) <= tol = toBV h
-  | abs (toBV h) <= tol = toR h
-  | otherwise = h
-reduce c@C{}
-  | abs c <= tol = R 0
-  | abs (toR c) <= tol = toI c
-  | abs (toI c) <= tol = toR c  
-  | otherwise = c
-reduce bpv@BPV{}
-  | abs bpv <= tol = R 0
-  | abs (toV3 bpv) <= tol = toBV bpv
-  | abs (toBV bpv) <= tol = toV3 bpv
-  | otherwise = bpv
-reduce od@ODD{}
-  | abs od <= tol = R 0
-  | abs (toV3 od) <= tol = toI od
-  | abs (toI od) <= tol = toV3 od
-  | otherwise = od
-reduce tpv@TPV{}
-  | abs tpv <= tol = R 0
-  | abs (toBV tpv) <= tol = toI tpv
-  | abs (toI tpv) <= tol = toBV tpv
-  | otherwise = tpv
-reduce aps@APS{}
-  | abs aps <= tol = R 0
-  | abs (toC aps) <= tol = reduce (toBPV aps)
-  | abs (toBPV aps) <= tol = reduce (toC aps)
-  | abs (toH aps) <= tol = reduce (toODD aps)
-  | abs (toODD aps) <= tol = reduce (toH aps)
-  | abs (toPV aps) <= tol = reduce (toTPV aps)
-  | abs (toTPV aps) <= tol = reduce (toPV aps)
-  | otherwise = aps
+reduce cliff
+  | abs cliff <= tol = R 0
+  | otherwise = go_reduce cliff
+    where
+      go_reduce r@R{} = r
+      go_reduce v@V3{} = v
+      go_reduce bv@BV{} = bv
+      go_reduce i@I{} = i
+      go_reduce pv@PV{}
+        | abs (toV3 pv) <= tol = toR pv
+        | abs (toR pv) <= tol = toV3 pv
+        | otherwise = pv
+      go_reduce h@H{}
+        | abs (toBV h) <= tol = toR h
+        | abs (toR h) <= tol = toBV h
+        | otherwise = h
+      go_reduce c@C{}
+        | abs (toI c) <= tol = toR c
+        | abs (toR c) <= tol = toI c
+        | otherwise = c
+      go_reduce bpv@BPV{}
+        | abs (toBV bpv) <= tol = toV3 bpv
+        | abs (toV3 bpv) <= tol = toBV bpv
+        | otherwise = bpv
+      go_reduce od@ODD{}
+        | abs (toI od) <= tol = toV3 od
+        | abs (toV3 od) <= tol = toI od
+        | otherwise = od
+      go_reduce tpv@TPV{}
+        | abs (toBV tpv) <= tol = toI tpv
+        | abs (toI tpv) <= tol = toBV tpv
+        | otherwise = tpv
+      go_reduce aps@APS{}
+        | abs (toBPV aps) <= tol = go_reduce (toC aps)
+        | abs (toODD aps) <= tol = go_reduce (toH aps)
+        | abs (toTPV aps) <= tol = go_reduce (toPV aps)
+        | abs (toC aps) <= tol = go_reduce (toBPV aps)
+        | abs (toH aps) <= tol = go_reduce (toODD aps)
+        | abs (toPV aps) <= tol = go_reduce (toTPV aps)
+        | otherwise = aps
 
--- | 'mI' negative i
-mI :: Cl3
-mI = I (-1)
+
+--  | 'mIx' a more effecient '\x -> I (-1) * x' typically useful for converting a
+-- Bivector to a Vector in the same direction. Related to Hodge Dual amd/or
+-- Inverse Hodge Star.
+mIx :: Cl3 -> Cl3
+mIx (R a0) = I (negate a0)
+mIx (V3 a1 a2 a3) = BV (negate a1) (negate a2) (negate a3)
+mIx (BV a23 a31 a12) = V3 a23 a31 a12
+mIx (I a123) = R a123
+mIx (PV a0 a1 a2 a3) = TPV (negate a1) (negate a2) (negate a3) (negate a0)
+mIx (H a0 a23 a31 a12) = ODD a23 a31 a12 (negate a0)
+mIx (C a0 a123) = C a123 (negate a0)
+mIx (BPV a1 a2 a3 a23 a31 a12) = BPV a23 a31 a12 (negate a1) (negate a2) (negate a3)
+mIx (ODD a1 a2 a3 a123) = H a123 (negate a1) (negate a2) (negate a3)
+mIx (TPV a23 a31 a12 a123) = PV a123 a23 a31 a12
+mIx (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS a123 a23 a31 a12 (negate a1) (negate a2) (negate a3) (negate a0)
+
 
 -- | 'tol' currently 128*eps
 tol :: Cl3
-tol = R $ 128 * 1.1102230246251565e-16
+{-# INLINE tol #-}
+tol = R 1.4210854715202004e-14
 
 tol' :: Double
-tol' = 128 * 1.1102230246251565e-16
+{-# INLINE tol' #-}
+tol' = 1.4210854715202004e-14
 
 
 -- | 'bar' is a Clifford Conjugate, the vector grades are negated
@@ -1565,7 +1628,7 @@ toAPS (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS a0 a1 a2 a3 a23 a31 a12 a123
 
 -- derivatives of the functions in the Fractional Class for use in Jordan NF functon implemetnation
 recip' :: Cl3 -> Cl3
-recip' x = negate.recip $ x * x   -- pole at 0
+recip' = negate.recip.(^2)   -- pole at 0
 
 exp' :: Cl3 -> Cl3
 exp' = exp
@@ -1574,7 +1637,7 @@ log' :: Cl3 -> Cl3
 log' = recip  -- pole at 0
 
 sqrt' :: Cl3 -> Cl3
-sqrt' x = 0.5 * recip (sqrt x)   -- pole at 0
+sqrt' = (0.5 *).recip.sqrt   -- pole at 0
 
 sin' :: Cl3 -> Cl3
 sin' = cos
@@ -1583,16 +1646,16 @@ cos' :: Cl3 -> Cl3
 cos' = negate.sin
 
 tan' :: Cl3 -> Cl3
-tan' x = recip (cos x) * recip (cos x)  -- pole at pi/2*n for all integers
+tan' = recip.(^2).cos  -- pole at pi/2*n for all integers
 
 asin' :: Cl3 -> Cl3
-asin' x = recip.sqrt $ 1 - (x * x)  -- pole at +/-1
+asin' = recip.sqrt.(1 -).(^2)  -- pole at +/-1
 
 acos' :: Cl3 -> Cl3
-acos' x = negate.recip.sqrt $ 1 - (x * x)  -- pole at +/-1
+acos' = negate.recip.sqrt.(1 -).(^2)  -- pole at +/-1
 
 atan' :: Cl3 -> Cl3
-atan' x = recip $ 1 + (x * x)  -- pole at +/-i
+atan' = recip.(1 +).(^2)  -- pole at +/-i
 
 sinh' :: Cl3 -> Cl3
 sinh' = cosh
@@ -1601,16 +1664,16 @@ cosh' :: Cl3 -> Cl3
 cosh' = sinh
 
 tanh' :: Cl3 -> Cl3
-tanh' x = recip (cosh x) * recip (cosh x)
+tanh' = recip.(^2).cosh
 
 asinh' :: Cl3 -> Cl3
-asinh' x = recip.sqrt $ (x * x) + 1  -- pole at +/-i
+asinh' = recip.sqrt.(1 +).(^2)  -- pole at +/-i
 
 acosh' :: Cl3 -> Cl3
 acosh' x = recip $ sqrt (x - 1) * sqrt (x + 1)  -- pole at +/-1
 
 atanh' :: Cl3 -> Cl3
-atanh' x = recip $ 1 - (x * x)  -- pole at +/-1
+atanh' = recip.(1 -).(^2)  -- pole at +/-1
 
 
 -------------------------------------------------------------------
@@ -1864,7 +1927,7 @@ randNilpotent :: RandomGen g => g -> (Cl3, g)
 randNilpotent g =
   let (p, g') = randProjector g
       (v, g'') = randUnitV3 g'
-      vnormal = signum $ I (-1) * toBV ( toV3 p * v)  -- unit vector normal to the projector
+      vnormal = signum.mIx.toBV $ toV3 p * v  -- unit vector normal to the projector
   in (toBPV $ vnormal * p, g'')
 
 

@@ -1,5 +1,61 @@
 # Revision history for cl3
 
+## 2.0.0.0  -- 2020-04-21
+
+* Added new function 'mIx' for the Inverse Hodge Star operator
+* Fixed 'compare' so that there will be a total order when comparing I with other I values
+* Refactored 'compare' so that lets were moved to a higher level
+* Refactored 'abs' so that (2*) was changed to (x + x) and common computations were let floated
+* Refactored 'recip' to use a helper function, moved some shared calculations to a 'let' binding
+* Refactored imaginary implementation of 'sqrt' to change a (2*) to a (u+u)
+* Refactored complex implementation of 'sqrt' to change a (2*) to a (u'+u')
+* Refactored complex implementation of 'tan' to inline more Double precision math into the 'C' constructor
+* Refactored complex implementation of 'asin' to use 'mIx' and moved some calculations into the 'C' constructor
+* Refactored complex implementation of 'acos' to use 'mIx' and moved some calculations into the 'C' constructor
+* Refactored imaginary implementation of 'atan' to use 'mIx' and inlined (/)
+* Refactored complex implementation of 'atan' to use 'mIx' and moved some calculations into the 'C' constructor
+* Refactored complex implementation of 'tanh' to move some calculations into the 'C' constructor
+* Refactored complex implementation of 'asinh' to move some calculations into the 'C' constructor
+* Refactored real implementation of 'acosh' to move some calculations into the 'R' constructor
+* Refactored imaginary implementation of 'acosh' to move some calculations into the 'C' constructor
+* Refactored complex implementation of 'acosh' to move some calculations into the 'C' constructor
+* Refactored real implementation of 'atanh' to move some calculations into the 'R' constructor and factor out the (0.5*)
+* Refactored imaginary implementation of 'atanh' to move some calculations into the 'C' constructor and factor out the (0.5*)
+* Refactored complex implementation of 'atanh' to move some calculations into the 'C' constructor and factor out the (0.5*)
+* Refactored 'lsv' same as 'abs'
+* Implemented hlint's suggestion to remove parens around pattern for 'spectraldcmp' helper function 'dcmp'
+* Implemented hlint's suggestion to remove parens around pattern for 'eigvals' helper function 'eigv'
+* Implemented hlint's suggestion to remove parens around pattern for 'project' helper function 'proj'
+* Refactored 'proj' to use 'mIx' and fewer parens
+* Refactored 'proj' to distribute the (0.5*) on the real and vector parts
+* Refactored 'boost2colinear' to use 'mIx'
+* Refactored 'boost2colinear' to change a (2*) to (x + x)
+* Refactored 'isColinear' to be more directly comparisons on Doubles with a helper function 'hasit'
+* Refactored 'isColinear' to use a helper function suggested by hlint to calculate the magnitude of the vector and bivector components
+* Refactored 'isColinear' to remove the 'signum' function because it was too big and not needed
+* Refactored 'hasNilpotent' to be more directly comparisons on Doubles with a helper function 'hasit'
+* Refactored 'hasNilpotent' to use a helper function suggested by hlint to calculate the magnitude of the vector and bivector components
+* Refactored 'hasNilpotent' to remove the 'signum' function because it was too big and changed to square the bpv to determine if the magnitude was close to zero
+* Added 'vMagHelper' as suggested by hlint to commonize some calculation of the magnitude of the vector and bivector parts of a cliffor
+* Implemented hlint's suggestion to remove '$' from 'projEigs'
+* Refactored 'projEigs' to change some (2*) to (e1 + e1) and (e2 + e2)
+* Refactored 'reduce' to factor out a shared comparison and use a helper function
+* Refactored 'reduce' to re-order some of the comparisons to ones that are more common
+* Removed the old value of 'mI'
+* Performed the multiplication that was in 'tol' and 'tol''
+* Refactored 'recip'' to be in a point free style
+* Refactored 'sqrt'' to be in a point free style
+* Refactored 'tan'' to be in a point free style
+* Refactored 'asin'' to be in a point free style
+* Refactored 'acos'' to be in a point free style
+* Refactored 'atan'' to be in a point free style
+* Refactored 'tanh'' to be in a point free style
+* Refactored 'asinh'' to be in a point free style
+* Refactored 'atanh'' to be in a point free style
+* Refactored 'randNilpotent' to use 'mIx'
+* Changed the tests to run 50,000 times
+* Refactored the tests to use 'mIx'
+
 ## 1.0.0.4  -- 2018-10-18
 
 * Found various improvements while preparing for NPFL specialized Jordan for BPV and APS
