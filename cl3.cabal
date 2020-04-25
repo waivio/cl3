@@ -16,7 +16,7 @@ version:             2.0.0.0
 synopsis:            Clifford Algebra of three dimensional space.
 
 -- A longer description of the package.
-description:         Haskell Library implementing standard functions for the Algebra of Physical Space Cl(3,0)   
+description:         Haskell Library implementing standard functions for the Algebra of Physical Space Cl(3,0)
 
 -- URL for the project homepage or repository.
 homepage:            https://github.com/waivio/cl3
@@ -65,6 +65,16 @@ source-repository head
   type:     git
   location: https://github.com/waivio/cl3.git
 
+flag do-no-derived-instances
+  description: Disable derived instances to reduce noise when inspecting GHC Core
+  manual:      True
+  default:     False
+
+flag do-no-random
+  description: Build without random library support
+  manual:      True
+  default:     False
+
 library
   -- Modules exported by the library.
   exposed-modules:
@@ -74,18 +84,28 @@ library
   -- Compiler options
   ghc-options: -Wall -O2
   
+  if flag(do-no-derived-instances)
+    cpp-options: -DO_NO_DERIVED
+  
+  if flag(do-no-random)
+    cpp-options: -DO_NO_RANDOM
+  
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:
     Safe,
     GADTSyntax,
     ViewPatterns,
     DeriveDataTypeable,
-    DeriveGeneric
+    DeriveGeneric,
+    CPP
   
   -- Other library packages from which modules are imported.
   build-depends:       
-    base >=4.7 && <5,
-    random >=1.0 && <2
+    base >=4.7 && <5
+    
+  if !flag(do-no-random)
+    build-depends:
+      random >=1.0 && <2
   
   -- Directories containing source files.
   hs-source-dirs:      src

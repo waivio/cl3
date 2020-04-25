@@ -2,6 +2,8 @@
 
 ## 2.0.0.0  -- 2020-04-21
 
+* Added CPP flags to Cl3 be able to turn off derived instances and the random dependancy
+* Added CPP flags to JonesCalculus to turn off the random dependancy
 * Added new function 'mIx' for the Inverse Hodge Star operator
 * Fixed 'compare' so that there will be a total order when comparing I with other I values
 * Refactored 'compare' so that lets were moved to a higher level

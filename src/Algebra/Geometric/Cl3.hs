@@ -4,7 +4,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-
+{-# LANGUAGE CPP #-}
 
 
 --------------------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ module Algebra.Geometric.Cl3
  showOctave,
  -- * Eliminate grades that are less than 'tol' to use a simpler Constructor
  reduce, tol,
+#ifndef O_NO_RANDOM
  -- * Random Instances
  randR, rangeR,
  randV3, rangeV3,
@@ -51,17 +52,25 @@ module Algebra.Geometric.Cl3
  randUnitV3,
  randProjector,
  randNilpotent,
+#endif
  -- * Helpful Functions
  eigvals, hasNilpotent,
  spectraldcmp, project, mIx
 ) where
 
-
+#ifndef O_NO_DERIVED
 import Data.Data (Typeable, Data)
 import GHC.Generics (Generic)
+#endif
+
+
 import Foreign.Storable (Storable, sizeOf, alignment, peek, poke)
 import Foreign.Ptr (Ptr, plusPtr, castPtr)
+
+
+#ifndef O_NO_RANDOM
 import System.Random (RandomGen, Random, randomR, random)
+#endif
 
 
 -- | Cl3 provides specialized constructors for sub-algebras and other geometric objects
@@ -104,8 +113,15 @@ data Cl3 where
   ODD :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Odd (G1 + G3)
   TPV :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Triparavector (G2 + G3)
   APS :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3 -- Algebra of Physical Space (G0 + G1 + G2 + G3)
+#ifndef O_NO_DERIVED
     deriving (Show, Read, Typeable, Data, Generic)
+#else
 
+-- | In case we don't derive Show, provide 'showOctave' as the Show instance
+instance Show Cl3 where
+  show = showOctave
+
+#endif
 
 
 -- |'showOctave' for useful for debug purposes.
@@ -1719,6 +1735,7 @@ instance Storable Cl3 where
 
 
 
+#ifndef O_NO_RANDOM
 -------------------------------------------------------------------
 -- 
 -- Random Instance of Cl3 types with the "System.Random" library.
@@ -1956,4 +1973,7 @@ vectorHelper con rng g =
       (theta, g'') = randomR (0,pi) g'
       (phi, g''') = randomR (0,2*pi) g''
   in (con (mag * sin theta * cos phi) (mag * sin theta * sin phi) (mag * cos theta), g''')
+
+
+#endif
 

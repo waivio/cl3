@@ -1,6 +1,7 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# LANGUAGE CPP #-}
 
 --------------------------------------------------------------------------------------------
 -- |
@@ -56,17 +57,22 @@ module Algebra.Geometric.Cl3.JonesCalculus
  wpRot,
  -- * Reflection
  refl,
+#ifndef O_NO_RANDOM
  -- * Random Jones Vectors
  randJonesVec,
  randOrthogonalJonesVec,
+#endif
  -- * Normalization Factorization
  factorize
 ) where
 
 
-import safe Algebra.Geometric.Cl3 (Cl3(..), dag, bar, toR, toV3, toC, project, randUnitV3)
-import System.Random (RandomGen)
+import safe Algebra.Geometric.Cl3 (Cl3(..), dag, bar, toR, toV3, toC, project)
 
+#ifndef O_NO_RANDOM
+import safe Algebra.Geometric.Cl3 (randUnitV3)
+import System.Random (RandomGen)
+#endif
 
 e0 = R 1
 e1 = V3 1 0 0
@@ -192,6 +198,7 @@ factorize jonesVec =
       phi = 2 * (-i) * log normC
   in (amp, phi, normJonesVec)
 
+#ifndef O_NO_RANDOM
 -------------------------------------------------------------------
 --
 --  Random Jones Vectors
@@ -210,3 +217,5 @@ randOrthogonalJonesVec :: RandomGen g => g -> ((Cl3, Cl3), g)
 randOrthogonalJonesVec g = 
   let (v3, g') = randUnitV3 g
   in ((jv v3, jv (bar v3)),g')
+
+#endif
