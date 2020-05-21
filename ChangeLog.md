@@ -1,7 +1,11 @@
 # Revision history for cl3
 
-## 2.0.0.0  -- 2020-05-07
+## 2.0.0.0  -- 2020-05-19
 
+* Added 'BangPatterns' language extension
+* Added 'Control.DeepSeq' dependency for 'NFData' and 'rnf'
+* Added class instance for 'NFData'
+* Added 'randUnitary' for a random Unitary value in APS
 * Added CPP flags to Cl3 be able to turn off derived instances and the random dependancy
 * Added CPP flags to JonesCalculus to turn off the random dependancy
 * Added new function 'mIx' for the Inverse Hodge Star operator
@@ -9,15 +13,23 @@
 * Fixed 'compare' so that there will be a total order when comparing I with other I values
 * Refactored 'compare' so that lets were moved to a higher level
 * Refactored 'abs' so that (2*) was changed to (x + x) and common computations were let floated
+* Refactored 'signum' to inline more Double precesion math into the returned value
 * Refactored 'recip' to use a helper function, moved some shared calculations to a 'let' binding
 * Refactored 'log' to convert the 'sqrt' from inside the log to a '(/2)'
+* Refactored imaginary implementation of 'log' to specialize the values at +/- 1 to be purly imaginary
 * Refactored imaginary implementation of 'sqrt' to inline more Double precision math into the 'C' constructor
+* Refactored imaginary implementation of 'sqrt' to specialize the values at 0 to be purly real
 * Refactored complex implementation of 'sqrt' to inline more Double precision math into the 'C' constructor
+* Refactored imaginary implementation of 'sin' to specialize the values at 0 to be purly real
 * Refactored complex implementation of 'tan' to inline more Double precision math into the 'C' constructor
+* Refactored imaginary implementation of 'tan' to specialize the value at 0 to be purly real
 * Refactored real implementation of 'asin' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored imaginary implementation of 'asin' to specialize the value at 0 to be purly real
 * Refactored complex implementation of 'asin' to inline more Double precision math into the 'C' constructor
 * Refactored real implementation of 'acos' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored imaginary implementation of 'acos' to specialize the value at 0 to be purly real
 * Refactored complex implementation of 'acos' to inline more Double precision math into the 'C' constructor
+* Refactored complex implementation of 'acos' to specialize the value at 0 to be purly real
 * Refactored imaginary implementation of 'atan' to re-derive the implemenation to inline more Double precision math into the various constructors
 * Refactored complex implementation of 'atan' to inline more Double precision math into the 'C' constructor
 * Refactored complex implementation of 'tanh' to inline more Double precision math into the 'C' constructor
@@ -28,6 +40,7 @@
 * Refactored complex implementation of 'acosh' to inline more Double precision math into the 'C' constructor
 * Refactored real implementation of 'atanh' to re-derive the implemenation to inline more Double precision math into the various constructors
 * Refactored imaginary implementation of 'atanh' to inline more Double precision math into the 'I' constructor
+* Refactored imaginary implementation of 'atanh' to specialize the value at 0 to be purly real
 * Refactored complex implementation of 'atanh' to inline more Double precision math into the 'C' constructor
 * Refactored 'lsv' same as 'abs'
 * Implemented hlint's suggestion to remove parens around pattern for 'spectraldcmp' helper function 'dcmp'
@@ -39,15 +52,12 @@
 * Refactored 'proj' to use 'mIx' and fewer parens
 * Refactored 'proj' to distribute the (0.5*) on the real and vector parts
 * Refactored 'boost2colinear' to use 'mIx'
-* Refactored 'isColinear' to be more directly comparisons on Doubles with a helper function 'hasit'
-* Refactored 'isColinear' to use a helper function suggested by hlint to calculate the magnitude of the vector and bivector components
-* Refactored 'isColinear' to remove the 'signum' function because it was too big and not needed
+* Refactored 'isColinear' to be calculated with Double precision math with a helper function 'hasit'
+* Refactored 'isColinear' to inline and specialize the 'signum' function
 * Refactored 'isColinear' to commonize the BPV and APS constructors
-* Refactored 'hasNilpotent' to be more directly comparisons on Doubles with a helper function 'hasit'
-* Refactored 'hasNilpotent' to use a helper function suggested by hlint to calculate the magnitude of the vector and bivector components
-* Refactored 'hasNilpotent' to remove the 'signum' function because it was too big and changed to square the bpv to determine if the magnitude was close to zero
+* Refactored 'hasNilpotent' to be calculated with Double precision math with a helper function 'hasit'
+* Refactored 'hasNilpotent' to inline and specialize the 'signum' function
 * Refactored 'hasNilpotent' to commonize the BPV and APS constructors
-* Added 'vMagHelper' as suggested by hlint to commonize some calculation of the magnitude of the vector and bivector parts of a cliffor
 * Implemented hlint's suggestion to remove '$' from 'projEigs'
 * Refactored 'reduce' to factor out a shared comparison and use a helper function
 * Refactored 'reduce' to re-order some of the comparisons to ones that are more common
@@ -62,9 +72,25 @@
 * Refactored 'tanh'' to be in a point free style
 * Refactored 'asinh'' to be in a point free style
 * Refactored 'atanh'' to be in a point free style
-* Refactored 'randNilpotent' to use 'mIx'
-* Changed the tests to run 50,000 times
+* Refactored 'rangePV' to be more uniform and within the required range
+* Refactored 'rangeH' to be more uniform and within the required range
+* Refactored 'rangeC' to be more uniform and within the required range
+* Refactored 'rangeBPV' to be more uniform and within the required range
+* Refactored 'rangeODD' to be more uniform and within the required range
+* Refactored 'rangeTPV' to be more uniform and within the required range
+* Refactored 'rangeAPS' to be more uniform and within the required range
+* Refactored 'randUnitV3' to be more uniform and not to be biased to the poles
+* Refactored 'randProjector' to inline more Double precision math into the PV constructor
+* Refactored 'randNilpotent' to inline more Double precision math into the BPV constructor
+* Added 'randUnitary' to generate random unitary Cliffors
+* Refactored 'vectorHelper' to use 'randUnitV3'
+* Rewrote the tests to use Criterion instead of QuickCheck
+* Changed the tests Arbitrary to 'randomRIO'
+* Changed the test's random input to be 50,000 Cliffors; 50,000,000 didn't take too long either
 * Refactored the tests to use 'mIx'
+* Refactored the tests '≈≈' to be a mean squared error calculation compared to a threshold
+* Refactored the tests 'poles' to use a 'closeTo' function instead of '≈≈' to compare with eigenvalues
+* Added to the tests a 'closeTo' function to compare against eigenvalues in the complex plane using a Euclidean distance
 
 ## 1.0.0.4  -- 2018-10-18
 

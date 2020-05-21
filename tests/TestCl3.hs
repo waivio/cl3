@@ -4,7 +4,7 @@
 
 -------------------------------------------------------------------
 -- |
--- Copyright   :  (c) 2017 Nathan Waivio
+-- Copyright   :  (c) 2017-2020 Nathan Waivio
 -- License     :  BSD3
 -- Maintainer  :  Nathan Waivio <nathan.waivio@gmail.com>
 -- 
@@ -16,10 +16,10 @@
 
 module Main (main) where
 
-import Test.QuickCheck (Arbitrary, arbitrary, oneof, suchThat, quickCheckWith, stdArgs, maxSuccess)
 import Algebra.Geometric.Cl3
-import Control.Applicative ((<*>), (<$>))
-
+import Control.Monad (replicateM)
+import Criterion.Main (defaultMain, bench, nfIO, env, Benchmark)
+import System.Random (randomRIO)
 
 ------------------------------------------------------------------
 -- |
@@ -36,7 +36,6 @@ import Control.Applicative ((<*>), (<$>))
 --
 -- * Approximate equivalence is tested due to limitations with respect to floating point math.
 --
--- * The implementation of Arbitrary for Cl3 limits the arbitrary cliffor such that the absolute value of cliff is less than 15
 -- 
 -- The following properties are verified in this module:
 --
@@ -96,72 +95,61 @@ import Control.Applicative ((<*>), (<$>))
 --
 -------------------------------------------------------------------
 
+
 main :: IO ()
-main = do moduleTests
-          print "Testing log.exp Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_LogExp
-          print "Testing exp.log Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_ExpLog
-          print "Testing abs*signum law:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AbsSignum
-          print "Testing the definition of recip:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_RecipDef
-          print "Testing recip.recip Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_RecipID
-          print "Testing sin.asin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinAsin
-          print "Testing asin.sin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AsinSin
-          print "Testing cos.acos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CosAcos
-          print "Testing acos.cos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcosCos
-          print "Testing sinh.asinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinhAsinh
-          print "Testing asinh.sinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AsinhSinh
-          print "Testing cosh.acosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CoshAcosh
-          print "Testing acosh.cosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcoshCosh
-          print "Testing acosh.cosh Identity2:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_AcoshCosh2
-          print "Testing Double Sin Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubSin
-          print "Testing Double Cos Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubCos
-          print "Testing Double Tan Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubTan
-          print "Testing Double Sinh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubSinh
-          print "Testing Double Cosh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubCosh
-          print "Testing Double Tanh Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DubTanh
-          print "Testing Positive Sin Shift Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_PosSinShift
-          print "Testing Negative Sin Shift Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_NegSinShift
-          print "Testing sin^2+cos^2 Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SinSqCosSq
-          print "Testing cosh^2-sinh^2 Identity:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CoshSqmSinhSq
-          print "Testing Symmetry of Cosh:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SymCosh
-          print "Testing Symmetry of Sinh:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_SymSinh
-          print "Testing Double I Sin:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_DoubleISin
-          print "It has Composition Sub-Algebras:"
-          quickCheckWith stdArgs { maxSuccess = 50000 } prop_CompAlg
+main = defaultMain benchList
 
+benchList :: [Benchmark]
+benchList = fmap buildBench props
 
+props :: [(String,(Cl3 -> Bool))]
+props = [("Testing log.exp Identity:", prop_LogExp),
+         ("Testing exp.log Identity:", prop_ExpLog),
+         ("Testing abs*signum law:", prop_AbsSignum),
+         ("Testing the definition of recip:", prop_RecipDef),
+         ("Testing recip.recip Identity:", prop_RecipID),
+         ("Testing sin.asin Identity:", prop_SinAsin),
+         ("Testing asin.sin Identity:", prop_AsinSin),
+         ("Testing cos.acos Identity:", prop_CosAcos),
+         ("Testing acos.cos Identity:", prop_AcosCos),
+         ("Testing sinh.asinh Identity:", prop_SinhAsinh),
+         ("Testing asinh.sinh Identity:", prop_AsinhSinh),
+         ("Testing cosh.acosh Identity:", prop_CoshAcosh),
+         ("Testing acosh.cosh Identity:", prop_AcoshCosh),
+         ("Testing acosh.cosh Identity2:", prop_AcoshCosh2),
+         ("Testing Double Sin Identity:", prop_DubSin),
+         ("Testing Double Cos Identity:", prop_DubCos),
+         ("Testing Double Tan Identity:", prop_DubTan),
+         ("Testing Double Sinh Identity:", prop_DubSinh),
+         ("Testing Double Cosh Identity:", prop_DubCosh),
+         ("Testing Double Tanh Identity:", prop_DubTanh),
+         ("Testing Positive Sin Shift Identity:", prop_PosSinShift),
+         ("Testing Negative Sin Shift Identity:", prop_NegSinShift),
+         ("Testing sin^2+cos^2 Identity:", prop_SinSqCosSq),
+         ("Testing cosh^2-sinh^2 Identity:", prop_CoshSqmSinhSq),
+         ("Testing Symmetry of Cosh:", prop_SymCosh),
+         ("Testing Symmetry of Sinh:", prop_SymSinh),
+         ("Testing Double I Sin:", prop_DoubleISin)]
 
-----------------------------------------------------------
--- |Start of Module Tests
-moduleTests :: IO ()
-moduleTests = sequence_ $ tests <*> inputs
+buildBench :: (String,(Cl3 -> Bool)) -> Benchmark
+buildBench (name, prop) = runWithEnv $ \cliffs -> bench name (nfIO $ test cliffs)
+  where
+    test :: [Cl3] -> IO ()
+    test ([]) = return ()
+    test (cl:cls) =
+      if prop cl
+      then test cls
+      else error $ "Failed on input: " ++ show cl
 
+runWithEnv :: ([Cl3] -> Benchmark) -> Benchmark
+runWithEnv = (env listRandCliffs)
+
+listRandCliffs :: IO [Cl3]
+listRandCliffs = do
+  randCliff <-(replicateM 50000).randomRIO $ (R 0, R 3)
+  return (inputs ++ randCliff)
+
+-- Standard inputs and special cases of projectors and nilpotents
 inputs :: [Cl3]
 inputs = [R 0
          ,APS 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8
@@ -170,224 +158,217 @@ inputs = [R 0
          ,BPV 0.5 0 0 0 (-0.5) 0
          ,BPV 0.5 0 0 0 0.5 0
          ,R 1
+         ,R (-1)
+         ,R pi
+         ,R (pi/2)
+         ,R (pi/4)
          ,V3 1 0 0
          ,APS 1 0.5 0 0 0 0.5 0 0
          ,APS 1 0.5 0 0 0 (-0.5) 0 0
          ,PV 1 1 0 0
-         ,R 1
-         ,R (-1)
          ,V3 1 0 0
          ,V3 (-1) 0 0
          ,V3 0 1 0
          ,V3 0 (-1) 0
          ,V3 0 0 1
          ,V3 0 0 (-1)
+         ,V3 pi 0 0
+         ,V3 (pi/2) 0 0
+         ,V3 (pi/4) 0 0
          ,BV 1 0 0
          ,BV (-1) 0 0
          ,BV 0 1 0
          ,BV 0 (-1) 0
          ,BV 0 0 1
          ,BV 0 0 (-1)
+         ,BV pi 0 0
+         ,BV (pi/2) 0 0
+         ,BV (pi/4) 0 0
          ,I 1
          ,I (-1)
+         ,I pi
+         ,I (pi/2)
+         ,I (pi/4)
          ]
 
--- | 'tests' is a list of tests
--- The out of bounds can be the poles of the function or if the cliffor has
--- nilpotent content then the poles of the derivative as well as the function
-tests :: [Cl3 -> IO()]
-tests = [runTest "Log.Exp Identity" (log.exp) id (const False)
-        ,runTest "Exp.Log Identity" (exp.log) id (\z -> lsv z < tol) -- singular inputs are out of bounds
-        ,runTest "Abs*Signum Identity" (\x->abs x * signum x) id (const False)
-        ,runTest "Reciprical Identity" (recip.recip) id (\z -> lsv z < tol) -- singular inputs are out of bounds
-        ,runTest "sin.asin" (sin.asin) id (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
-        ,runTest "asin.sin" (asin.sin) (\z -> mIx.log $ (0.5 * (exp (I 1 * z) - exp (mIx z)) +
-                                                                  sqrt (1+0.25*(exp (mIx z) - exp (I 1 * z))^2))) (const False)
-        ,runTest "cos.acos" (cos.acos) id (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
-        ,runTest "acos.cos" (acos.cos) (\z -> 0.5 * (pi - 2 * asin(cos z))) (\z -> hasNilpotent z && poles [R 0, pi, negate pi] z)
-        ,runTest "sinh.asinh" (sinh.asinh) id (const False)
-        ,runTest "asinh.sinh" (asinh.sinh) (\z -> log (0.5*(exp z - exp (negate z)) + sqrt (0.25 * (exp z - exp (negate z))^2 + 1))) (const False)
-        ,runTest "cosh.acosh" (cosh.acosh) id (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
-        ,runTest "acosh.cosh" (acosh.cosh) (\z -> log (0.5*(exp z + exp (negate z)) +
-                                                 sqrt (0.5*(exp z + exp (negate z)) - 1) * sqrt (0.5*(exp z + exp (negate z)) + 1))) (const False)
-        ,runTest "Double Angle sin" (\z -> sin (2 * z)) (\z -> 2 * sin z * cos z) (const False)
-        ,runTest "Double Angle cos" (\z -> cos (2 * z)) (\z -> cos z ^ 2 - sin z ^ 2) (const False)
-        ,runTest "Double Angle tan" (\z -> tan (2 * z)) (\z -> (2 * tan z) / (1 - tan z ^ 2)) (const False)
-        ,runTest "+Sin Shift" (\z -> sin (pi/2 + z)) cos (const False)
-        ,runTest "-Sin Shift" (\z -> sin (pi/2 - z)) cos (const False)
-        ,runTest "Double Angle sinh" (\z -> sinh (2 * z)) (\z -> 2 * sinh z * cosh z) (const False)
-        ,runTest "Double Angle cosh" (\z -> cosh (2 * z)) (\z -> 2 * cosh z ^ 2 - 1) (const False)
-        ,runTest "Double Angle tanh" (\z -> tanh (2 * z)) (\z -> (2 * tanh z) / (1 + tanh z ^ 2)) (const False)
-        ,runTest "sin^2+cos^2" (\z -> sin z ^ 2 + cos z ^ 2) (const $ R 1) (const False)
-        ,runTest "cosh^2-sinh^2" (\z -> cosh z ^ 2 - sinh z ^ 2) (const $ R 1) (const False)
-        ,runTest "Symetry of cosh" (cosh.negate) cosh (const False)
-        ,runTest "Symetry of sinh" (sinh.negate) (negate.sinh) (const False)
-        ,runTest "sin.acos" (sin.acos) (\z -> sqrt (1 - z^2)) (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
-        ,runTest "sin.atan" (sin.atan) (\z -> z / sqrt (1 + z^2)) (poles [I 1, I (-1)])
-        ,runTest "cos.atan" (cos.atan) (\z -> recip.sqrt $ 1 + z^2) (poles [I 1, I (-1)])
-        ,runTest "cos.asin" (cos.asin) (\z -> sqrt (1 - z^2)) (\z -> hasNilpotent z && poles [R 1, R (-1)] z)
-        ,runTest "tan.asin" (tan.asin) (\z -> z / sqrt (1 - z^2)) (poles [R 1, R (-1)])
-        ,runTest "tan.acos" (tan.acos) (\z -> sqrt (1 - z^2) / z) (\z -> if hasNilpotent z then poles [R 1, R 0, R (-1)] z else poles [R 0] z)
-        ]
 
--- | The Properties
-prop_LogExp :: ArbCl3 -> Bool
-prop_LogExp (Arb cliffor) = (abs cliffor > 10) || (
+-------------------------------------------------------
+-- | A set of properties to test
+-------------------------------------------------------
+
+prop_LogExp :: Cl3 -> Bool
+prop_LogExp (cliffor) = (abs cliffor > 10) || (
   let cliffor' = unWrapIPartEigs cliffor  -- imaginary part of log.exp repeats
 -- round off errors get large for exp larger than 5 use spectproj (log.exp) for accuracy
-  in log (exp cliffor') ≈≈ cliffor')
+-- note: +/- i*pi are not really poles but cause issues due to cancelation for (BV pi 0 0)
+  in poles [I (-pi), I (pi)] cliffor' || (log (exp cliffor') ≈≈ cliffor'))
 
 -- log 0 is -Inf, Infinite vectors don't play nice
 -- spectproj (exp.log) doesn't have this issue
-prop_ExpLog :: ArbCl3 -> Bool
-prop_ExpLog (Arb cliffor) = (lsv cliffor < tol) || (exp (log cliffor) ≈≈ cliffor)
+prop_ExpLog :: Cl3 -> Bool
+prop_ExpLog (cliffor) = (lsv cliffor < tol) || (exp (log cliffor) ≈≈ cliffor)
 
-prop_AbsSignum :: ArbCl3 -> Bool
-prop_AbsSignum (Arb cliffor) = abs cliffor * signum cliffor ≈≈ cliffor
+prop_AbsSignum :: Cl3 -> Bool
+prop_AbsSignum (cliffor) = abs cliffor * signum cliffor ≈≈ cliffor
 
-prop_RecipDef :: ArbCl3 -> Bool
-prop_RecipDef (Arb cliffor) = (lsv cliffor < tol) || (recip cliffor * cliffor ≈≈ 1)
+prop_RecipDef :: Cl3 -> Bool
+prop_RecipDef (cliffor) = (lsv cliffor < tol) || (recip cliffor * cliffor ≈≈ 1)
 
 -- singular inputs don't recip also suffers from roundoff errors at large values
-prop_RecipID :: ArbCl3 -> Bool
-prop_RecipID (Arb cliffor) = (lsv cliffor < tol) || (recip (recip cliffor) ≈≈ cliffor)
+prop_RecipID :: Cl3 -> Bool
+prop_RecipID (cliffor) = (lsv cliffor < tol) || (recip (recip cliffor) ≈≈ cliffor)
 
-prop_SinAsin :: ArbCl3 -> Bool
-prop_SinAsin (Arb cliffor) = if hasNilpotent cliffor
-                             then poles [R 1, R (-1)] cliffor || (sin (asin cliffor) ≈≈ cliffor)
-                             else sin (asin cliffor) ≈≈ cliffor
+prop_SinAsin :: Cl3 -> Bool
+prop_SinAsin (cliffor) = if hasNilpotent cliffor
+                         then poles [R 1, R (-1)] cliffor || (sin (asin cliffor) ≈≈ cliffor)
+                         else sin (asin cliffor) ≈≈ cliffor
 
-prop_AsinSin :: ArbCl3 -> Bool
-prop_AsinSin (Arb cliffor) = (abs cliffor > 10) || (asin (sin cliffor) ≈≈ (I (-1) * log (0.5 * (exp (I 1 * cliffor) - exp (mIx cliffor)) +
-                                                                                         sqrt (1+0.25*(exp (mIx cliffor) - exp (I 1 * cliffor))^2))))
+prop_AsinSin :: Cl3 -> Bool
+prop_AsinSin (cliffor) = (abs cliffor > 10) || (asin (sin cliffor) ≈≈ (I (-1) * log (0.5 * (exp (I 1 * cliffor) - exp (mIx cliffor)) +
+                                                                                     sqrt (1+0.25*(exp (mIx cliffor) - exp (I 1 * cliffor))^2))))
 
-prop_CosAcos :: ArbCl3 -> Bool
-prop_CosAcos (Arb cliffor) = if hasNilpotent cliffor
+prop_CosAcos :: Cl3 -> Bool
+prop_CosAcos (cliffor) = if hasNilpotent cliffor
                              then poles [R 1, R (-1)] cliffor || (cos (acos cliffor) ≈≈ cliffor)
                              else cos (acos cliffor) ≈≈ cliffor
 
-prop_AcosCos :: ArbCl3 -> Bool
-prop_AcosCos (Arb cliffor) = (abs cliffor > 10) || (if hasNilpotent cliffor
-                                                    then poles [R 0, pi, negate pi] cliffor || (acos (cos cliffor) ≈≈ 0.5 * (pi - 2 * asin(cos cliffor)))
-                                                    else acos (cos cliffor) ≈≈ 0.5 * (pi - 2 * asin(cos cliffor)))
+prop_AcosCos :: Cl3 -> Bool
+prop_AcosCos (cliffor) = (abs cliffor > 10) || (if hasNilpotent cliffor
+                                                then poles [R 0, pi, negate pi] cliffor || (acos (cos cliffor) ≈≈ 0.5 * (pi - 2 * asin(cos cliffor)))
+                                                else acos (cos cliffor) ≈≈ 0.5 * (pi - 2 * asin(cos cliffor)))
 
-prop_SinhAsinh :: ArbCl3 -> Bool
-prop_SinhAsinh (Arb cliffor) = sinh (asinh cliffor) ≈≈ cliffor
+prop_SinhAsinh :: Cl3 -> Bool
+prop_SinhAsinh (cliffor) = sinh (asinh cliffor) ≈≈ cliffor
 
-prop_AsinhSinh :: ArbCl3 -> Bool
-prop_AsinhSinh (Arb cliffor) = (abs cliffor > 10) || (asinh (sinh cliffor) ≈≈ log (0.5*(exp cliffor - exp (negate cliffor)) +
+prop_AsinhSinh :: Cl3 -> Bool
+prop_AsinhSinh (cliffor) = (abs cliffor > 10) || (asinh (sinh cliffor) ≈≈ log (0.5*(exp cliffor - exp (negate cliffor)) +
                                                                                    sqrt (0.25 * (exp cliffor - exp (negate cliffor))^2 + 1)))
 
-prop_CoshAcosh :: ArbCl3 -> Bool
-prop_CoshAcosh (Arb cliffor) = if hasNilpotent cliffor
-                               then poles [R 1, R (-1)] cliffor || (cosh (acosh cliffor) ≈≈ cliffor)
-                               else cosh (acosh cliffor) ≈≈ cliffor
+prop_CoshAcosh :: Cl3 -> Bool
+prop_CoshAcosh (cliffor) = if hasNilpotent cliffor
+                           then poles [R 1, R (-1)] cliffor || (cosh (acosh cliffor) ≈≈ cliffor)
+                           else cosh (acosh cliffor) ≈≈ cliffor
 
-prop_AcoshCosh :: ArbCl3 -> Bool
-prop_AcoshCosh (Arb cliffor) = acosh (cosh cliffor) ≈≈ log (0.5*(exp cliffor + exp (negate cliffor)) +
-                                                            sqrt (0.5*(exp cliffor + exp (negate cliffor)) - 1) *
-                                                            sqrt (0.5*(exp cliffor + exp (negate cliffor)) + 1))
+prop_AcoshCosh :: Cl3 -> Bool
+prop_AcoshCosh (cliffor) = acosh (cosh cliffor) ≈≈ log (0.5*(exp cliffor + exp (negate cliffor)) +
+                                                        sqrt (0.5*(exp cliffor + exp (negate cliffor)) - 1) *
+                                                        sqrt (0.5*(exp cliffor + exp (negate cliffor)) + 1))
 
-prop_AcoshCosh2 :: ArbCl3 -> Bool
-prop_AcoshCosh2 (Arb cliffor) = acosh (cosh cliffor) ≈≈ log (cosh cliffor + sqrt (cosh cliffor - 1) * sqrt (cosh cliffor + 1))
+prop_AcoshCosh2 :: Cl3 -> Bool
+prop_AcoshCosh2 (cliffor) = acosh (cosh cliffor) ≈≈ log (cosh cliffor + sqrt (cosh cliffor - 1) * sqrt (cosh cliffor + 1))
 
-prop_DubSin :: ArbCl3 -> Bool
-prop_DubSin (Arb cliffor) = sin (2 * cliffor) ≈≈ 2 * sin cliffor * cos cliffor
+prop_DubSin :: Cl3 -> Bool
+prop_DubSin (cliffor) = sin (2 * cliffor) ≈≈ 2 * sin cliffor * cos cliffor
 
-prop_DubCos :: ArbCl3 -> Bool
-prop_DubCos (Arb cliffor) = cos (2 * cliffor) ≈≈ cos cliffor ^ 2 - sin cliffor ^ 2
+prop_DubCos :: Cl3 -> Bool
+prop_DubCos (cliffor) = cos (2 * cliffor) ≈≈ cos cliffor ^ 2 - sin cliffor ^ 2
 
-prop_DubTan :: ArbCl3 -> Bool
-prop_DubTan (Arb cliffor) = tan (2 * cliffor) ≈≈ (2 * tan cliffor) / (1 - tan cliffor ^ 2)
+prop_DubTan :: Cl3 -> Bool
+prop_DubTan (cliffor) = poles [R (-pi), R (-3*pi/4), R (-pi/2), R (-pi/4), R (pi/4), R (pi/2), R (3*pi/4), R (pi)] cliffor ||
+                        (tan (2 * cliffor) ≈≈ (2 * tan cliffor) / (1 - tan cliffor ^ 2))
 
-prop_DubSinh :: ArbCl3 -> Bool
-prop_DubSinh (Arb cliffor) = sinh (2 * cliffor) ≈≈ 2 * sinh cliffor * cosh cliffor
+prop_DubSinh :: Cl3 -> Bool
+prop_DubSinh (cliffor) = sinh (2 * cliffor) ≈≈ 2 * sinh cliffor * cosh cliffor
 
-prop_DubCosh :: ArbCl3 -> Bool
-prop_DubCosh (Arb cliffor) = cosh (2 * cliffor) ≈≈ 2 * cosh cliffor ^ 2 - 1
+prop_DubCosh :: Cl3 -> Bool
+prop_DubCosh (cliffor) = cosh (2 * cliffor) ≈≈ 2 * cosh cliffor ^ 2 - 1
 
-prop_DubTanh :: ArbCl3 -> Bool
-prop_DubTanh (Arb cliffor) = tanh (2 * cliffor) ≈≈ (2 * tanh cliffor) / (1 + tanh cliffor ^ 2)
+-- The test has poles at imaginary eigenvalues of n*pi/4 even is poles in the denominator and odd is poles in the numerator
+-- The poles are a source of a loss of precision.
+prop_DubTanh :: Cl3 -> Bool
+prop_DubTanh (cliffor) = poles [I (-pi), I (-3*pi/4), I (-pi/2), I (-pi/4), I (pi/4), I (pi/2), I (3*pi/4), I (pi)] cliffor ||
+                         (tanh (2 * cliffor) ≈≈ (2 * tanh cliffor) / (1 + tanh cliffor ^ 2))
 
-prop_PosSinShift :: ArbCl3 -> Bool
-prop_PosSinShift (Arb cliffor) = sin (pi/2 + cliffor) ≈≈ cos cliffor
+prop_PosSinShift :: Cl3 -> Bool
+prop_PosSinShift (cliffor) = sin (pi/2 + cliffor) ≈≈ cos cliffor
 
-prop_NegSinShift :: ArbCl3 -> Bool
-prop_NegSinShift (Arb cliffor) = sin (pi/2 - cliffor) ≈≈ cos cliffor
+prop_NegSinShift :: Cl3 -> Bool
+prop_NegSinShift (cliffor) = sin (pi/2 - cliffor) ≈≈ cos cliffor
 
-prop_SinSqCosSq :: ArbCl3 -> Bool
-prop_SinSqCosSq (Arb cliffor) = (abs cliffor > 10) || (sin cliffor ^ 2 + cos cliffor ^ 2 ≈≈ 1)
+prop_SinSqCosSq :: Cl3 -> Bool
+prop_SinSqCosSq (cliffor) = (abs cliffor > 10) || (sin cliffor ^ 2 + cos cliffor ^ 2 ≈≈ 1)
 
-prop_CoshSqmSinhSq :: ArbCl3 -> Bool
-prop_CoshSqmSinhSq (Arb cliffor) = (abs cliffor > 10) || (cosh cliffor ^ 2 - sinh cliffor ^ 2 ≈≈ 1)
+prop_CoshSqmSinhSq :: Cl3 -> Bool
+prop_CoshSqmSinhSq (cliffor) = (abs cliffor > 10) || (cosh cliffor ^ 2 - sinh cliffor ^ 2 ≈≈ 1)
 
-prop_SymCosh :: ArbCl3 -> Bool
-prop_SymCosh (Arb cliffor) = cosh (negate cliffor) ≈≈ cosh cliffor
+prop_SymCosh :: Cl3 -> Bool
+prop_SymCosh (cliffor) = cosh (negate cliffor) ≈≈ cosh cliffor
 
-prop_SymSinh :: ArbCl3 -> Bool
-prop_SymSinh (Arb cliffor) = sinh (negate cliffor) ≈≈ negate (sinh cliffor)
+prop_SymSinh :: Cl3 -> Bool
+prop_SymSinh (cliffor) = sinh (negate cliffor) ≈≈ negate (sinh cliffor)
 
-prop_DoubleISin :: ArbCl3 -> Bool
-prop_DoubleISin (Arb cliffor) = 2 * I 1 * sin cliffor ≈≈ exp(I 1 * cliffor) - exp (mIx cliffor)
+prop_DoubleISin :: Cl3 -> Bool
+prop_DoubleISin (cliffor) = 2 * I 1 * sin cliffor ≈≈ exp(I 1 * cliffor) - exp (mIx cliffor)
 
--- | Composition Sub-Algebras have a distributive norm over multiplication, like this:
+-- | Composition Sub-Algebras have a distributive norm over multiplication,
+-- like this:
 -- 
 -- > norm $ clif * clif' = norm clif * norm clif'
 --
--- Strangly the constructor combinations with the "= True" don't play nice with 'abs'
--- they are the constructors with non-zero zero-divisors.
-prop_CompAlg :: (ArbCl3, ArbCl3) -> Bool
-prop_CompAlg (Arb PV{}, Arb PV{}) = True
-prop_CompAlg (Arb PV{}, Arb BPV{}) = True
-prop_CompAlg (Arb PV{}, Arb TPV{}) = True
-prop_CompAlg (Arb PV{}, Arb APS{}) = True
-prop_CompAlg (Arb BPV{}, Arb PV{}) = True
-prop_CompAlg (Arb TPV{}, Arb PV{}) = True
-prop_CompAlg (Arb APS{}, Arb PV{}) = True
-prop_CompAlg (Arb BPV{}, Arb BPV{}) = True
-prop_CompAlg (Arb BPV{}, Arb TPV{}) = True
-prop_CompAlg (Arb BPV{}, Arb APS{}) = True
-prop_CompAlg (Arb TPV{}, Arb BPV{}) = True
-prop_CompAlg (Arb APS{}, Arb BPV{}) = True
-prop_CompAlg (Arb TPV{}, Arb TPV{}) = True
-prop_CompAlg (Arb TPV{}, Arb APS{}) = True
-prop_CompAlg (Arb APS{}, Arb TPV{}) = True
-prop_CompAlg (Arb APS{}, Arb APS{}) = True
-prop_CompAlg (Arb cliffor, Arb cliffor') = abs ( cliffor * cliffor') ≈≈ abs cliffor * abs cliffor'
+-- Strangly the constructor combinations with the "= True" don't play nice
+-- with 'abs' they are the constructors with non-zero zero-divisors.
+prop_CompAlg :: (Cl3, Cl3) -> Bool
+prop_CompAlg (PV{}, PV{}) = True
+prop_CompAlg (PV{}, BPV{}) = True
+prop_CompAlg (PV{}, TPV{}) = True
+prop_CompAlg (PV{}, APS{}) = True
+prop_CompAlg (BPV{}, PV{}) = True
+prop_CompAlg (TPV{}, PV{}) = True
+prop_CompAlg (APS{}, PV{}) = True
+prop_CompAlg (BPV{}, BPV{}) = True
+prop_CompAlg (BPV{}, TPV{}) = True
+prop_CompAlg (BPV{}, APS{}) = True
+prop_CompAlg (TPV{}, BPV{}) = True
+prop_CompAlg (APS{}, BPV{}) = True
+prop_CompAlg (TPV{}, TPV{}) = True
+prop_CompAlg (TPV{}, APS{}) = True
+prop_CompAlg (APS{}, TPV{}) = True
+prop_CompAlg (APS{}, APS{}) = True
+prop_CompAlg (cliffor, cliffor') = abs ( cliffor * cliffor') ≈≈ abs cliffor * abs cliffor'
 
+----------------------------------------------------
+-- Helper functions for the properties
+----------------------------------------------------
 
--- Run the test
--- compare the function under test (fUT) to a golden test funcion (gTF)
--- if the input is within bounds
-runTest :: String -> (Cl3 -> Cl3) -> (Cl3 -> Cl3) -> (Cl3 -> Bool) -> Cl3 -> IO()
-runTest testName fUT gTF outOB iVal =
-  let f = fUT iVal
-      g = gTF iVal
-  in if outOB iVal
-       then putStr (unlines [testName ++ ": Input Out of Bounds"])
-       else if f ≈≈ g
-              then putStr (unlines [testName ++ ": Passed"])
-              else putStr (unlines [testName ++ ": Failed"
-                                   ,"Expected: " ++ show g
-                                   ,"     got: " ++ show f
-                                   ,"on input: " ++ show iVal
-                                   ])
-
--- | '≈≈' aproximately equal
+-- | '≈≈' aproximately equal, using a mean squared error like calculation
+-- across the 8 dimensional vector space of APS.  The properties are 
+-- equivelent symbolicly but differ due to numerical errors.
 (≈≈) :: Cl3 -> Cl3 -> Bool
-(reduce -> clifforA) ≈≈ (reduce -> clifforB) =
-  let ave = (abs clifforA + abs clifforB) / 2
-  in abs (clifforA - clifforB) <= 1e-5*ave + tol
+(toAPS -> (APS a0 a1 a2 a3 a23 a31 a12 a123)) ≈≈ (toAPS -> (APS b0 b1 b2 b3 b23 b31 b12 b123)) =
+  let m0 = (a0 - b0)^2
+      m1 = (a1 - b1)^2
+      m2 = (a2 - b2)^2
+      m3 = (a3 - b3)^2
+      m23 = (a23 - b23)^2
+      m31 = (a31 - b31)^2
+      m12 = (a12 - b12)^2
+      m123 = (a123 - b123)^2
+      sumsq = m0 + m1 + m2 + m3 + m23 + m31 + m12 + m123
+      var = sumsq / 8
+  in var <= 2e-13
+_ ≈≈ _ = error "Everything passed to (≈≈) should be caught by toAPS/APS pattern match"
 infix 4 ≈≈
 
 -- | 'poles' a function that tests if a cliffor is one of the defined poles
 poles :: [Cl3] -> Cl3 -> Bool
 poles [] _ = False
-poles [p] cliffor = eig1 ≈≈ p || eig2 ≈≈ p
+poles [p] cliffor = eig1 `closeTo` p || eig2 `closeTo` p
   where (eig1,eig2) = eigvals cliffor
-poles (p:ps) cliffor = (eig1 ≈≈ p || eig2 ≈≈ p) || poles ps cliffor
+poles (p:ps) cliffor = (eig1 `closeTo` p || eig2 `closeTo` p) || poles ps cliffor
   where (eig1,eig2) = eigvals cliffor
 
+-- | 'closeTo' used with poles to determine if an eigenvalue is close to a pole
+-- the current threshold is 1e-3
+closeTo :: Cl3 -> Cl3 -> Bool
+closeTo (toC -> (C a0 a123)) (toC -> (C b0 b123)) =
+  let diffR = abs (a0 - b0)
+      diffI = abs (a123 - b123)
+      magDiff = sqrt (diffR^2 + diffI^2)
+  in magDiff < 1e-3
+closeTo _ _ = error "Everything passed to 'closeTo' should be caught by toC/C pattern match"
+
+-- | 'unWrapIPartEigs' a function to reduce the magnitude of the imaginary
+-- portion of the Eigenvalues
 unWrapIPartEigs :: Cl3 -> Cl3
 unWrapIPartEigs cliffor = reduce $ spectraldcmp unWrapI id cliffor
   where unWrapI (R a0) = R a0
@@ -399,34 +380,4 @@ unWrapIPartEigs cliffor = reduce $ spectraldcmp unWrapI id cliffor
                             | otherwise = C a0 a123
         unWrapI _ = error "unWrapI should only be unWrapping R I and C"
 
-----------------------------------------------------------
-
--------------------------------------------------------------------
--- 
--- Arbitrary Instance of Cl3 types, typically for use with the 
--- "Test.QuickCheck" library. 
--- 
--------------------------------------------------------------------
-
--- | 'ArbCl3' to provide a newtype wrapper to avoid the orphan instance
-newtype ArbCl3 = Arb Cl3 deriving (Show)
-
--- | 'Arbitrary' instance that has its largest singular value less than or equal to 15
-instance Arbitrary ArbCl3 where
-  arbitrary = 
-     oneof [(Arb.)R <$> arbitrary, 
-            ((Arb.).).V3 <$> arbitrary <*> arbitrary <*> arbitrary,
-            ((Arb.).).BV <$> arbitrary <*> arbitrary <*> arbitrary,
-            (Arb.)I <$> arbitrary,
-            (((Arb.).).).PV <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
-            (((Arb.).).).H <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
-            (Arb.).C <$> arbitrary <*> arbitrary,
-            (((((Arb.).).).).).BPV <$> arbitrary <*> arbitrary <*> arbitrary 
-                                   <*> arbitrary <*> arbitrary <*> arbitrary,
-            (((Arb.).).).ODD <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
-            (((Arb.).).).TPV <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
-            (((((((Arb.).).).).).).).APS <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary 
-                                         <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
-            ] `suchThat` lessThan15
-    where
-      lessThan15 (Arb cliffor) = abs cliffor <= 15
+-- End of File
