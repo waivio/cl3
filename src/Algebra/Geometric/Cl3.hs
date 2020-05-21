@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 
 
@@ -52,6 +53,7 @@ module Algebra.Geometric.Cl3
  randUnitV3,
  randProjector,
  randNilpotent,
+ randUnitary,
 #endif
  -- * Helpful Functions
  eigvals, hasNilpotent,
@@ -65,6 +67,7 @@ import GHC.Generics (Generic)
 #endif
 
 
+import Control.DeepSeq (NFData,rnf)
 import Foreign.Storable (Storable, sizeOf, alignment, peek, poke)
 import Foreign.Ptr (Ptr, plusPtr, castPtr)
 
@@ -117,6 +120,7 @@ data Cl3 where
   APS :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3 -- Algebra of Physical Space (G0 + G1 + G2 + G3)
 #ifndef O_NO_DERIVED
     deriving (Show, Read, Typeable, Data, Generic)
+
 #else
 
 -- | In case we don't derive Show, provide 'showOctave' as the Show instance
@@ -124,6 +128,10 @@ instance Show Cl3 where
   show = showOctave
 
 #endif
+
+
+instance NFData Cl3 where
+  rnf !_ = ()
 
 
 -- |'showOctave' for useful for debug purposes.
@@ -973,11 +981,68 @@ instance Num Cl3 where
 
   -- |'signum' satisfies the Law "abs x * signum x == x"
   -- kind of cool: signum of a vector is it's unit vector.
-  signum cliffor
-    | abs cliffor == 0 = 0  -- initially this was abs cliffor < tol, but this caused problems with 'spectraldcmp'
-    | otherwise =
-        let (R mag) = abs cliffor
-        in cliffor * R (recip mag)
+  signum (R a0) = R (signum a0)
+  signum (V3 a1 a2 a3) =
+    let mag = sqrt (a1^2 + a2^2 + a3^2)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else V3 (invMag * a1) (invMag * a2) (invMag * a3)
+  signum (BV a23 a31 a12) =
+    let mag = sqrt (a23^2 + a31^2 + a12^2)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else BV (invMag * a23) (invMag * a31) (invMag * a12)
+  signum (I a123) = I (signum a123)
+  signum (PV a0 a1 a2 a3) =
+    let sumsqs = a1^2 + a2^2 + a3^2
+        x = abs a0 * sqrt sumsqs
+        mag = sqrt (a0^2 + sumsqs + x + x)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else PV (invMag * a0) (invMag * a1) (invMag * a2) (invMag * a3)
+  signum (H a0 a23 a31 a12) =
+    let mag = sqrt (a0^2 + a23^2 + a31^2 + a12^2)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else H (invMag * a0) (invMag * a23) (invMag * a31) (invMag * a12)
+  signum (C a0 a123) =
+    let mag = sqrt (a0^2 + a123^2)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else C (invMag * a0) (invMag * a123)
+  signum (BPV a1 a2 a3 a23 a31 a12) =
+    let x = sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2)
+        mag = sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else BPV (invMag * a1) (invMag * a2) (invMag * a3) (invMag * a23) (invMag * a31) (invMag * a12)
+  signum (ODD a1 a2 a3 a123) =
+    let mag = sqrt (a1^2 + a2^2 + a3^2 + a123^2)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else ODD (invMag * a1) (invMag * a2) (invMag * a3) (invMag * a123)
+  signum (TPV a23 a31 a12 a123) =
+    let sumsqs = a23^2 + a31^2 + a12^2
+        x = abs a123 * sqrt sumsqs
+        mag = sqrt (sumsqs + a123^2 + x + x)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else TPV (invMag * a23) (invMag * a31) (invMag * a12) (invMag * a123)
+  signum (APS a0 a1 a2 a3 a23 a31 a12 a123) =
+    let x = sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)
+        mag = sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x)
+        invMag = recip mag
+    in if mag == 0
+       then R 0
+       else APS (invMag * a0) (invMag * a1) (invMag * a2) (invMag * a3) (invMag * a23) (invMag * a31) (invMag * a12) (invMag * a123)
 
 
   -- |'fromInteger'
@@ -1047,8 +1112,12 @@ instance Floating Cl3 where
   --
   log (R a0)
     | a0 >= 0 = R (log a0)
+    | a0 == (-1) = I pi
     | otherwise = C (log.negate $ a0) pi
-  log (I a123) = C (log.abs $ a123) (signum a123 * (pi/2))
+  log (I a123)
+    | a123 == 1 = I (pi/2)
+    | a123 == (-1) = I (-pi/2)
+    | otherwise = C (log.abs $ a123) (signum a123 * (pi/2))
   log (C a0 a123) = C ((log (a0^2 + a123^2))/2) (atan2 a123 a0)
   log cliffor = reduce $ spectraldcmp log log' cliffor
 
@@ -1056,10 +1125,12 @@ instance Floating Cl3 where
   sqrt (R a0)
     | a0 >= 0 = R (sqrt a0)
     | otherwise = I (sqrt.negate $ a0)
-  sqrt (I a123) =
-    let sqrtr = sqrt.abs $ a123
-        phiby2 = signum a123 * (pi/4) -- evaluated: atan2 a123 0 / 2
-    in C (sqrtr * cos phiby2) (sqrtr * sin phiby2)
+  sqrt (I a123)
+    | a123 == 0 = R 0
+    | otherwise =
+        let sqrtr = sqrt.abs $ a123
+            phiby2 = signum a123 * (pi/4) -- evaluated: atan2 a123 0 / 2
+        in C (sqrtr * cos phiby2) (sqrtr * sin phiby2)
   sqrt (C a0 a123) =
     let sqrtr = sqrt.sqrt $ a0^2 + a123^2
         phiby2 = (atan2 a123 a0)/2
@@ -1068,7 +1139,9 @@ instance Floating Cl3 where
 
   --
   sin (R a0) = R (sin a0)
-  sin (I a123) = I (sinh a123)
+  sin (I a123)
+    | a123 == 0 = R 0
+    | otherwise = I (sinh a123)
   sin (C a0 a123) = C (sin a0 * cosh a123) (cos a0 * sinh a123)
   sin cliffor = reduce $ spectraldcmp sin sin' cliffor
 
@@ -1080,7 +1153,9 @@ instance Floating Cl3 where
 
   --
   tan (R a0) = R (tan a0)
-  tan (I a123) = I (tanh a123)
+  tan (I a123)
+    | a123 == 0 = R 0
+    | otherwise = I (tanh a123)
   tan (C a0 a123) =
     let
       m = x2^2 + y2^2
@@ -1143,7 +1218,9 @@ instance Floating Cl3 where
       -- recip $ (sqrt $ 1 + a123^2) - a123) == (sqrt $ 1 + a123^2) + a123)
       -- I (log $ (sqrt $ 1 + a123^2) + a123)
       -- I (asinh a123)
-  asin (I a123) = I (asinh a123)
+  asin (I a123)
+    | a123 == 0 = R 0
+    | otherwise = I (asinh a123)
     --
   asin (C a0 a123) =
       -- For C:
@@ -1188,7 +1265,9 @@ instance Floating Cl3 where
       -- asin (I a123)  = I (asinh a123) -- so,
       -- acos x == R (pi/2) - I (asinh a123)
       -- C (pi/2) (negate $ asinh a123)
-  acos (I a123) = C (pi/2) (negate $ asinh a123)
+  acos (I a123)
+    | a123 == 0 = R (pi/2)
+    | otherwise = C (pi/2) (negate $ asinh a123)
   --
   acos (C a0 a123) =
       -- For C:
@@ -1224,6 +1303,7 @@ instance Floating Cl3 where
       -- I (0.5) * (R ((log (1 + a123)) - (log (1 - a123))))
       -- I (((log (1 + a123)) - (log (1 - a123)))/2)
       -- I (atanh a123)
+    | a123 == 0 = R 0
     | a123 >= (-1) = I (atanh a123)
       -- I (0.5) * (log (R 1 - (I 1 * I a123)) - log (R 1 + (I 1 * I a123)))
       -- I (0.5) * (log (R 1 - (R (-a123))) - log (R 1 + (R (-a123))))
@@ -1298,6 +1378,7 @@ instance Floating Cl3 where
       -- I (atan (a123 / (sqrt (1 - a123^2))))
       -- Identity: tan(asin x) = x / (sqrt (1 - x^2))
       -- asin a123 = atan (a123 / (sqrt (1 - a123^2)))
+    | a123 == 0 = R 0
     | a123 >= (-1) = I (asin a123)
       -- log (I a123 + sqrt (R (1 - a123^2)))
       -- For a123 < (-1):
@@ -1492,7 +1573,9 @@ instance Floating Cl3 where
     -- For I:
     -- = 0.5 * (log (C 1 a123) - log (C 1 (-a123)))
     -- = I (atan a123)
-  atanh (I a123) = I (atan a123)
+  atanh (I a123)
+    | a123 == 0 = R 0
+    | otherwise = I (atan a123)
     -- = 0.5 * (log (C (1+a0) a123) - log (C (1-a0) (-a123)))
     -- Def log ==> log (C a0 a123) = C (log.sqrt $ a0^2 + a123^2) (atan2 a123 a0)
     -- log (C (1+a0) a123) = C (log.sqrt $ (1+a0)^2 + a123^2) (atan2 a123 (1+a0))
@@ -1518,7 +1601,7 @@ lsv (PV a0 a1 a2 a3) =
 lsv (H a0 a23 a31 a12) = R (sqrt (a0^2 + a23^2 + a31^2 + a12^2))
 lsv (C a0 a123) = R (sqrt (a0^2 + a123^2)) -- magnitude of a complex number
 lsv (BPV a1 a2 a3 a23 a31 a12) =
-  let x = negate $ sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
+  let x = negate.sqrt $ (a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2 -- core was duplicating this computation added let to hopefully reduce the duplication
   in R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x))
 lsv (ODD a1 a2 a3 a123) = R (sqrt (a1^2 + a2^2 + a3^2 + a123^2))
 lsv (TPV a23 a31 a12 a123) =
@@ -1526,8 +1609,8 @@ lsv (TPV a23 a31 a12 a123) =
       x = negate $ abs a123 * sqrt sumsqs
   in R (sqrt (sumsqs + a123^2 + x + x))
 lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) =
-  let x = negate $ sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
-                         (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
+  let x = negate.sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
+                        (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2 -- core was duplicating this computation added let to hopefully reduce the duplication
   in R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x))
 
 
@@ -1663,17 +1746,21 @@ isColinear H{} = True
 isColinear C{} = True
 isColinear ODD{} = True
 isColinear TPV{} = True
-isColinear cliff = hasit.toBPV $ cliff
+isColinear cliff = hasit cliff
   where
     hasit :: Cl3 -> Bool
-    hasit cliffor =
-      let (magV3,magBV) = vMagHelper cliffor
-          v3 = toV3 cliffor
-          bv = mIx.toBV $ cliffor
-          (R crss) = abs.toBV $ v3 * bv  -- we used to have signum for each vector but that made the function too large
+    hasit (toBPV -> BPV a1 a2 a3 a23 a31 a12) =
+      let magV3 = sqrt (a1^2 + a2^2 + a3^2)
+          invMagV3 = recip magV3
+          magBV = sqrt (a23^2 + a31^2 + a12^2)
+          invMagBV = recip magBV
+          crss = sqrt (((invMagV3 * a2)*(invMagBV * a12) - (invMagV3 * a3)*(invMagBV * a31))^2 +
+                       ((invMagV3 * a3)*(invMagBV * a23) - (invMagV3 * a1)*(invMagBV * a12))^2 +
+                       ((invMagV3 * a1)*(invMagBV * a31) - (invMagV3 * a2)*(invMagBV * a23))^2)
       in magV3 /= 0 &&     -- Non-Zero
          magBV /= 0 &&     -- Non-Zero
          crss <= tol'      -- Orthoganl part is zero-ish
+    hasit _ = error "Failed toBPV/BPV pattern match in isColinear"
 
 
 -- | 'hasNilpotent' takes a Cliffor and determines if the vector part and the bivector part are
@@ -1688,25 +1775,37 @@ hasNilpotent H{} = False
 hasNilpotent C{} = False
 hasNilpotent ODD{} = False
 hasNilpotent TPV{} = False
-hasNilpotent cliff = hasit.toBPV $ cliff
+hasNilpotent cliff = hasit cliff
   where
     hasit :: Cl3 -> Bool
-    hasit cliffor =
-      let (magV3,magBV) = vMagHelper cliffor
+    hasit (toBPV -> BPV a1 a2 a3 a23 a31 a12) =
+      let magV3 = sqrt (a1^2 + a2^2 + a3^2)
+          invMagV3 = recip magV3
+          magBV = sqrt (a23^2 + a31^2 + a12^2)
+          invMagBV = recip magV3
           magDiff = abs (magV3 - magBV)
-          (R sqMag) = abs.(^2) $ cliffor
+          b1 = invMagV3 * a1
+          b2 = invMagV3 * a2
+          b3 = invMagV3 * a3
+          b23 = invMagBV * a23
+          b31 = invMagBV * a31
+          b12 = invMagBV * a12
+          c0 = b1*b1 + b2*b2 + b3*b3 - b23*b23 - b31*b31 - b12*b12
+          c1 = b12*b2 - b2*b12 + b3*b31 - b31*b3
+          c2 = b1*b12 - b12*b1 - b3*b23 + b23*b3
+          c3 = b31*b1 - b1*b31 + b2*b23 - b23*b2
+          c23 = b2*b3 - b3*b2 - b31*b12 + b12*b31
+          c31 = b3*b1 - b1*b3 + b23*b12 - b12*b23
+          c12 = b1*b2 - b2*b1 - b23*b31 + b31*b23
+          c123 = b1*b23 + b23*b1 + b2*b31 + b31*b2 + b3*b12 + b12*b3
+          x = sqrt ((c0*c1 + c123*c23)^2 + (c0*c2 + c123*c31)^2 + (c0*c3 + c123*c12)^2 +
+                    (c2*c12 - c3*c31)^2 + (c3*c23 - c1*c12)^2 + (c1*c31 - c2*c23)^2)
+          sqMag = sqrt (c0^2 + c1^2 + c2^2 + c3^2 + c23^2 + c31^2 + c12^2 + c123^2 + x + x)
       in magV3 /= 0 &&          -- Non-Zero Vector Part
          magBV /= 0 &&          -- Non-Zero Bivector Part
          magDiff <= tol' &&     -- Vector and Bivector are Equal Magnitude
          sqMag <= tol'          -- It's non-zero but squares to zero
-
-vMagHelper :: Cl3 -> (Double, Double)
-vMagHelper cliffor =
-  let v3 = toV3 cliffor
-      (R magV3) = abs v3
-      bv = toBV cliffor
-      (R magBV) = abs bv
-  in (magV3,magBV)
+    hasit _ = error "Failed toBPV/BPV pattern match in hasNilpotent"
 
 -- | 'projEigs' function returns complementary projectors and eigenvalues for a Cliffor with specialization.
 -- The Cliffor at this point is allready colinear and the Eigenvalue is known to be real, imaginary, or complex.
@@ -2184,9 +2283,14 @@ randPV = rangePV (0,1)
 -- | 'rangePV' random Paravector made from random Grade 0 and Grade 1 elements within a range
 rangePV :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
 rangePV (lo, hi) g =
-  let (r, g') = rangeR (lo, hi) g
-      (v3, g'') = rangeV3 (lo, hi) g'
-  in (r + v3, g'')
+  let (R scale, g') = rangeR (lo, hi) g
+      (R a0, g'') = randR g'
+      (V3 a1 a2 a3, g''') = randV3 g''
+      sumsqs = a1^2 + a2^2 + a3^2
+      x = abs a0 * sqrt sumsqs
+      invMag = recip.sqrt $ a0^2 + sumsqs + x + x
+      mag = scale * invMag
+  in (PV (mag * a0) (mag * a1) (mag * a2) (mag * a3), g''')
 
 
 -- | 'randH' random Quaternion made from random Grade 0 and Grade 2 elements
@@ -2197,9 +2301,12 @@ randH = rangeH (0,1)
 -- | 'rangeH' random Quaternion made from random Grade 0 and Grade 2 elements within a range
 rangeH :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
 rangeH (lo, hi) g =
-  let (r, g') = rangeR (lo, hi) g
-      (bv, g'') = rangeBV (lo, hi) g'
-  in (r + bv, g'')
+  let (R scale, g') = rangeR (lo, hi) g
+      (R a0, g'') = randR g'
+      (BV a23 a31 a12, g''') = randBV g''
+      invMag = recip.sqrt $ a0^2 + a23^2 + a31^2 + a12^2
+      mag = scale * invMag
+  in (H (mag * a0) (mag * a23) (mag * a31) (mag * a12), g''')
 
 
 -- | 'randC' random combination of Grade 0 and Grade 3
@@ -2210,9 +2317,9 @@ randC = rangeC (0,1)
 -- | 'rangeC' random combination of Grade 0 and Grade 3 within a range
 rangeC :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
 rangeC (lo, hi) g =
-  let (r, g') = rangeR (lo, hi) g
-      (i, g'') = rangeI (lo, hi) g'
-  in (r + i, g'')
+  let (R scale, g') = rangeR (lo, hi) g
+      (phi, g'') = randomR (0, 2*pi) g'
+  in (C (scale * cos phi) (scale * sin phi), g'')
 
 
 -- | 'randBPV' random combination of Grade 1 and Grade 2
@@ -2223,9 +2330,13 @@ randBPV = rangeBPV (0,1)
 -- | 'rangeBPV' random combination of Grade 1 and Grade 2 within a range
 rangeBPV :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
 rangeBPV (lo, hi) g =
-  let (v3, g') = rangeV3 (lo, hi) g
-      (bv, g'') = rangeBV (lo, hi) g'
-  in (v3 + bv, g'')
+  let (R scale, g') = rangeR (lo, hi) g
+      (V3 a1 a2 a3, g'') = randV3 g'
+      (BV a23 a31 a12, g''') = randBV g''
+      x = sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2)
+      invMag = recip.sqrt $ a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x
+      mag = scale * invMag
+  in (BPV (mag * a1) (mag * a2) (mag * a3) (mag * a23) (mag * a31) (mag * a12), g''')
 
 
 -- | 'randODD' random combination of Grade 1 and Grade 3
@@ -2236,9 +2347,12 @@ randODD = rangeODD (0,1)
 -- | 'rangeODD' random combination of Grade 1 and Grade 3 within a range
 rangeODD :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
 rangeODD (lo, hi) g =
-  let (v3, g') = rangeV3 (lo, hi) g
-      (i, g'') = rangeI (lo, hi) g'
-  in (v3 + i, g'')
+  let (R scale, g') = rangeR (lo, hi) g
+      (V3 a1 a2 a3, g'') = randV3 g'
+      (I a123, g''') = randI g''
+      invMag = recip.sqrt $ a1^2 + a2^2 + a3^2 + a123^2
+      mag = scale * invMag
+  in (ODD (mag * a1) (mag * a2) (mag * a3) (mag * a123), g''')
 
 
 -- | 'randTPV' random combination of Grade 2 and Grade 3
@@ -2249,9 +2363,14 @@ randTPV = rangeTPV (0,1)
 -- | 'rangeTPV' random combination of Grade 2 and Grade 3 within a range
 rangeTPV :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
 rangeTPV (lo, hi) g =
-  let (bv, g') = rangeBV (lo, hi) g
-      (i, g'') = rangeI (lo, hi) g'
-  in (bv + i, g'')
+  let (R scale, g') = rangeR (lo, hi) g
+      (BV a23 a31 a12, g'') = randBV g'
+      (I a123, g''') = randI g''
+      sumsqs = a23^2 + a31^2 + a12^2
+      x = abs a123 * sqrt sumsqs
+      invMag = recip.sqrt $ sumsqs + a123^2 + x + x
+      mag = scale * invMag
+  in (TPV (mag * a23) (mag * a31) (mag * a12) (mag * a123), g''')
 
 
 -- | 'randAPS' random combination of all 4 grades
@@ -2262,9 +2381,14 @@ randAPS = rangeAPS (0,1)
 -- | 'rangeAPS' random combination of all 4 grades within a range
 rangeAPS :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
 rangeAPS (lo, hi) g =
-  let (pv, g') = rangePV (lo, hi) g
-      (tpv, g'') = rangeTPV (lo, hi) g'
-  in (pv + tpv, g'')
+  let (R scale, g') = rangeR (lo, hi) g
+      (C a0 a123, g'') = randC g'
+      (V3 a1 a2 a3, g''') = randV3 g''
+      (BV a23 a31 a12, g'v) = randBV g'''
+      x = sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)
+      invMag = recip.sqrt $ a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x
+      mag = scale * invMag
+  in (APS (mag * a0) (mag * a1) (mag * a2) (mag * a3) (mag * a23) (mag * a31) (mag * a12) (mag * a123), g'v)
 
 
 -------------------------------------------------------------------
@@ -2273,25 +2397,36 @@ rangeAPS (lo, hi) g =
 -- | 'randUnitV3' a unit vector with a random direction
 randUnitV3 :: RandomGen g => g -> (Cl3, g)
 randUnitV3 g =
-  let (theta, g') = randomR (0,pi) g
-      (phi, g'') = randomR (0,2*pi) g'
-  in (V3 (sin theta * cos phi) (sin theta * sin phi) (cos theta), g'')
+  let (theta, g') = randomR (0,2*pi) g
+      (u, g'') = randomR (-1,1) g'
+      simicircle = sqrt (1-u^2)
+  in (V3 (simicircle * cos theta) (simicircle * sin theta) (u), g'')
 
 
 -- | 'randProjector' a projector with a random direction
 randProjector :: RandomGen g => g -> (Cl3, g)
 randProjector g =
-  let (v3, g') = randUnitV3 g
-  in (0.5 + 0.5 * v3, g')
+  let (V3 a1 a2 a3, g') = randUnitV3 g
+  in (PV 0.5 (0.5 * a1) (0.5 * a2) (0.5 * a3), g')
 
 
 -- | 'randNilpotent' a nilpotent element with a random orientation
 randNilpotent :: RandomGen g => g -> (Cl3, g)
 randNilpotent g =
-  let (p, g') = randProjector g
-      (v, g'') = randUnitV3 g'
-      vnormal = signum.mIx.toBV $ toV3 p * v  -- unit vector normal to the projector
-  in (toBPV $ vnormal * p, g'')
+  let (p@(PV _ a1 a2 a3), g') = randProjector g
+      (V3 b1 b2 b3, g'') = randUnitV3 g'
+      (V3 c1 c2 c3) = V3 (a2*b3 - a3*b2) (a3*b1 - a1*b3) (a1*b2 - a2*b1) -- vector normal to the projector: mIx.toBV $ toV3 p * v
+      mag = sqrt (c1^2 + c2^2 + c3^2)
+      invMag = recip mag
+      vunit = V3 (invMag * c1) (invMag * c2) (invMag * c3)  -- unit vector normal to the projector
+  in (toBPV $ vunit * p, g'')
+
+
+-- | 'randUnitary' a unitary element with a random orientation
+randUnitary :: RandomGen g => g -> (Cl3, g)
+randUnitary g =
+  let (tpv,g') = randTPV g
+  in (exp tpv,g')
 
 
 -------------------------------------------------------------------
@@ -2316,10 +2451,10 @@ scalarHelper con rng g =
 vectorHelper :: RandomGen g => (Double -> Double -> Double -> Cl3) -> (Cl3, Cl3) -> g -> (Cl3, g)
 vectorHelper con rng g =
   let (mag, g') = magHelper rng g
-      (theta, g'') = randomR (0,pi) g'
-      (phi, g''') = randomR (0,2*pi) g''
-  in (con (mag * sin theta * cos phi) (mag * sin theta * sin phi) (mag * cos theta), g''')
+      ((V3 x y z), g'') = randUnitV3 g'
+  in (con (mag * x) (mag * y) (mag * z), g'')
 
 
 #endif
 
+-- End of File
