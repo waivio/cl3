@@ -364,7 +364,7 @@ closeTo (toC -> (C a0 a123)) (toC -> (C b0 b123)) =
   let diffR = abs (a0 - b0)
       diffI = abs (a123 - b123)
       magDiff = sqrt (diffR^2 + diffI^2)
-  in magDiff < 1e-3
+  in magDiff < 2e-3
 closeTo _ _ = error "Everything passed to 'closeTo' should be caught by toC/C pattern match"
 
 -- | 'unWrapIPartEigs' a function to reduce the magnitude of the imaginary
