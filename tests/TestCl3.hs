@@ -146,7 +146,7 @@ runWithEnv = (env listRandCliffs)
 
 listRandCliffs :: IO [Cl3]
 listRandCliffs = do
-  randCliff <-(replicateM 50000).randomRIO $ (R 0, R 3)
+  randCliff <-(replicateM 5000000).randomRIO $ (R 0, R 3)
   return (inputs ++ randCliff)
 
 -- Standard inputs and special cases of projectors and nilpotents
