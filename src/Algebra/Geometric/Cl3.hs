@@ -6,6 +6,7 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE MultiWayIf #-}
 
 
 --------------------------------------------------------------------------------------------
@@ -959,20 +960,14 @@ instance Num Cl3 where
   abs (V3 a1 a2 a3) = R (sqrt (a1^2 + a2^2 + a3^2)) -- magnitude of a vector
   abs (BV a23 a31 a12) = R (sqrt (a23^2 + a31^2 + a12^2)) -- magnitude of a bivector
   abs (I a123) = R (abs a123) -- magnitude of a Imaginary number
-  abs (PV a0 a1 a2 a3) =
-    let sumsqs = a1^2 + a2^2 + a3^2
-        x = abs a0 * sqrt sumsqs
-    in R (sqrt (a0^2 + sumsqs + x + x))
+  abs (PV a0 a1 a2 a3) = R (reimMag a0 a1 a2 a3)
+  abs (TPV a23 a31 a12 a123) = R (reimMag a123 a23 a31 a12)
   abs (H a0 a23 a31 a12) = R (sqrt (a0^2 + a23^2 + a31^2 + a12^2)) -- largest singular value
   abs (C a0 a123) = R (sqrt (a0^2 + a123^2)) -- magnitude of a complex number
   abs (BPV a1 a2 a3 a23 a31 a12) =
     let x = sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
     in R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x))
   abs (ODD a1 a2 a3 a123) = R (sqrt (a1^2 + a2^2 + a3^2 + a123^2))
-  abs (TPV a23 a31 a12 a123) =
-    let sumsqs = a23^2 + a31^2 + a12^2
-        x = abs a123 * sqrt sumsqs
-    in R (sqrt (sumsqs + a123^2 + x + x))
   abs (APS a0 a1 a2 a3 a23 a31 a12 a123) =
     let x = sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
                   (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
@@ -996,9 +991,7 @@ instance Num Cl3 where
        else BV (invMag * a23) (invMag * a31) (invMag * a12)
   signum (I a123) = I (signum a123)
   signum (PV a0 a1 a2 a3) =
-    let sumsqs = a1^2 + a2^2 + a3^2
-        x = abs a0 * sqrt sumsqs
-        mag = sqrt (a0^2 + sumsqs + x + x)
+    let mag = reimMag a0 a1 a2 a3
         invMag = recip mag
     in if mag == 0
        then R 0
@@ -1029,9 +1022,7 @@ instance Num Cl3 where
        then R 0
        else ODD (invMag * a1) (invMag * a2) (invMag * a3) (invMag * a123)
   signum (TPV a23 a31 a12 a123) =
-    let sumsqs = a23^2 + a31^2 + a12^2
-        x = abs a123 * sqrt sumsqs
-        mag = sqrt (sumsqs + a123^2 + x + x)
+    let mag = reimMag a123 a23 a31 a12
         invMag = recip mag
     in if mag == 0
        then R 0
@@ -1071,6 +1062,12 @@ instance Num Cl3 where
                                                   (negate a23) (negate a31) (negate a12)
                                                   (negate a123)
 
+-- | 'reimMag' small helper function to calculate magnitude for PV and TPV
+reimMag :: Double -> Double -> Double -> Double -> Double
+reimMag v0 v1 v2 v3 =
+  let sumsqs = v1^2 + v2^2 + v3^2
+      x = abs v0 * sqrt sumsqs
+  in sqrt (v0^2 + sumsqs + x + x)
 
 -- |Cl(3,0) has a Fractional instance
 instance Fractional Cl3 where
@@ -1118,7 +1115,7 @@ instance Floating Cl3 where
     | a123 == 1 = I (pi/2)
     | a123 == (-1) = I (-pi/2)
     | otherwise = C (log.abs $ a123) (signum a123 * (pi/2))
-  log (C a0 a123) = C ((log (a0^2 + a123^2))/2) (atan2 a123 a0)
+  log (C a0 a123) = C (log (a0^2 + a123^2) / 2) (atan2 a123 a0)
   log cliffor = reduce $ spectraldcmp log log' cliffor
 
   --
@@ -1133,7 +1130,7 @@ instance Floating Cl3 where
         in C (sqrtr * cos phiby2) (sqrtr * sin phiby2)
   sqrt (C a0 a123) =
     let sqrtr = sqrt.sqrt $ a0^2 + a123^2
-        phiby2 = (atan2 a123 a0)/2
+        phiby2 = atan2 a123 a0 / 2
     in C (sqrtr * cos phiby2) (sqrtr * sin phiby2)
   sqrt cliffor = reduce $ spectraldcmp sqrt sqrt' cliffor
 
@@ -1240,7 +1237,7 @@ instance Floating Cl3 where
         rho = sqrt.sqrt $ (1 - a0^2 + a123^2)^2 + (-2*a0*a123)^2
         b0 = rho * cos (theta/2) - a123
         b123 = rho * sin (theta/2) + a0
-    in C (atan2 b123 b0) ((log (b0^2 + b123^2))/(-2))
+    in C (atan2 b123 b0) (log (b0^2 + b123^2) / (-2))
     --
   asin cliffor = reduce $ spectraldcmp asin asin' cliffor
 
@@ -1278,7 +1275,7 @@ instance Floating Cl3 where
         rho = sqrt.sqrt $ (1 - a0^2 + a123^2)^2 + (-2*a0*a123)^2
         b0 = rho * cos (theta/2) - a123
         b123 = rho * sin (theta/2) + a0
-    in C ((pi/2) - atan2 b123 b0) ((log (b0^2 + b123^2))/2)
+    in C ((pi/2) - atan2 b123 b0) (log (b0^2 + b123^2) / 2)
     --
   acos cliffor = reduce $ spectraldcmp acos acos' cliffor
 
@@ -1405,7 +1402,7 @@ instance Floating Cl3 where
         rho = sqrt.sqrt $ (a0^2 - a123^2 +1)^2 + (2*a0*a123)^2
         b0 = a0 + rho * cos (theta/2)
         b123 = a123 + rho * sin (theta/2)
-    in C ((log (b0^2 + b123^2))/2) (atan2 b123 b0)
+    in C (log (b0^2 + b123^2) / 2) (atan2 b123 b0)
     --
   asinh cliffor = reduce $ spectraldcmp asinh asinh' cliffor
 
@@ -1414,11 +1411,13 @@ instance Floating Cl3 where
     -- log (R a0 + sqrt(R (a0+1)) * sqrt(R (a0-1)))
     | a0 >= 1 = R (acosh a0)
       -- log (R a0 + sqrt(R (a0+1)) * sqrt(R (a0-1)))
-      -- log (R a0 + R (sqrt $ a0-1) * R (sqrt $ a0-1))
-      -- log (R a0 + R ((sqrt $ a0-1) * (sqrt $ a0-1)))
-      -- log (R (a0 + (sqrt $ a0-1) * (sqrt $ a0-1)))
-      -- R (log $ a0 + (sqrt $ a0-1) * (sqrt $ a0-1))
+      -- log (R a0 + R (sqrt $ a0+1) * R (sqrt $ a0-1))
+      -- log (R a0 + R ((sqrt $ a0+1) * (sqrt $ a0-1)))
+      -- log (R (a0 + (sqrt $ a0+1) * (sqrt $ a0-1)))
+      -- R (log $ a0 + (sqrt $ a0+1) * (sqrt $ a0-1))
       -- R (acosh a0)
+      -- Strangely ghc substitutes 'acosh a0' with something like:
+      -- R (log $ a0 + (a0 + 1 ) * (sqrt $ (a0 - 1)/(a0 + 1)))
     | a0 >= (-1) = I (atan2 (sqrt $ 1-a0^2) a0) -- This is I because of cancelation of the real component
       -- log (R a0 + sqrt(R (a0+1)) * sqrt(R (a0-1)))
       -- log (R a0 + R (sqrt $ a0+1) * I (sqrt.negate $ a0-1))
@@ -1548,7 +1547,7 @@ instance Floating Cl3 where
         rho = sqrt.sqrt $ ((a0+1)^2 + a123^2) * ((a0-1)^2 + a123^2)
         b0 = a0 + rho * cos(theta/2)
         b123 = a123 + rho * sin(theta/2)
-    in C ((log (b0^2 + b123^2))/2) (atan2 b123 b0)
+    in C (log (b0^2 + b123^2) / 2) (atan2 b123 b0)
     --
   acosh cliffor = reduce $ spectraldcmp acosh acosh' cliffor
 
@@ -1594,25 +1593,35 @@ lsv (R a0) = R (abs a0) -- absolute value of a real number
 lsv (V3 a1 a2 a3) = R (sqrt (a1^2 + a2^2 + a3^2)) -- magnitude of a vector
 lsv (BV a23 a31 a12) = R (sqrt (a23^2 + a31^2 + a12^2)) -- magnitude of a bivector
 lsv (I a123) = R (abs a123)
-lsv (PV a0 a1 a2 a3) =
-  let sumsqs = a1^2 + a2^2 + a3^2
-      x = negate $ abs a0 * sqrt sumsqs
-  in R (sqrt (a0^2 + sumsqs + x + x))
+lsv (PV a0 a1 a2 a3) = R (loDisc a0 a1 a2 a3)
+lsv (TPV a23 a31 a12 a123) = R (loDisc a123 a23 a31 a12)
 lsv (H a0 a23 a31 a12) = R (sqrt (a0^2 + a23^2 + a31^2 + a12^2))
 lsv (C a0 a123) = R (sqrt (a0^2 + a123^2)) -- magnitude of a complex number
 lsv (BPV a1 a2 a3 a23 a31 a12) =
   let x = negate.sqrt $ (a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2 -- core was duplicating this computation added let to hopefully reduce the duplication
-  in R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x))
+      y = a1^2 + a23^2 + a2^2 + x + a31^2 + a3^2 + a12^2 + x -- attempted to balance out the sum of several positives with a negitive before the next sum of positives and negitive
+  in if y <= tol' -- gaurd for numerical errors, y could be negative with large enough biparavectors
+     then R 0
+     else R (sqrt y)
 lsv (ODD a1 a2 a3 a123) = R (sqrt (a1^2 + a2^2 + a3^2 + a123^2))
-lsv (TPV a23 a31 a12 a123) =
-  let sumsqs = a23^2 + a31^2 + a12^2
-      x = negate $ abs a123 * sqrt sumsqs
-  in R (sqrt (sumsqs + a123^2 + x + x))
 lsv (APS a0 a1 a2 a3 a23 a31 a12 a123) =
   let x = negate.sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
                         (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2 -- core was duplicating this computation added let to hopefully reduce the duplication
-  in R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x))
+      y = a0^2 + a1^2 + a2^2 + a3^2 + x + a23^2 + a31^2 + a12^2 + a123^2 + x -- attempted to balance out the sum of several positives with a negitive before the next sum of positives and negitive
+  in if y <= tol' -- gaurd for numerical errors, y could be negative with large enough cliffors
+     then R 0
+     else R (sqrt y)
 
+
+-- | 'loDisc' The Lower Discriminant for Paravectors and Triparavectors, real and imagninary portions of APS
+loDisc :: Double -> Double -> Double -> Double -> Double
+loDisc v0 v1 v2 v3 =
+  let sumsqs = v1^2 + v2^2 + v3^2
+      x = negate $ abs v0 * sqrt sumsqs
+      y = v0^2 + x + sumsqs + x
+  in if y <= tol' -- gaurd for numerical errors, y could be negative with large enough paravectors
+     then 0
+     else sqrt y
 
 
 -- | 'spectraldcmp' the spectral decomposition of a function to calculate analytic functions of cliffors in Cl(3,0).
@@ -1698,23 +1707,56 @@ eigvalsSpecial toSpecial cliffor =
 
 
 -- | 'project' makes a projector based off of the vector content of the Cliffor.
--- We have safty problem with unreduced values, so it calls reduce first, as a view pattern.
 project :: Cl3 -> Cl3
-project (reduce -> cliffor) = proj cliffor
-  where
-    proj R{} = PV 0.5 0 0 0.5   -- default to e3 direction
-    proj I{} = PV 0.5 0 0 0.5   -- default to e3 direction
-    proj C{} = PV 0.5 0 0 0.5   -- default to e3 direction
-    proj v@V3{} = 0.5 + 0.5*signum v
-    proj pv@PV{} = 0.5 + 0.5*(signum.toV3 $ pv)
-    proj od@ODD{} = 0.5 + 0.5*(signum.toV3 $ od)
-    proj bv@BV{} = 0.5 + 0.5*(mIx.signum $ bv)
-    proj h@H{} = 0.5 + 0.5*(mIx.signum.toBV $ h)
-    proj tpv@TPV{} = 0.5 + 0.5*(mIx.signum.toBV $ tpv)
-    proj cliff = go_proj.toBPV $ cliff
-    go_proj cliff
-      | abs (toV3 cliff + (mIx.toBV $ cliff)) <= tol = 0.5 + 0.5*(signum.toV3 $ cliff)  -- gaurd for equal and opposite
-      | otherwise = 0.5 + 0.5*signum (toV3 cliff + (mIx.toBV $ cliff))
+project R{} = PV 0.5 0 0 0.5   -- default to e3 direction
+project I{} = PV 0.5 0 0 0.5   -- default to e3 direction
+project C{} = PV 0.5 0 0 0.5   -- default to e3 direction
+project (V3 a1 a2 a3) = triDProj a1 a2 a3   -- proj v@V3{} = 0.5 + 0.5*signum v
+project (PV _ a1 a2 a3) = triDProj a1 a2 a3   -- proj pv@PV{} = 0.5 + 0.5*(signum.toV3 $ pv)
+project (ODD a1 a2 a3 _) = triDProj a1 a2 a3   -- od@ODD{} = 0.5 + 0.5*(signum.toV3 $ od)
+project (BV a23 a31 a12) = triDProj a23 a31 a12   -- bv@BV{} = 0.5 + 0.5*(mIx.signum $ bv)
+project (H _ a23 a31 a12) = triDProj a23 a31 a12   -- h@H{} = 0.5 + 0.5*(mIx.signum.toBV $ h)
+project (TPV a23 a31 a12 _) = triDProj a23 a31 a12   -- tpv@TPV{} = 0.5 + 0.5*(mIx.signum.toBV $ tpv)
+project (BPV a1 a2 a3 a23 a31 a12) = biTriDProj a1 a2 a3 a23 a31 a12
+project (APS _ a1 a2 a3 a23 a31 a12 _) = biTriDProj a1 a2 a3 a23 a31 a12
+
+
+
+-- If Dot product is negative or zero we have a problem, if it is zero
+-- it either the vector or bivector par is zero or they are orthognal
+-- if the dot product is negative the vectors could be antiparallel
+biTriDProj :: Double -> Double -> Double -> Double -> Double -> Double -> Cl3
+biTriDProj a1 a2 a3 a23 a31 a12 =
+  let v3Mag = sqrt $ a1^2 + a2^2 + a3^2
+      v3MagltTol = v3Mag < tol'
+      halfInvV3Mag = recip v3Mag / 2
+      bvMag = sqrt $ a23^2 + a31^2 + a12^2
+      bvMagltTol = bvMag < tol'
+      halfInvBVMag = recip bvMag / 2
+      dotPos = (a1*a23) + (a2*a31) + (a3*a12) >= 0
+      b1 = a1 + a23
+      b2 = a2 + a31
+      b3 = a3 + a12
+      bHalfInvMag = (/2).recip.sqrt $ b1^2 + b2^2 + b3^2
+      c1 = a1 - a23
+      c2 = a2 - a31
+      c3 = a3 - a12
+      cHalfInvMag = (/2).recip.sqrt $ c1^2 + c2^2 + c3^2
+  in if | v3MagltTol && bvMagltTol -> PV 0.5 0 0 0.5
+        | bvMagltTol -> PV 0.5 (halfInvV3Mag * a1) (halfInvV3Mag * a2) (halfInvV3Mag * a3)
+        | v3MagltTol -> PV 0.5 (halfInvBVMag * a23) (halfInvBVMag * a31) (halfInvBVMag * a12)
+        | dotPos -> PV 0.5 (bHalfInvMag * b1) (bHalfInvMag * b2) (bHalfInvMag * b3)
+        | otherwise -> PV 0.5 (cHalfInvMag * c1) (cHalfInvMag * c2) (cHalfInvMag * c3)
+
+
+-- | 'triDProj' a single 3 dimensional vector grade to a projector
+triDProj :: Double -> Double -> Double -> Cl3
+triDProj v1 v2 v3 =
+  let mag = sqrt $ v1^2 + v2^2 + v3^2
+      halfInvMag = recip mag / 2
+  in if mag == 0
+     then PV 0.5 0 0 0.5
+     else PV 0.5 (halfInvMag * v1) (halfInvMag * v2) (halfInvMag * v3)
 
 
 -- | 'boost2colinear' calculates a boost that is perpendicular to both the vector and bivector
@@ -1746,21 +1788,21 @@ isColinear H{} = True
 isColinear C{} = True
 isColinear ODD{} = True
 isColinear TPV{} = True
-isColinear cliff = hasit cliff
-  where
-    hasit :: Cl3 -> Bool
-    hasit (toBPV -> BPV a1 a2 a3 a23 a31 a12) =
-      let magV3 = sqrt (a1^2 + a2^2 + a3^2)
-          invMagV3 = recip magV3
-          magBV = sqrt (a23^2 + a31^2 + a12^2)
-          invMagBV = recip magBV
-          crss = sqrt (((invMagV3 * a2)*(invMagBV * a12) - (invMagV3 * a3)*(invMagBV * a31))^2 +
-                       ((invMagV3 * a3)*(invMagBV * a23) - (invMagV3 * a1)*(invMagBV * a12))^2 +
-                       ((invMagV3 * a1)*(invMagBV * a31) - (invMagV3 * a2)*(invMagBV * a23))^2)
-      in magV3 /= 0 &&     -- Non-Zero
-         magBV /= 0 &&     -- Non-Zero
-         crss <= tol'      -- Orthoganl part is zero-ish
-    hasit _ = error "Failed toBPV/BPV pattern match in isColinear"
+isColinear (BPV a1 a2 a3 a23 a31 a12) = colinearHelper a1 a2 a3 a23 a31 a12
+isColinear (APS _ a1 a2 a3 a23 a31 a12 _) = colinearHelper a1 a2 a3 a23 a31 a12
+
+colinearHelper :: Double -> Double -> Double -> Double -> Double -> Double -> Bool
+colinearHelper a1 a2 a3 a23 a31 a12 =
+  let magV3 = sqrt $ a1^2 + a2^2 + a3^2
+      invMagV3 = recip magV3
+      magBV = sqrt $ a23^2 + a31^2 + a12^2
+      invMagBV = recip magBV
+      crss = sqrt (((invMagV3 * a2)*(invMagBV * a12) - (invMagV3 * a3)*(invMagBV * a31))^2 +
+                   ((invMagV3 * a3)*(invMagBV * a23) - (invMagV3 * a1)*(invMagBV * a12))^2 +
+                   ((invMagV3 * a1)*(invMagBV * a31) - (invMagV3 * a2)*(invMagBV * a23))^2)
+  in magV3 /= 0 &&     -- Non-Zero
+     magBV /= 0 &&     -- Non-Zero
+     crss <= tol'      -- Orthoganl part is zero-ish
 
 
 -- | 'hasNilpotent' takes a Cliffor and determines if the vector part and the bivector part are
@@ -1775,37 +1817,38 @@ hasNilpotent H{} = False
 hasNilpotent C{} = False
 hasNilpotent ODD{} = False
 hasNilpotent TPV{} = False
-hasNilpotent cliff = hasit cliff
-  where
-    hasit :: Cl3 -> Bool
-    hasit (toBPV -> BPV a1 a2 a3 a23 a31 a12) =
-      let magV3 = sqrt (a1^2 + a2^2 + a3^2)
-          invMagV3 = recip magV3
-          magBV = sqrt (a23^2 + a31^2 + a12^2)
-          invMagBV = recip magV3
-          magDiff = abs (magV3 - magBV)
-          b1 = invMagV3 * a1
-          b2 = invMagV3 * a2
-          b3 = invMagV3 * a3
-          b23 = invMagBV * a23
-          b31 = invMagBV * a31
-          b12 = invMagBV * a12
-          c0 = b1*b1 + b2*b2 + b3*b3 - b23*b23 - b31*b31 - b12*b12
-          c1 = b12*b2 - b2*b12 + b3*b31 - b31*b3
-          c2 = b1*b12 - b12*b1 - b3*b23 + b23*b3
-          c3 = b31*b1 - b1*b31 + b2*b23 - b23*b2
-          c23 = b2*b3 - b3*b2 - b31*b12 + b12*b31
-          c31 = b3*b1 - b1*b3 + b23*b12 - b12*b23
-          c12 = b1*b2 - b2*b1 - b23*b31 + b31*b23
-          c123 = b1*b23 + b23*b1 + b2*b31 + b31*b2 + b3*b12 + b12*b3
-          x = sqrt ((c0*c1 + c123*c23)^2 + (c0*c2 + c123*c31)^2 + (c0*c3 + c123*c12)^2 +
-                    (c2*c12 - c3*c31)^2 + (c3*c23 - c1*c12)^2 + (c1*c31 - c2*c23)^2)
-          sqMag = sqrt (c0^2 + c1^2 + c2^2 + c3^2 + c23^2 + c31^2 + c12^2 + c123^2 + x + x)
-      in magV3 /= 0 &&          -- Non-Zero Vector Part
-         magBV /= 0 &&          -- Non-Zero Bivector Part
-         magDiff <= tol' &&     -- Vector and Bivector are Equal Magnitude
-         sqMag <= tol'          -- It's non-zero but squares to zero
-    hasit _ = error "Failed toBPV/BPV pattern match in hasNilpotent"
+hasNilpotent (BPV a1 a2 a3 a23 a31 a12) = nilpotentHelper a1 a2 a3 a23 a31 a12
+hasNilpotent (APS _ a1 a2 a3 a23 a31 a12 _) = nilpotentHelper a1 a2 a3 a23 a31 a12
+
+nilpotentHelper :: Double -> Double -> Double -> Double -> Double -> Double -> Bool
+nilpotentHelper a1 a2 a3 a23 a31 a12 =
+  let magV3 = sqrt $ a1^2 + a2^2 + a3^2
+      invMagV3 = recip magV3
+      magBV = sqrt $ a23^2 + a31^2 + a12^2
+      invMagBV = recip magV3
+      magDiff = abs (magV3 - magBV)
+      b1 = invMagV3 * a1
+      b2 = invMagV3 * a2
+      b3 = invMagV3 * a3
+      b23 = invMagBV * a23
+      b31 = invMagBV * a31
+      b12 = invMagBV * a12
+      c0 = b1*b1 + b2*b2 + b3*b3 - b23*b23 - b31*b31 - b12*b12
+      c1 = b12*b2 - b2*b12 + b3*b31 - b31*b3
+      c2 = b1*b12 - b12*b1 - b3*b23 + b23*b3
+      c3 = b31*b1 - b1*b31 + b2*b23 - b23*b2
+      c23 = b2*b3 - b3*b2 - b31*b12 + b12*b31
+      c31 = b3*b1 - b1*b3 + b23*b12 - b12*b23
+      c12 = b1*b2 - b2*b1 - b23*b31 + b31*b23
+      c123 = b1*b23 + b23*b1 + b2*b31 + b31*b2 + b3*b12 + b12*b3
+      x = sqrt ((c0*c1 + c123*c23)^2 + (c0*c2 + c123*c31)^2 + (c0*c3 + c123*c12)^2 +
+                (c2*c12 - c3*c31)^2 + (c3*c23 - c1*c12)^2 + (c1*c31 - c2*c23)^2)
+      sqMag = sqrt (c0^2 + c1^2 + c2^2 + c3^2 + c23^2 + c31^2 + c12^2 + c123^2 + x + x)
+  in magV3 /= 0 &&          -- Non-Zero Vector Part
+     magBV /= 0 &&          -- Non-Zero Bivector Part
+     magDiff <= tol' &&     -- Vector and Bivector are Equal Magnitude
+     sqMag <= tol'          -- It's non-zero but squares to zero
+
 
 -- | 'projEigs' function returns complementary projectors and eigenvalues for a Cliffor with specialization.
 -- The Cliffor at this point is allready colinear and the Eigenvalue is known to be real, imaginary, or complex.
@@ -2211,6 +2254,9 @@ instance Random Cl3 where
         ConODD -> rangeODD (minAbs,maxAbs) g'
         ConTPV -> rangeTPV (minAbs,maxAbs) g'
         ConAPS -> rangeAPS (minAbs,maxAbs) g'
+        ConProj -> rangeProjector (minAbs,maxAbs) g'
+        ConNilpotent -> rangeNilpotent (minAbs,maxAbs) g'
+        ConUnitary -> rangeUnitary (minAbs,maxAbs) g'
 
   random = randomR (0,1)
 
@@ -2228,6 +2274,9 @@ data ConCl3 = ConR
             | ConODD
             | ConTPV
             | ConAPS
+            | ConProj
+            | ConNilpotent
+            | ConUnitary
   deriving (Bounded, Enum)
 
 
@@ -2333,7 +2382,7 @@ rangeBPV (lo, hi) g =
   let (R scale, g') = rangeR (lo, hi) g
       (V3 a1 a2 a3, g'') = randV3 g'
       (BV a23 a31 a12, g''') = randBV g''
-      x = sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2)
+      x = sqrt $ (a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2
       invMag = recip.sqrt $ a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x
       mag = scale * invMag
   in (BPV (mag * a1) (mag * a2) (mag * a3) (mag * a23) (mag * a31) (mag * a12), g''')
@@ -2385,7 +2434,7 @@ rangeAPS (lo, hi) g =
       (C a0 a123, g'') = randC g'
       (V3 a1 a2 a3, g''') = randV3 g''
       (BV a23 a31 a12, g'v) = randBV g'''
-      x = sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)
+      x = sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2
       invMag = recip.sqrt $ a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x
       mag = scale * invMag
   in (APS (mag * a0) (mag * a1) (mag * a2) (mag * a3) (mag * a23) (mag * a31) (mag * a12) (mag * a123), g'v)
@@ -2400,7 +2449,7 @@ randUnitV3 g =
   let (theta, g') = randomR (0,2*pi) g
       (u, g'') = randomR (-1,1) g'
       simicircle = sqrt (1-u^2)
-  in (V3 (simicircle * cos theta) (simicircle * sin theta) (u), g'')
+  in (V3 (simicircle * cos theta) (simicircle * sin theta) u, g'')
 
 
 -- | 'randProjector' a projector with a random direction
@@ -2410,16 +2459,35 @@ randProjector g =
   in (PV 0.5 (0.5 * a1) (0.5 * a2) (0.5 * a3), g')
 
 
+-- | 'rangeProjector' a projector with a range of random magnitudes and directions
+rangeProjector :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
+rangeProjector (lo, hi) g =
+  let (R mag, g') = rangeR (lo, hi) g
+      (PV a0 a1 a2 a3, g'') = randProjector g'
+  in (PV (mag * a0) (mag * a1) (mag * a2) (mag * a3), g'')
+
+
 -- | 'randNilpotent' a nilpotent element with a random orientation
 randNilpotent :: RandomGen g => g -> (Cl3, g)
 randNilpotent g =
-  let (p@(PV _ a1 a2 a3), g') = randProjector g
+  let (PV a0 a1 a2 a3, g') = randProjector g
       (V3 b1 b2 b3, g'') = randUnitV3 g'
-      (V3 c1 c2 c3) = V3 (a2*b3 - a3*b2) (a3*b1 - a1*b3) (a1*b2 - a2*b1) -- vector normal to the projector: mIx.toBV $ toV3 p * v
-      mag = sqrt (c1^2 + c2^2 + c3^2)
-      invMag = recip mag
-      vunit = V3 (invMag * c1) (invMag * c2) (invMag * c3)  -- unit vector normal to the projector
-  in (toBPV $ vunit * p, g'')
+      c1 = a2*b3 - a3*b2
+      c2 = a3*b1 - a1*b3
+      c3 = a1*b2 - a2*b1 -- (V3 c1 c2 c3) vector normal to the projector: mIx.toBV $ toV3 p * v
+      invMag = recip.sqrt $ c1^2 + c2^2 + c3^2
+      d1 = invMag * c1
+      d2 = invMag * c2
+      d3 = invMag * c3  -- (V3 d1 d2 d3) unit vector normal to the projector
+  in (BPV (d1*a0) (d2*a0) (d3*a0) (d2*a3 - d3*a2) (d3*a1 - d1*a3) (d1*a2 - d2*a1), g'')
+
+
+-- | 'rangeNilpotent' a nilpotent with a range of random magnitudes and orientations
+rangeNilpotent :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
+rangeNilpotent (lo, hi)  g =
+  let (R mag, g') = rangeR (lo, hi) g
+      (BPV a1 a2 a3 a23 a31 a12, g'') = randNilpotent g'
+  in (BPV (mag * a1) (mag * a2) (mag * a3) (mag * a23) (mag * a31) (mag * a12), g'')
 
 
 -- | 'randUnitary' a unitary element with a random orientation
@@ -2427,6 +2495,13 @@ randUnitary :: RandomGen g => g -> (Cl3, g)
 randUnitary g =
   let (tpv,g') = randTPV g
   in (exp tpv,g')
+
+
+-- | 'rangeUnitary' a unitary element with a range of random magnitudes and orientations, the exponential of a triparavector
+rangeUnitary :: RandomGen g => (Cl3, Cl3) -> g -> (Cl3, g)
+rangeUnitary (lo, hi) g =
+  let (tpv, g') = rangeTPV (lo, hi) g
+  in (exp tpv, g')
 
 
 -------------------------------------------------------------------
@@ -2451,7 +2526,7 @@ scalarHelper con rng g =
 vectorHelper :: RandomGen g => (Double -> Double -> Double -> Cl3) -> (Cl3, Cl3) -> g -> (Cl3, g)
 vectorHelper con rng g =
   let (mag, g') = magHelper rng g
-      ((V3 x y z), g'') = randUnitV3 g'
+      (V3 x y z, g'') = randUnitV3 g'
   in (con (mag * x) (mag * y) (mag * z), g'')
 
 

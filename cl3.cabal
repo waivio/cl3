@@ -98,7 +98,8 @@ library
     DeriveDataTypeable,
     DeriveGeneric,
     CPP,
-    BangPatterns
+    BangPatterns,
+    MultiWayIf
   
   -- Other library packages from which modules are imported.
   build-depends:       
