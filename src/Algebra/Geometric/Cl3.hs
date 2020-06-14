@@ -1766,14 +1766,31 @@ triDProj v1 v2 v3 =
 -- and then d = bar v * cliffor * v. d will have colinear vector and bivector parts.
 -- This is somewhat simular to finding the drift frame for an electromagnetic field.
 boost2colinear :: Cl3 -> (Cl3, Cl3, Cl3)
-boost2colinear cliffor =
-  let v = toV3 cliffor  -- extract the vector
-      bv = mIx.toBV $ cliffor  -- extract the bivector and turn it into a vector
-      invariant = ((2*).mIx.toBV $ v * bv) / (toR (v^2) + toR (bv^2))
+boost2colinear cliffor@(calcInvariant -> invariant) =
+  let boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
+      boost_bar = bar boost
+      d = boost_bar * cliffor * boost
+  in (boost, d, boost_bar)
+{-
+boost2colinear cliffor@(BPV a1 a2 a3 a23 a31 a12) =
+  let invariant = calcInvariant a1 a2 a3 a23 a31 a12
       boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
       boost_bar = bar boost
       d = boost_bar * cliffor * boost
   in (boost, d, boost_bar)
+boost2colinear cliffor@(APS _ a1 a2 a3 a23 a31 a12 _) =
+  let invariant = calcInvariant a1 a2 a3 a23 a31 a12
+      boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
+      boost_bar = bar boost
+      d = boost_bar * cliffor * boost
+  in (boost, d, boost_bar)
+-}
+-- calcInvariant :: Cl3:>BPV -> Cl3:>V3
+-- calcInvariant :: Double -> Double -> Double -> Double -> Double -> Double -> Cl3
+calcInvariant :: Cl3 -> Cl3
+calcInvariant (toBPV -> BPV a1 a2 a3 a23 a31 a12) =
+  let scale = 2 / (a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2)
+  in V3 (scale * (a2*a12 - a3*a31)) (scale * (a3*a23 - a1*a12)) (scale * (a1*a31 - a2*a23))
 
 
 -- | 'isColinear' takes a Cliffor and determines if the vector part and the bivector part are
