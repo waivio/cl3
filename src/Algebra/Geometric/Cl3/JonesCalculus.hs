@@ -3,6 +3,12 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE CPP #-}
 
+#if __GLASGOW_HASKELL__ == 810
+-- Work around to fix GHC Issue #15304, issue popped up again in GHC 8.10, it should be fixed in GHC 8.12
+-- This code is meant to reproduce MR 2608 for GHC 8.10
+{-# OPTIONS_GHC -funfolding-keeness-factor=1 -funfolding-use-threshold=80 #-}
+#endif
+
 --------------------------------------------------------------------------------------------
 -- |
 -- Copyright   :  (C) 2018 Nathan Waivio

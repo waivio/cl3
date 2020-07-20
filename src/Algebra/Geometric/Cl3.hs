@@ -8,6 +8,11 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE MultiWayIf #-}
 
+#if __GLASGOW_HASKELL__ == 810
+-- Work around to fix GHC Issue #15304, issue popped up again in GHC 8.10, it should be fixed in GHC 8.12
+-- This code is meant to reproduce MR 2608 for GHC 8.10
+{-# OPTIONS_GHC -funfolding-keeness-factor=1 -funfolding-use-threshold=80 #-}
+#endif
 
 --------------------------------------------------------------------------------------------
 -- |
@@ -87,38 +92,38 @@ import System.Random (RandomGen, Random, randomR, random)
 --
 --   * 'R' is the constructor for the Real Scalar Sub-algebra Grade-0
 --
---   * 'V3' is the Vector constructor Grade-1
+--   * 'V3' is the Three Dimensional Real Vector constructor Grade-1
 --
---   * 'BV' is the Bivector constructor Grade-2
+--   * 'BV' is the Bivector constructor Grade-2 an Imaginary Three Dimensional Vector
 --
 --   * 'I' is the Imaginary constructor Grade-3 and is the Pseudo-Scalar for APS
 --
---   * 'PV' is the Paravector constructor with Grade-0 and Grade-1 elements
+--   * 'PV' is the Paravector constructor with Grade-0 and Grade-1 elements, a Real Scalar plus Vector, (R + V3)
 --
---   * 'H' is the Quaternion constructor it is the Even Sub-algebra with Grade-0 and Grade-2 elements
+--   * 'H' is the Quaternion constructor it is the Even Sub-algebra with Grade-0 and Grade-2 elements, a Real Scalar plus Bivector, (R + BV)
 --
---   * 'C' is the Complex constructor it is the Scalar Sub-algebra with Grade-0 and Grade-3 elements
+--   * 'C' is the Complex constructor it is the Scalar Sub-algebra with Grade-0 and Grade-3 elements, a Real Scalar plus Imaginar Scalar, (R + I)
 --
---   * 'BPV' is the Biparavector constructor with Grade-1 and Grade-2 elements
+--   * 'BPV' is the Biparavector constructor with Grade-1 and Grade-2 elements, a Real Vector plus Bivector, (V3 + BV)
 --
---   * 'ODD' is the Odd constructor with Grade-1 and Grade-3 elements
+--   * 'ODD' is the Odd constructor with Grade-1 and Grade-3 elements, a Vector plus Imaginary Scalar, (V3 + I)
 --
---   * 'TPV' is the Triparavector constructor with Grade-2 and Grade-3 elements
+--   * 'TPV' is the Triparavector constructor with Grade-2 and Grade-3 elements, a Bivector plus Imaginary, (BV + I)
 --
 --   * 'APS' is the constructor for an element in the Algebra of Physical Space with Grade-0 through Grade-3 elements
 --
 data Cl3 where
-  R   :: !Double -> Cl3 -- Real Scalar Sub-algebra (G0)
-  V3  :: !Double -> !Double -> !Double -> Cl3 -- Vectors (G1)
-  BV  :: !Double -> !Double -> !Double -> Cl3 -- Bivectors (G2)
-  I   :: !Double -> Cl3 -- Trivector Imaginary Pseudo-Scalar (G3)
-  PV  :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Paravector (G0 + G1)
-  H   :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Quaternion Even Sub-algebra (G0 + G2)
-  C   :: !Double -> !Double -> Cl3 -- Complex Sub-algebra (G0 + G3)
-  BPV :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3 -- Biparavector (G1 + G2)
-  ODD :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Odd (G1 + G3)
-  TPV :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Triparavector (G2 + G3)
-  APS :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3 -- Algebra of Physical Space (G0 + G1 + G2 + G3)
+  R   :: !Double -> Cl3 -- Real Scalar Sub-algebra
+  V3  :: !Double -> !Double -> !Double -> Cl3 -- Three Dimensional Vectors
+  BV  :: !Double -> !Double -> !Double -> Cl3 -- Bivectors, Imaginary Three Dimenstional Vectors
+  I   :: !Double -> Cl3 -- Trivector Imaginary Pseudo-Scalar, Imaginary Scalar
+  PV  :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Paravector, Real Scalar plus Three Dimensional Real Vector, (R + V3)
+  H   :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Quaternion Even Sub-algebra, Real Scalar plus Bivector, (R + BV)
+  C   :: !Double -> !Double -> Cl3 -- Complex Sub-algebra, Real Scalar plus Imaginary Scalar, (R + I)
+  BPV :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3 -- Biparavector, Vector plus Bivector, (V3 + BV)
+  ODD :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Odd, Vector plus Imaginary, (V3 + I)
+  TPV :: !Double -> !Double -> !Double -> !Double -> Cl3 -- Triparavector, Bivector plus Imaginary Scalar, (BV + I)
+  APS :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3 -- Algebra of Physical Space
 #ifndef O_NO_DERIVED
     deriving (Show, Read, Typeable, Data, Generic)
 
@@ -953,7 +958,7 @@ instance Num Cl3 where
   -- |'abs' is the spectral norm aka the spectral radius
   -- it is the largest singular value. This function may need to be fiddled with
   -- to make the math a bit safer wrt overflows.  This makes use of the largest
-  -- singular value, if the smallest singular value is zero then the element is not
+  -- singular value, if the littlest singular value is zero then the element is not
   -- invertable, we can see here that R, C, V3, BV, and H are all invertable, and
   -- by implication R, C, and H are division algebras.
   abs (R a0) = R (abs a0) -- absolute value of a real number
@@ -1104,7 +1109,7 @@ instance Floating Cl3 where
   exp (C a0 a123) =
     let expa0 = exp a0
     in C (expa0 * cos a123) (expa0 * sin a123)
-  exp cliffor = reduce $ spectraldcmp exp exp' cliffor
+  exp cliffor = spectraldcmp exp exp' cliffor
 
   --
   log (R a0)
@@ -1116,7 +1121,7 @@ instance Floating Cl3 where
     | a123 == (-1) = I (-pi/2)
     | otherwise = C (log.abs $ a123) (signum a123 * (pi/2))
   log (C a0 a123) = C (log (a0^2 + a123^2) / 2) (atan2 a123 a0)
-  log cliffor = reduce $ spectraldcmp log log' cliffor
+  log cliffor = spectraldcmp log log' cliffor
 
   --
   sqrt (R a0)
@@ -1132,7 +1137,7 @@ instance Floating Cl3 where
     let sqrtr = sqrt.sqrt $ a0^2 + a123^2
         phiby2 = atan2 a123 a0 / 2
     in C (sqrtr * cos phiby2) (sqrtr * sin phiby2)
-  sqrt cliffor = reduce $ spectraldcmp sqrt sqrt' cliffor
+  sqrt cliffor = spectraldcmp sqrt sqrt' cliffor
 
   --
   sin (R a0) = R (sin a0)
@@ -1140,13 +1145,13 @@ instance Floating Cl3 where
     | a123 == 0 = R 0
     | otherwise = I (sinh a123)
   sin (C a0 a123) = C (sin a0 * cosh a123) (cos a0 * sinh a123)
-  sin cliffor = reduce $ spectraldcmp sin sin' cliffor
+  sin cliffor = spectraldcmp sin sin' cliffor
 
   --
   cos (R a0) = R (cos a0)
   cos (I a123) = R (cosh a123)
   cos (C a0 a123) = C (cos a0 * cosh a123) (negate $ sin a0 * sinh a123)
-  cos cliffor = reduce $ spectraldcmp cos cos' cliffor
+  cos cliffor = spectraldcmp cos cos' cliffor
 
   --
   tan (R a0) = R (tan a0)
@@ -1165,7 +1170,7 @@ instance Floating Cl3 where
       sinhy = sinh a123
       coshy = cosh a123
     in C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
-  tan cliffor = reduce $ spectraldcmp tan tan' cliffor
+  tan cliffor = spectraldcmp tan tan' cliffor
 
   --
   asin (R a0)
@@ -1239,7 +1244,7 @@ instance Floating Cl3 where
         b123 = rho * sin (theta/2) + a0
     in C (atan2 b123 b0) (log (b0^2 + b123^2) / (-2))
     --
-  asin cliffor = reduce $ spectraldcmp asin asin' cliffor
+  asin cliffor = spectraldcmp asin asin' cliffor
 
   --
   acos (R a0)
@@ -1277,7 +1282,7 @@ instance Floating Cl3 where
         b123 = rho * sin (theta/2) + a0
     in C ((pi/2) - atan2 b123 b0) (log (b0^2 + b123^2) / 2)
     --
-  acos cliffor = reduce $ spectraldcmp acos acos' cliffor
+  acos cliffor = spectraldcmp acos acos' cliffor
 
   --
   atan (R a0) = R (atan a0)
@@ -1318,19 +1323,19 @@ instance Floating Cl3 where
   atan (C a0 a123) = C ((atan2 a0 (1 - a123) + atan2 a0 (1 + a123))/2)
                        ((log ((1 + a123)^2 + a0^2) - log ((1 - a123)^2 + a0^2))/4)
     --
-  atan cliffor = reduce $ spectraldcmp atan atan' cliffor
+  atan cliffor = spectraldcmp atan atan' cliffor
 
   --
   sinh (R a0) = R (sinh a0)
   sinh (I a123) = I (sin a123)
   sinh (C a0 a123) = C (cos a123 * sinh a0) (sin a123 * cosh a0)
-  sinh cliffor = reduce $ spectraldcmp sinh sinh' cliffor
+  sinh cliffor = spectraldcmp sinh sinh' cliffor
 
   --
   cosh (R a0) = R (cosh a0)
   cosh (I a123) = R (cos a123)
   cosh (C a0 a123) = C (cos a123 * cosh a0) (sin a123 * sinh a0)
-  cosh cliffor = reduce $ spectraldcmp cosh cosh' cliffor
+  cosh cliffor = spectraldcmp cosh cosh' cliffor
 
   --
   tanh (R a0) = R (tanh a0)
@@ -1347,7 +1352,7 @@ instance Floating Cl3 where
       sinhx = sinh a0
       coshx = cosh a0
     in C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
-  tanh cliffor = reduce $ spectraldcmp tanh tanh' cliffor
+  tanh cliffor = spectraldcmp tanh tanh' cliffor
 
   --
   asinh (R a0) = R (asinh a0)
@@ -1404,7 +1409,7 @@ instance Floating Cl3 where
         b123 = a123 + rho * sin (theta/2)
     in C (log (b0^2 + b123^2) / 2) (atan2 b123 b0)
     --
-  asinh cliffor = reduce $ spectraldcmp asinh asinh' cliffor
+  asinh cliffor = spectraldcmp asinh asinh' cliffor
 
   --
   acosh (R a0)
@@ -1549,7 +1554,7 @@ instance Floating Cl3 where
         b123 = a123 + rho * sin(theta/2)
     in C (log (b0^2 + b123^2) / 2) (atan2 b123 b0)
     --
-  acosh cliffor = reduce $ spectraldcmp acosh acosh' cliffor
+  acosh cliffor = spectraldcmp acosh acosh' cliffor
 
   --
   atanh (R a0)
@@ -1583,7 +1588,7 @@ instance Floating Cl3 where
     -- C (((log $ (1+a0)^2 + a123^2) - (log $ (1-a0)^2 + a123^2))/4) (((atan2 a123 (1-a0)) + (atan2 a123 (1+a0)))/2)
   atanh (C a0 a123) = C ((log ((1+a0)^2 + a123^2) - log ((1-a0)^2 + a123^2))/4) ((atan2 a123 (1-a0) + atan2 a123 (1+a0))/2)
   --
-  atanh cliffor = reduce $ spectraldcmp atanh atanh' cliffor
+  atanh cliffor = spectraldcmp atanh atanh' cliffor
 
 
 
@@ -1654,9 +1659,11 @@ spectraldcmp fun fun' (reduce -> cliffor) = dcmp cliffor
       | hasNilpotent cliff = jordan toC fun fun' cliff  -- jordan normal form Cl3 style
       | isColinear cliff = spectraldcmpSpecial toC fun cliff -- spectprojC fun bpv
       | otherwise =                               -- transform it so it will be colinear
-          let (v,d,v_bar) = boost2colinear cliff
-          in v * spectraldcmpSpecial toC fun d * v_bar -- v * spectprojC fun d * v_bar
+          let (BPV a1 a2 a3 a23 a31 a12) = toBPV cliff
+              boost = boost2colinear a1 a2 a3 a23 a31 a12
+          in boost * spectraldcmpSpecial toC fun (bar boost * cliff * boost) * bar boost -- v * spectprojC fun d * v_bar
 --
+
 
 -- | 'jordan' does a Cl(3,0) version of the decomposition into Jordan Normal Form and Matrix Function Calculation
 -- The intended use is for calculating functions for cliffors with vector parts simular to Nilpotent.
@@ -1682,9 +1689,9 @@ spectraldcmpSpecial toSpecial function cliffor =
 eigvals :: Cl3 -> (Cl3,Cl3)
 eigvals (reduce -> cliffor) = eigv cliffor
   where
-    eigv r@R{} = (r,r)
-    eigv i@I{} = (i,i)
-    eigv c@C{} = (c,c)
+    eigv r@R{} = dup r
+    eigv i@I{} = dup i
+    eigv c@C{} = dup c
     eigv v@V3{} = eigvalsSpecial toR v -- eigvalsR v
     eigv pv@PV{} = eigvalsSpecial toR pv -- eigvalsR pv
     eigv bv@BV{} = eigvalsSpecial toI bv -- eigvalsI bv
@@ -1692,12 +1699,17 @@ eigvals (reduce -> cliffor) = eigv cliffor
     eigv h@H{} = eigvalsSpecial toC h -- eigvalsC h
     eigv od@ODD{} = eigvalsSpecial toC od -- eigvalsC od
     eigv cliff
-      | hasNilpotent cliff = (toC cliff, toC cliff)  -- this case is actually nilpotent
+      | hasNilpotent cliff = dup.reduce.toC $ cliff  -- this case is actually nilpotent
       | isColinear cliff = eigvalsSpecial toC cliff  -- eigvalsC bpv
       | otherwise =                           -- transform it so it will be colinear
-          let (_,d,_) = boost2colinear cliff
-          in eigvalsSpecial toC d -- eigvalsC d
+          let (BPV a1 a2 a3 a23 a31 a12) = toBPV cliff
+              boost = boost2colinear a1 a2 a3 a23 a31 a12
+          in eigvalsSpecial toC (bar boost * cliff * boost) -- eigvalsC d
 --
+
+
+dup :: Cl3 -> (Cl3,Cl3)
+dup cliff = (cliff, cliff)
 
 -- | 'eigvalsSpecial' helper function to calculate Eigenvalues
 eigvalsSpecial :: (Cl3 -> Cl3) -> Cl3 -> (Cl3,Cl3)
@@ -1707,7 +1719,7 @@ eigvalsSpecial toSpecial cliffor =
 
 
 -- | 'project' makes a projector based off of the vector content of the Cliffor.
-project :: Cl3 -> Cl3
+project :: Cl3 -> Cl3  -- PV<:Cl3
 project R{} = PV 0.5 0 0 0.5   -- default to e3 direction
 project I{} = PV 0.5 0 0 0.5   -- default to e3 direction
 project C{} = PV 0.5 0 0 0.5   -- default to e3 direction
@@ -1725,7 +1737,7 @@ project (APS _ a1 a2 a3 a23 a31 a12 _) = biTriDProj a1 a2 a3 a23 a31 a12
 -- If Dot product is negative or zero we have a problem, if it is zero
 -- it either the vector or bivector par is zero or they are orthognal
 -- if the dot product is negative the vectors could be antiparallel
-biTriDProj :: Double -> Double -> Double -> Double -> Double -> Double -> Cl3
+biTriDProj :: Double -> Double -> Double -> Double -> Double -> Double -> Cl3  -- PV<:Cl3
 biTriDProj a1 a2 a3 a23 a31 a12 =
   let v3Mag = sqrt $ a1^2 + a2^2 + a3^2
       v3MagltTol = v3Mag < tol'
@@ -1750,7 +1762,7 @@ biTriDProj a1 a2 a3 a23 a31 a12 =
 
 
 -- | 'triDProj' a single 3 dimensional vector grade to a projector
-triDProj :: Double -> Double -> Double -> Cl3
+triDProj :: Double -> Double -> Double -> Cl3  -- PV<:Cl3
 triDProj v1 v2 v3 =
   let mag = sqrt $ v1^2 + v2^2 + v3^2
       halfInvMag = recip mag / 2
@@ -1760,41 +1772,40 @@ triDProj v1 v2 v3 =
 
 
 -- | 'boost2colinear' calculates a boost that is perpendicular to both the vector and bivector
--- components, that will mix the vector and bivector parts such that the vector and bivector
--- parts become colinear. This function is a simularity transform such that
--- cliffor = v * d * bar v and returns v, d, and v_bar as a tuple.  First v must be calculated
--- and then d = bar v * cliffor * v. d will have colinear vector and bivector parts.
--- This is somewhat simular to finding the drift frame for an electromagnetic field.
-boost2colinear :: Cl3 -> (Cl3, Cl3, Cl3)
-boost2colinear cliffor@(calcInvariant -> invariant) =
-  let boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
-      boost_bar = bar boost
-      d = boost_bar * cliffor * boost
-  in (boost, d, boost_bar)
-{-
-boost2colinear cliffor@(BPV a1 a2 a3 a23 a31 a12) =
-  let invariant = calcInvariant a1 a2 a3 a23 a31 a12
-      boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
-      boost_bar = bar boost
-      d = boost_bar * cliffor * boost
-  in (boost, d, boost_bar)
-boost2colinear cliffor@(APS _ a1 a2 a3 a23 a31 a12 _) =
-  let invariant = calcInvariant a1 a2 a3 a23 a31 a12
-      boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
-      boost_bar = bar boost
-      d = boost_bar * cliffor * boost
-  in (boost, d, boost_bar)
--}
--- calcInvariant :: Cl3:>BPV -> Cl3:>V3
--- calcInvariant :: Double -> Double -> Double -> Double -> Double -> Double -> Cl3
-calcInvariant :: Cl3 -> Cl3
-calcInvariant (toBPV -> BPV a1 a2 a3 a23 a31 a12) =
-  let scale = 2 / (a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2)
-  in V3 (scale * (a2*a12 - a3*a31)) (scale * (a3*a23 - a1*a12)) (scale * (a1*a31 - a2*a23))
+-- components of the cliffor, that will mix the vector and bivector parts such that the vector and bivector
+-- parts become colinear. This function is a simularity transform such that:
+--
+-- > cliffor = boost * colinear * bar boost
+--
+-- and returns the boost given the inputs.  First the boost must be calculated
+-- and then
+--
+-- > colinear = bar boost * cliffor * boost
+--
+-- and colinear will have colinear vector and bivector parts of the cliffor.
+-- This is somewhat simular to finding the drift frame for a static electromagnetic field.
+--
+-- > v = toV3 cliffor  -- extract the vector
+-- > bv = mIx.toBV $ cliffor  -- extract the bivector and turn it into a vector
+-- > invariant = ((2*).mIx.toBV $ v * bv) / (toR (v^2) + toR (bv^2))
+-- > boost = spectraldcmpSpecial toR (exp.(/4).atanh) invariant
+--
+boost2colinear :: Double -> Double -> Double -> Double -> Double -> Double -> Cl3  -- PV<:Cl3
+boost2colinear a1 a2 a3 a23 a31 a12 =
+  let scale = recip $ a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2
+      b1 = scale * (a2*a12 - a3*a31)
+      b2 = scale * (a3*a23 - a1*a12)
+      b3 = scale * (a1*a31 - a2*a23)
+      eig1 = (2*).sqrt $ b1^2 + b2^2 + b3^2
+      eig2 = negate eig1
+      transEig1 = exp.(/4).atanh $ eig1
+      transEig2 = exp.(/4).atanh $ eig2
+      sumTransEigs = (transEig1 - transEig2) * recip eig1
+  in PV (0.5 * (transEig1 + transEig2)) (sumTransEigs * b1) (sumTransEigs * b2) (sumTransEigs * b3)
 
 
--- | 'isColinear' takes a Cliffor and determines if the vector part and the bivector part are
--- non-zero and aligned in the same direction.
+-- | 'isColinear' takes a Cliffor and determines if either the vector part or the bivector part are
+-- zero or both aligned in the same direction.
 isColinear :: Cl3 -> Bool
 isColinear R{} = True
 isColinear V3{} = True
@@ -1817,8 +1828,8 @@ colinearHelper a1 a2 a3 a23 a31 a12 =
       crss = sqrt (((invMagV3 * a2)*(invMagBV * a12) - (invMagV3 * a3)*(invMagBV * a31))^2 +
                    ((invMagV3 * a3)*(invMagBV * a23) - (invMagV3 * a1)*(invMagBV * a12))^2 +
                    ((invMagV3 * a1)*(invMagBV * a31) - (invMagV3 * a2)*(invMagBV * a23))^2)
-  in magV3 /= 0 &&     -- Non-Zero
-     magBV /= 0 &&     -- Non-Zero
+  in magV3 == 0 ||     -- Zero Vector
+     magBV == 0 ||     -- Zero Bivector
      crss <= tol'      -- Orthoganl part is zero-ish
 
 

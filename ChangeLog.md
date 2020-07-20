@@ -1,7 +1,8 @@
 # Revision history for cl3
 
-## 2.0.0.0  -- 2020-05-31
+## 2.0.0.0  -- 2020-06-20
 
+* Added work around for GHC 8.10 regression of Issue #15304 reproducing code changes from GHC MR 2608 in the source files
 * Added 'BangPatterns' language extension
 * Added 'MultiWayIf' language extension
 * Added 'Control.DeepSeq' dependency for 'NFData' and 'rnf'
@@ -19,6 +20,7 @@
 * Refactored 'signum' to reduce duplicate code with a helper function
 * Added 'reimMag' helper function for calculating the magnitude of the real and imaginary grades of APS
 * Refactored 'recip' to use a helper function, moved some shared calculations to a 'let' binding
+* Removed the final 'reduce' from the Fractional instances
 * Refactored 'log' to convert the 'sqrt' from inside the log to a '(/2)'
 * Refactored imaginary implementation of 'log' to specialize the values at +/- 1 to be purly imaginary
 * Refactored imaginary implementation of 'sqrt' to inline more Double precision math into the 'C' constructor
@@ -54,12 +56,14 @@
 * Refactored 'dcmp' to order based on the RHS and to commonize the BPV and APS constructors
 * Implemented hlint's suggestion to remove parens around pattern for 'eigvals' helper function 'eigv'
 * Refactored 'eigv' to order based on the RHS and to commonize the BPV and APS constructors
+* Added 'dup' helper function to duplicate a value in a tuple
 * Implemented hlint's suggestion to remove parens around pattern for 'project' helper function 'proj'
 * Refactored 'project' to use helper functions for single and double vector grade constructors
 * Added 'biTriDProj' helper function for generating projectors for double vector grades
 * Added 'triDProj' helper function for generating projectors for single vector grades
-* Refactored 'boost2colinear' to use 'mIx'
+* Refactored 'boost2colinear' to specialize and inline more Double precision math
 * Refactored 'isColinear' to be calculated with Double precision math with a helper function 'colinearHelper'
+* Corrected 'isColinear' to properly test for colinear even with non-reduced values
 * Added 'colinearHelper' function to calculate if the biparavector portion is colinear
 * Refactored 'hasNilpotent' to be calculated with Double precision math with a helper function 'nilpotentHelper'
 * Added 'nilpotentHelper' function to calculate if the biparavector portion is nilpotent
