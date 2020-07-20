@@ -1933,7 +1933,7 @@ reduce cliff
         | otherwise = aps
 
 
---  | 'mIx' a more effecient '\x -> I (-1) * x' typically useful for converting a
+-- | 'mIx' a more effecient '\x -> I (-1) * x' typically useful for converting a
 -- Bivector to a Vector in the same direction. Related to Hodge Dual and/or
 -- Inverse Hodge Star.
 mIx :: Cl3 -> Cl3
