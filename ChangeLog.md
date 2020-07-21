@@ -1,5 +1,107 @@
 # Revision history for cl3
 
+## 2.0.0.0  -- 2020-06-20
+
+* Added work around for GHC 8.10 regression of Issue #15304 reproducing code changes from GHC MR 2608 in the source files
+* Added 'BangPatterns' language extension
+* Added 'MultiWayIf' language extension
+* Added 'Control.DeepSeq' dependency for 'NFData' and 'rnf'
+* Added class instance for 'NFData'
+* Added 'randUnitary' for a random Unitary value in APS
+* Added CPP flags to Cl3 be able to turn off derived instances and the random dependancy
+* Added CPP flags to JonesCalculus to turn off the random dependancy
+* Added new function 'mIx' for the Inverse Hodge Star operator
+* Added new function 'timesI' to easily multiply 'i' times something 
+* Fixed 'compare' so that there will be a total order when comparing I with other I values
+* Refactored 'compare' so that lets were moved to a higher level
+* Refactored 'abs' so that (2*) was changed to (x + x) and common computations were let floated
+* Refactored 'abs' to reduce duplicate code with a helper function
+* Refactored 'signum' to inline more Double precesion math into the returned value
+* Refactored 'signum' to reduce duplicate code with a helper function
+* Added 'reimMag' helper function for calculating the magnitude of the real and imaginary grades of APS
+* Refactored 'recip' to use a helper function, moved some shared calculations to a 'let' binding
+* Removed the final 'reduce' from the Fractional instances
+* Refactored 'log' to convert the 'sqrt' from inside the log to a '(/2)'
+* Refactored imaginary implementation of 'log' to specialize the values at +/- 1 to be purly imaginary
+* Refactored imaginary implementation of 'sqrt' to inline more Double precision math into the 'C' constructor
+* Refactored imaginary implementation of 'sqrt' to specialize the values at 0 to be purly real
+* Refactored complex implementation of 'sqrt' to inline more Double precision math into the 'C' constructor
+* Refactored imaginary implementation of 'sin' to specialize the values at 0 to be purly real
+* Refactored complex implementation of 'tan' to inline more Double precision math into the 'C' constructor
+* Refactored imaginary implementation of 'tan' to specialize the value at 0 to be purly real
+* Refactored real implementation of 'asin' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored imaginary implementation of 'asin' to specialize the value at 0 to be purly real
+* Refactored complex implementation of 'asin' to inline more Double precision math into the 'C' constructor
+* Refactored real implementation of 'acos' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored imaginary implementation of 'acos' to specialize the value at 0 to be purly real
+* Refactored complex implementation of 'acos' to inline more Double precision math into the 'C' constructor
+* Refactored complex implementation of 'acos' to specialize the value at 0 to be purly real
+* Refactored imaginary implementation of 'atan' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored complex implementation of 'atan' to inline more Double precision math into the 'C' constructor
+* Refactored complex implementation of 'tanh' to inline more Double precision math into the 'C' constructor
+* Refactored imaginary implementation of 'asinh' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored complex implementation of 'asinh' to inline more Double precision math into the 'C' constructor
+* Refactored real implementation of 'acosh' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored imaginary implementation of 'acosh' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored complex implementation of 'acosh' to inline more Double precision math into the 'C' constructor
+* Refactored real implementation of 'atanh' to re-derive the implemenation to inline more Double precision math into the various constructors
+* Refactored imaginary implementation of 'atanh' to inline more Double precision math into the 'I' constructor
+* Refactored imaginary implementation of 'atanh' to specialize the value at 0 to be purly real
+* Refactored complex implementation of 'atanh' to inline more Double precision math into the 'C' constructor
+* Refactored 'lsv' same as 'abs'
+* Refactored 'lsv' to guard the sqrt function so that negative values
+* Refactored 'lsv' to use a helper function to reduce duplicated code
+* Added 'loDisc' helper function to calculate lsv for PV and TPV
+* Implemented hlint's suggestion to remove parens around pattern for 'spectraldcmp' helper function 'dcmp'
+* Refactored 'dcmp' to order based on the RHS and to commonize the BPV and APS constructors
+* Implemented hlint's suggestion to remove parens around pattern for 'eigvals' helper function 'eigv'
+* Refactored 'eigv' to order based on the RHS and to commonize the BPV and APS constructors
+* Added 'dup' helper function to duplicate a value in a tuple
+* Implemented hlint's suggestion to remove parens around pattern for 'project' helper function 'proj'
+* Refactored 'project' to use helper functions for single and double vector grade constructors
+* Added 'biTriDProj' helper function for generating projectors for double vector grades
+* Added 'triDProj' helper function for generating projectors for single vector grades
+* Refactored 'boost2colinear' to specialize and inline more Double precision math
+* Refactored 'isColinear' to be calculated with Double precision math with a helper function 'colinearHelper'
+* Corrected 'isColinear' to properly test for colinear even with non-reduced values
+* Added 'colinearHelper' function to calculate if the biparavector portion is colinear
+* Refactored 'hasNilpotent' to be calculated with Double precision math with a helper function 'nilpotentHelper'
+* Added 'nilpotentHelper' function to calculate if the biparavector portion is nilpotent
+* Implemented hlint's suggestion to remove '$' from 'projEigs'
+* Refactored 'reduce' to factor out a shared comparison and use a helper function
+* Refactored 'reduce' to re-order some of the comparisons to ones that are more common
+* Removed the old value of 'mI'
+* Performed the multiplication that was in 'tol' and 'tol''
+* Refactored 'recip'' to be in a point free style
+* Refactored 'sqrt'' to be in a point free style
+* Refactored 'tan'' to be in a point free style
+* Refactored 'asin'' to be in a point free style
+* Refactored 'acos'' to be in a point free style
+* Refactored 'atan'' to be in a point free style
+* Refactored 'tanh'' to be in a point free style
+* Refactored 'asinh'' to be in a point free style
+* Refactored 'atanh'' to be in a point free style
+* Added random projectors, nilpotnents, and unitary cliffors, to the Random instance of Cl3
+* Refactored 'rangePV' to be more uniform and within the required range
+* Refactored 'rangeH' to be more uniform and within the required range
+* Refactored 'rangeC' to be more uniform and within the required range
+* Refactored 'rangeBPV' to be more uniform and within the required range
+* Refactored 'rangeODD' to be more uniform and within the required range
+* Refactored 'rangeTPV' to be more uniform and within the required range
+* Refactored 'rangeAPS' to be more uniform and within the required range
+* Refactored 'randUnitV3' to be more uniform and not to be biased to the poles
+* Refactored 'randProjector' to inline more Double precision math into the PV constructor
+* Refactored 'randNilpotent' to inline more Double precision math into the BPV constructor
+* Added 'randUnitary' to generate random unitary Cliffors
+* Refactored 'vectorHelper' to use 'randUnitV3'
+* Rewrote the tests to use Criterion instead of QuickCheck
+* Changed the tests Arbitrary to 'randomRIO'
+* Changed the test's random input to be 5,000,000 Cliffors
+* Refactored the tests to use 'mIx'
+* Refactored the tests '≈≈' to be a mean squared error calculation compared to a threshold
+* Refactored the tests 'poles' to use a 'closeTo' function instead of '≈≈' to compare with eigenvalues
+* Added to the tests a 'closeTo' function to compare against eigenvalues in the complex plane using a Euclidean distance
+
 ## 1.0.0.4  -- 2018-10-18
 
 * Found various improvements while preparing for NPFL specialized Jordan for BPV and APS

@@ -1,6 +1,13 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# LANGUAGE CPP #-}
+
+#if __GLASGOW_HASKELL__ == 810
+-- Work around to fix GHC Issue #15304, issue popped up again in GHC 8.10, it should be fixed in GHC 8.12
+-- This code is meant to reproduce MR 2608 for GHC 8.10
+{-# OPTIONS_GHC -funfolding-keeness-factor=1 -funfolding-use-threshold=80 #-}
+#endif
 
 --------------------------------------------------------------------------------------------
 -- |
@@ -56,17 +63,22 @@ module Algebra.Geometric.Cl3.JonesCalculus
  wpRot,
  -- * Reflection
  refl,
+#ifndef O_NO_RANDOM
  -- * Random Jones Vectors
  randJonesVec,
  randOrthogonalJonesVec,
+#endif
  -- * Normalization Factorization
  factorize
 ) where
 
 
-import safe Algebra.Geometric.Cl3 (Cl3(..), dag, bar, toR, toV3, toC, project, randUnitV3)
-import System.Random (RandomGen)
+import safe Algebra.Geometric.Cl3 (Cl3(..), dag, bar, toR, toV3, toC, project)
 
+#ifndef O_NO_RANDOM
+import safe Algebra.Geometric.Cl3 (randUnitV3)
+import System.Random (RandomGen)
+#endif
 
 e0 = R 1
 e1 = V3 1 0 0
@@ -192,6 +204,7 @@ factorize jonesVec =
       phi = 2 * (-i) * log normC
   in (amp, phi, normJonesVec)
 
+#ifndef O_NO_RANDOM
 -------------------------------------------------------------------
 --
 --  Random Jones Vectors
@@ -210,3 +223,5 @@ randOrthogonalJonesVec :: RandomGen g => g -> ((Cl3, Cl3), g)
 randOrthogonalJonesVec g = 
   let (v3, g') = randUnitV3 g
   in ((jv v3, jv (bar v3)),g')
+
+#endif
