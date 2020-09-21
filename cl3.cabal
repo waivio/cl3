@@ -10,7 +10,7 @@ name:                cl3
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             2.0.0.0
+version:             3.0.0.0
 
 -- A short (one-line) description of the package.
 synopsis:            Clifford Algebra of three dimensional space.
@@ -50,7 +50,8 @@ tested-with:         GHC == 7.8.4,
                      GHC == 8.4.2,
                      GHC == 8.4.4,
                      GHC == 8.6.5,
-                     GHC == 8.8.3
+                     GHC == 8.8.3,
+                     GHC == 8.10.2
 
 -- Extra files to be distributed with the package, such as examples or a 
 -- README.
@@ -75,6 +76,11 @@ flag do-no-random
   manual:      True
   default:     False
 
+flag do-liquid
+  description: Build with Liquid Haskell checking
+  manual:      True
+  default:     False
+
 library
   -- Modules exported by the library.
   exposed-modules:
@@ -84,11 +90,17 @@ library
   -- Compiler options
   ghc-options: -Wall -O2
   
+  if flag(do-liquid)
+    ghc-options: -fplugin=LiquidHaskell
+  
   if flag(do-no-derived-instances)
     cpp-options: -DO_NO_DERIVED
   
   if flag(do-no-random)
     cpp-options: -DO_NO_RANDOM
+  
+  if flag(do-liquid)
+    cpp-options: -DO_LIQUID -DO_NO_RANDOM -DO_NO_DERIVED
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:
@@ -102,13 +114,21 @@ library
     MultiWayIf
   
   -- Other library packages from which modules are imported.
-  build-depends:       
-    base >=4.7 && <5,
+  build-depends:
     deepseq >=1.1 && <2
   
   if !flag(do-no-random)
     build-depends:
       random >=1.0 && <2
+  
+  if !flag(do-liquid)
+    build-depends:
+      base >=4.7 && <5
+  
+  if flag(do-liquid)
+    build-depends:
+      liquid-base,
+      liquidhaskell >= 0.8.10
   
   -- Directories containing source files.
   hs-source-dirs:      src
