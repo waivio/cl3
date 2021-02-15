@@ -49,6 +49,17 @@ module Algebra.Geometric.Cl3
  showOctave,
  -- * Eliminate grades that are less than 'tol' to use a simpler Constructor
  reduce, tol,
+ -- * Compact Storable types for the Cl3 Constructors with smart constructors
+ Cl3_R, toCl3_R, fromCl3_R,
+ Cl3_V3, toCl3_V3, fromCl3_V3,
+ Cl3_BV, toCl3_BV, fromCl3_BV,
+ Cl3_I, toCl3_I, fromCl3_I,
+ Cl3_PV, toCl3_PV, fromCl3_PV,
+ Cl3_H, toCl3_H, fromCl3_H,
+ Cl3_C, toCl3_C, fromCl3_C,
+ Cl3_BPV, toCl3_BPV, fromCl3_BPV,
+ Cl3_ODD, toCl3_ODD, fromCl3_ODD,
+ Cl3_TPV, toCl3_TPV, fromCl3_TPV,
 #ifndef O_NO_RANDOM
  -- * Random Instances
  randR, rangeR,
@@ -1969,6 +1980,13 @@ timesI (ODD a1 a2 a3 a123) = H (negate a123) a1 a2 a3
 timesI (TPV a23 a31 a12 a123) = PV (negate a123) (negate a23) (negate a31) (negate a12)
 timesI (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS (negate a123) (negate a23) (negate a31) (negate a12) a1 a2 a3 a0
 
+#ifdef O_LIQUID
+tol :: Cl3
+tol = R 0
+
+tol' :: Double
+tol' = 0
+#else
 -- | 'tol' currently 128*eps
 tol :: Cl3
 {-# INLINE tol #-}
@@ -1977,7 +1995,7 @@ tol = R 1.4210854715202004e-14
 tol' :: Double
 {-# INLINE tol' #-}
 tol' = 1.4210854715202004e-14
-
+#endif
 
 -- | 'bar' is a Clifford Conjugate, the vector grades are negated
 bar :: Cl3 -> Cl3
@@ -2225,6 +2243,9 @@ atanh' = recip.(1-).(^2)  -- pole at +/-1
 
 -- | Cl3 instance of Storable uses the APS constructor as its standard interface.
 -- "peek" returns a cliffor constructed with APS. "poke" converts a cliffor to APS.
+-- For a more compact storing of constructors other than APS use the storable
+-- subtypes Cl3_R, Cl3_V3, Cl3_BV, Cl3_I, Cl3_PV, Cl3_H, Cl3_C, Cl3_BPV,
+-- Cl3_ODD, Cl3_TPV.
 instance Storable Cl3 where
   sizeOf _ = 8 * sizeOf (undefined :: Double)
   alignment _ = sizeOf (undefined :: Double)
@@ -2253,6 +2274,301 @@ instance Storable Cl3 where
       where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
   poke _ _ = error "Serious Issues with poke in Cl3.Storable"
+
+
+data Cl3_R where
+  Cl3_R :: !Double -> Cl3_R
+
+toCl3_R :: Cl3 -> Cl3_R
+toCl3_R (R a0) = Cl3_R a0
+toCl3_R (_) = error "Please don't try and cast something that's not R to Cl3_R"
+
+fromCl3_R :: Cl3_R -> Cl3
+fromCl3_R (Cl3_R a0) = R a0
+
+instance Storable Cl3_R where
+  sizeOf _ = sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a0 <- peek offset
+    return $ Cl3_R a0
+      where
+        offset = (castPtr ptr :: Ptr Double)
+
+  poke ptr (Cl3_R a0) = do
+    poke offset a0
+      where
+        offset = (castPtr ptr :: Ptr Double)
+
+
+data Cl3_V3 where
+  Cl3_V3 :: !Double -> !Double -> !Double -> Cl3_V3
+
+toCl3_V3 :: Cl3 -> Cl3_V3
+toCl3_V3 (V3 a1 a2 a3) = Cl3_V3 a1 a2 a3
+toCl3_V3 (_) = error "Please don't try and cast something that's not V3 to Cl3_V3"
+
+fromCl3_V3 :: Cl3_V3 -> Cl3
+fromCl3_V3 (Cl3_V3 a1 a2 a3) = V3 a1 a2 a3
+
+instance Storable Cl3_V3 where
+  sizeOf _ = 3 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a1 <- peek (offset 0)
+    a2 <- peek (offset 1)
+    a3 <- peek (offset 2)
+    return $ Cl3_V3 a1 a2 a3
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_V3 a1 a2 a3) = do
+    poke (offset 0) a1
+    poke (offset 1) a2
+    poke (offset 2) a3
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+
+data Cl3_BV where
+  Cl3_BV :: !Double -> !Double -> !Double -> Cl3_BV
+
+toCl3_BV :: Cl3 -> Cl3_BV
+toCl3_BV (BV a23 a31 a12) = Cl3_BV a23 a31 a12
+toCl3_BV (_) = error "Please don't try and cast something that's not BV to Cl3_BV"
+
+fromCl3_BV :: Cl3_BV -> Cl3
+fromCl3_BV (Cl3_BV a23 a31 a12) = BV a23 a31 a12
+
+instance Storable Cl3_BV where
+  sizeOf _ = 3 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a23 <- peek (offset 0)
+    a31 <- peek (offset 1)
+    a12 <- peek (offset 2)
+    return $ Cl3_BV a23 a31 a12
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_BV a23 a31 a12) = do
+    poke (offset 0) a23
+    poke (offset 1) a31
+    poke (offset 2) a12
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+
+data Cl3_I where
+  Cl3_I :: !Double -> Cl3_I
+
+toCl3_I :: Cl3 -> Cl3_I
+toCl3_I (I a123) = Cl3_I a123
+toCl3_I (_) = error "Please don't try and cast something that's not R to Cl3_R"
+
+fromCl3_I :: Cl3_I -> Cl3
+fromCl3_I (Cl3_I a123) = I a123
+
+instance Storable Cl3_I where
+  sizeOf _ = sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a123 <- peek offset
+    return $ Cl3_I a123
+      where
+        offset = (castPtr ptr :: Ptr Double)
+
+  poke ptr (Cl3_I a123) = do
+    poke offset a123
+      where
+        offset = (castPtr ptr :: Ptr Double)
+
+
+data Cl3_PV where
+  Cl3_PV :: !Double -> !Double -> !Double -> !Double -> Cl3_PV
+
+toCl3_PV :: Cl3 -> Cl3_PV
+toCl3_PV (PV a0 a1 a2 a3) = Cl3_PV a0 a1 a2 a3
+toCl3_PV (_) = error "Please don't try and cast something that's not PV to Cl3_PV"
+
+fromCl3_PV :: Cl3_PV -> Cl3
+fromCl3_PV (Cl3_PV a0 a1 a2 a3) = PV a0 a1 a2 a3
+
+instance Storable Cl3_PV where
+  sizeOf _ = 4 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a0 <- peek (offset 0)
+    a1 <- peek (offset 1)
+    a2 <- peek (offset 2)
+    a3 <- peek (offset 4)
+    return $ Cl3_PV a0 a1 a2 a3
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_PV a0 a1 a2 a3) = do
+    poke (offset 0) a0
+    poke (offset 1) a1
+    poke (offset 2) a2
+    poke (offset 3) a3
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+
+data Cl3_H where
+  Cl3_H :: !Double -> !Double -> !Double -> !Double -> Cl3_H
+
+toCl3_H :: Cl3 -> Cl3_H
+toCl3_H (H a0 a23 a31 a12) = Cl3_H a0 a23 a31 a12
+toCl3_H (_) = error "Please don't try and cast something that's not H to Cl3_H"
+
+fromCl3_H :: Cl3_H -> Cl3
+fromCl3_H (Cl3_H a0 a23 a31 a12) = H a0 a23 a31 a12
+
+instance Storable Cl3_H where
+  sizeOf _ = 4 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a0 <- peek (offset 0)
+    a23 <- peek (offset 1)
+    a31 <- peek (offset 2)
+    a12 <- peek (offset 3)
+    return $ Cl3_H a0 a23 a31 a12
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_H a0 a23 a31 a12) = do
+    poke (offset 0) a0
+    poke (offset 1) a23
+    poke (offset 2) a31
+    poke (offset 3) a12
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+
+data Cl3_C where
+  Cl3_C :: !Double -> !Double -> Cl3_C
+
+toCl3_C :: Cl3 -> Cl3_C
+toCl3_C (C a0 a123) = Cl3_C a0 a123
+toCl3_C (_) = error "Please don't try and cast something that's not C to Cl3_C"
+
+fromCl3_C :: Cl3_C -> Cl3
+fromCl3_C (Cl3_C a0 a123) = C a0 a123
+
+instance Storable Cl3_C where
+  sizeOf _ = 2 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a0 <- peek (offset 0)
+    a123 <- peek (offset 1)
+    return $ Cl3_C a0 a123
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_C a0 a123) = do
+    poke (offset 0) a0
+    poke (offset 1) a123
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+
+data Cl3_BPV where
+  Cl3_BPV :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3_BPV
+
+toCl3_BPV :: Cl3 -> Cl3_BPV
+toCl3_BPV (BPV a1 a2 a3 a23 a31 a12) = Cl3_BPV a1 a2 a3 a23 a31 a12
+toCl3_BPV (_) = error "Please don't try and cast something that's not BPV to Cl3_BPV"
+
+fromCl3_BPV :: Cl3_BPV -> Cl3
+fromCl3_BPV (Cl3_BPV a1 a2 a3 a23 a31 a12) = BPV a1 a2 a3 a23 a31 a12
+
+instance Storable Cl3_BPV where
+  sizeOf _ = 6 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a1 <- peek (offset 0)
+    a2 <- peek (offset 1)
+    a3 <- peek (offset 2)
+    a23 <- peek (offset 3)
+    a31 <- peek (offset 4)
+    a12 <- peek (offset 5)
+    return $ Cl3_BPV a1 a2 a3 a23 a31 a12
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_BPV a1 a2 a3 a23 a31 a12) = do
+    poke (offset 0) a1
+    poke (offset 1) a2
+    poke (offset 2) a3
+    poke (offset 3) a23
+    poke (offset 4) a31
+    poke (offset 5) a12
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+
+data Cl3_ODD where
+  Cl3_ODD :: !Double -> !Double -> !Double -> !Double -> Cl3_ODD
+
+toCl3_ODD :: Cl3 -> Cl3_ODD
+toCl3_ODD (ODD a1 a2 a3 a123) = Cl3_ODD a1 a2 a3 a123
+toCl3_ODD (_) = error "Please don't try and cast something that's not ODD to Cl3_ODD"
+
+fromCl3_ODD :: Cl3_ODD -> Cl3
+fromCl3_ODD (Cl3_ODD a1 a2 a3 a123) = ODD a1 a2 a3 a123
+
+instance Storable Cl3_ODD where
+  sizeOf _ = 4 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a1 <- peek (offset 0)
+    a2 <- peek (offset 1)
+    a3 <- peek (offset 2)
+    a123 <- peek (offset 3)
+    return $ Cl3_ODD a1 a2 a3 a123
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_ODD a1 a2 a3 a123) = do
+    poke (offset 0) a1
+    poke (offset 1) a2
+    poke (offset 2) a3
+    poke (offset 3) a123
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+
+data Cl3_TPV where
+  Cl3_TPV :: !Double -> !Double -> !Double -> !Double -> Cl3_TPV
+
+toCl3_TPV :: Cl3 -> Cl3_TPV
+toCl3_TPV (TPV a23 a31 a12 a123) = Cl3_TPV a23 a31 a12 a123
+toCl3_TPV (_) = error "Please don't try and cast something that's not TPV to Cl3_TPV"
+
+fromCl3_TPV :: Cl3_TPV -> Cl3
+fromCl3_TPV (Cl3_TPV a23 a31 a12 a123) = TPV a23 a31 a12 a123
+
+instance Storable Cl3_TPV where
+  sizeOf _ = 4 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a23 <- peek (offset 0)
+    a31 <- peek (offset 1)
+    a12 <- peek (offset 2)
+    a123 <- peek (offset 3)
+    return $ Cl3_TPV a23 a31 a12 a123
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_TPV a23 a31 a12 a123) = do
+    poke (offset 0) a23
+    poke (offset 1) a31
+    poke (offset 2) a12
+    poke (offset 3) a123
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
 
 
 

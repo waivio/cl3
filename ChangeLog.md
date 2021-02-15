@@ -1,5 +1,12 @@
 # Revision history for cl3
 
+## 3.0.0.0  -- 2021-01-12
+
+* Added LiquidHaskell support
+* Added more memory efficient subtypes for R, V3, BV, I, PV, H, C, BPV, ODD, TPV
+* Added smart constructors to covert to/from the more memory efficient subtypes
+* Added a "weigh" based benchmark to verify that the more memory efficient subtypes are actually more memory efficent 
+
 ## 2.0.0.0  -- 2020-06-20
 
 * Added work around for GHC 8.10 regression of Issue #15304 reproducing code changes from GHC MR 2608 in the source files

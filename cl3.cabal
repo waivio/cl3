@@ -91,7 +91,7 @@ library
   ghc-options: -Wall -O2
   
   if flag(do-liquid)
-    ghc-options: -fplugin=LiquidHaskell
+    ghc-options: -fplugin=LiquidHaskell -fplugin-opt=LiquidHaskell:--fast -fplugin-opt=LiquidHaskell:--no-termination
   
   if flag(do-no-derived-instances)
     cpp-options: -DO_NO_DERIVED
@@ -159,4 +159,18 @@ benchmark bench-cl3-nbody
     cl3,
     base >=4.7 && <5,
     criterion >=1.1 && <2
+  default-language: Haskell2010
+
+-- Weigh based benchmark
+benchmark bench-cl3-weigh
+  type: exitcode-stdio-1.0
+  hs-source-dirs: benchmarks
+  main-is: WeighStorableCl3.hs
+  ghc-options: -Wall -O2
+  build-depends:
+    cl3,
+    base >=4.7 && <5,
+    vector,
+    massiv,
+    weigh
   default-language: Haskell2010
