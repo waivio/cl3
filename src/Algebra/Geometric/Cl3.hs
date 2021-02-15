@@ -7,6 +7,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE MultiWayIf #-}
 
+
 #ifndef O_LIQUID
 -- Turn off Safe Haskell language extension due to liquid-base re-exports
 {-# LANGUAGE Safe #-}
@@ -49,6 +50,7 @@ module Algebra.Geometric.Cl3
  showOctave,
  -- * Eliminate grades that are less than 'tol' to use a simpler Constructor
  reduce, tol,
+#ifndef O_NO_STORABLE
  -- * Compact Storable types for the Cl3 Constructors with smart constructors
  Cl3_R, toCl3_R, fromCl3_R,
  Cl3_V3, toCl3_V3, fromCl3_V3,
@@ -60,6 +62,8 @@ module Algebra.Geometric.Cl3
  Cl3_BPV, toCl3_BPV, fromCl3_BPV,
  Cl3_ODD, toCl3_ODD, fromCl3_ODD,
  Cl3_TPV, toCl3_TPV, fromCl3_TPV,
+ Cl3_APS, toCl3_APS, fromCl3_APS,
+#endif
 #ifndef O_NO_RANDOM
  -- * Random Instances
  randR, rangeR,
@@ -81,7 +85,8 @@ module Algebra.Geometric.Cl3
  -- * Helpful Functions
  eigvals, hasNilpotent,
  spectraldcmp, project,
- mIx, timesI
+ mIx, timesI,
+ abssignum
 ) where
 
 #ifndef O_NO_DERIVED
@@ -89,11 +94,12 @@ import Data.Data (Typeable, Data)
 import GHC.Generics (Generic)
 #endif
 
-
 import Control.DeepSeq (NFData,rnf)
+
+#ifndef O_NO_STORABLE
 import Foreign.Storable (Storable, sizeOf, alignment, peek, poke)
 import Foreign.Ptr (Ptr, plusPtr, castPtr)
-
+#endif
 
 #ifndef O_NO_RANDOM
 import System.Random (RandomGen, Random, randomR, random)
@@ -151,6 +157,7 @@ instance Show Cl3 where
   show = showOctave
 
 #endif
+
 
 
 instance NFData Cl3 where
@@ -972,32 +979,37 @@ instance Num Cl3 where
                                                                                 (a0*b123 + a123*b0 + a1*b23 + a23*b1 + a2*b31 + a31*b2 + a3*b12 + a12*b3)
 
 
+
+
   -- |'abs' is the spectral norm aka the spectral radius
   -- it is the largest singular value. This function may need to be fiddled with
   -- to make the math a bit safer wrt overflows.  This makes use of the largest
   -- singular value, if the littlest singular value is zero then the element is not
   -- invertable, we can see here that R, C, V3, BV, and H are all invertable, and
   -- by implication R, C, and H are division algebras.
+  abs cl3 = fst $ abssignum cl3
+  {-
   abs (R a0) = R (abs a0) -- absolute value of a real number
-  abs (V3 a1 a2 a3) = R (sqrt (a1^2 + a2^2 + a3^2)) -- magnitude of a vector
-  abs (BV a23 a31 a12) = R (sqrt (a23^2 + a31^2 + a12^2)) -- magnitude of a bivector
+  abs (V3 a1 a2 a3) = R (sqrt $ a1^2 + a2^2 + a3^2) -- magnitude of a vector
+  abs (BV a23 a31 a12) = R (sqrt $ a23^2 + a31^2 + a12^2) -- magnitude of a bivector
   abs (I a123) = R (abs a123) -- magnitude of a Imaginary number
   abs (PV a0 a1 a2 a3) = R (reimMag a0 a1 a2 a3)
   abs (TPV a23 a31 a12 a123) = R (reimMag a123 a23 a31 a12)
-  abs (H a0 a23 a31 a12) = R (sqrt (a0^2 + a23^2 + a31^2 + a12^2)) -- largest singular value
-  abs (C a0 a123) = R (sqrt (a0^2 + a123^2)) -- magnitude of a complex number
+  abs (H a0 a23 a31 a12) = R (sqrt $ a0^2 + a23^2 + a31^2 + a12^2) -- largest singular value
+  abs (C a0 a123) = R (sqrt $ a0^2 + a123^2) -- magnitude of a complex number
   abs (BPV a1 a2 a3 a23 a31 a12) =
-    let x = sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
-    in R (sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x))
-  abs (ODD a1 a2 a3 a123) = R (sqrt (a1^2 + a2^2 + a3^2 + a123^2))
+    let mag = sqrt $ (a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2 -- core was duplicating this computation added let to hopefully reduce the duplication
+    in R (sqrt $ a1^2 + a23^2 + a2^2 + mag + a31^2 + a3^2 + a12^2 + mag)
+  abs (ODD a1 a2 a3 a123) = R (sqrt $ a1^2 + a2^2 + a3^2 + a123^2)
   abs (APS a0 a1 a2 a3 a23 a31 a12 a123) =
-    let x = sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 +
-                  (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2) -- core was duplicating this computation added let to hopefully reduce the duplication
-    in R (sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x))
-
+    let mag = sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2 -- core was duplicating this computation added let to hopefully reduce the duplication
+    in R (sqrt $ a0^2 + a1^2 + a2^2 + a3^2 + mag + a23^2 + a31^2 + a12^2 + a123^2 + mag)
+  -}
 
   -- |'signum' satisfies the Law "abs x * signum x == x"
   -- kind of cool: signum of a vector is it's unit vector.
+  signum cl3 = snd $ abssignum cl3
+  {-
   signum (R a0) = R (signum a0)
   signum (V3 a1 a2 a3) =
     let mag = sqrt (a1^2 + a2^2 + a3^2)
@@ -1011,7 +1023,10 @@ instance Num Cl3 where
     in if mag == 0
        then R 0
        else BV (invMag * a23) (invMag * a31) (invMag * a12)
-  signum (I a123) = I (signum a123)
+  signum (I a123) =
+    if a123 == 0
+    then R 0
+    else I (signum a123)
   signum (PV a0 a1 a2 a3) =
     let mag = reimMag a0 a1 a2 a3
         invMag = recip mag
@@ -1056,7 +1071,7 @@ instance Num Cl3 where
     in if mag == 0
        then R 0
        else APS (invMag * a0) (invMag * a1) (invMag * a2) (invMag * a3) (invMag * a23) (invMag * a31) (invMag * a12) (invMag * a123)
-
+  -}
 
   -- |'fromInteger'
   fromInteger int = R (fromInteger int)
@@ -1089,7 +1104,7 @@ reimMag :: Double -> Double -> Double -> Double -> Double
 reimMag v0 v1 v2 v3 =
   let sumsqs = v1^2 + v2^2 + v3^2
       x = abs v0 * sqrt sumsqs
-  in sqrt (v0^2 + sumsqs + x + x)
+  in sqrt (v0^2 + sumsqs + 2*x)
 
 -- |Cl(3,0) has a Fractional instance
 instance Fractional Cl3 where
@@ -1128,6 +1143,8 @@ instance Floating Cl3 where
     in C (expa0 * cos a123) (expa0 * sin a123)
   exp cliffor = spectraldcmp exp exp' cliffor
 
+
+
   --
   log (R a0)
     | a0 >= 0 = R (log a0)
@@ -1139,6 +1156,7 @@ instance Floating Cl3 where
     | otherwise = C (log.abs $ a123) (signum a123 * (pi/2))
   log (C a0 a123) = C (log (a0^2 + a123^2) / 2) (atan2 a123 a0)
   log cliffor = spectraldcmp log log' cliffor
+
 
   --
   sqrt (R a0)
@@ -1175,7 +1193,7 @@ instance Floating Cl3 where
   tan (I a123)
     | a123 == 0 = R 0
     | otherwise = I (tanh a123)
-  tan (C a0 a123) =
+  tan (reduce -> C a0 a123) =
     let
       m = x2^2 + y2^2
       x1 = sinx*coshy
@@ -1188,6 +1206,8 @@ instance Floating Cl3 where
       coshy = cosh a123
     in C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
   tan cliffor = spectraldcmp tan tan' cliffor
+
+
 
   --
   asin (R a0)
@@ -1357,7 +1377,7 @@ instance Floating Cl3 where
   --
   tanh (R a0) = R (tanh a0)
   tanh (I a123) = I (tan a123)
-  tanh (C a0 a123) =
+  tanh (reduce -> C a0 a123) =
     let
       m = x2^2 + y2^2
       x1 = cosy*sinhx
@@ -1980,6 +2000,62 @@ timesI (ODD a1 a2 a3 a123) = H (negate a123) a1 a2 a3
 timesI (TPV a23 a31 a12 a123) = PV (negate a123) (negate a23) (negate a31) (negate a12)
 timesI (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS (negate a123) (negate a23) (negate a31) (negate a12) a1 a2 a3 a0
 
+-- | 'abssignum' is a more effecient '\cl3 -> (abs cl3, signum cl3)'
+-- So 'abs' is always R and 'signum' is the same type of constructor as the input
+-- 'signum' is the element divided by its largest singular value 'abs'
+{-
+abssignum :: Cl3 -> (Cl3,Cl3)
+abssignum (R a0) = (R (abs a0),R (signum a0))
+abssignum (V3 a1 a2 a3) = let mag = sqrt $ a1^2 + a2^2 + a3^2 in ((R mag),V3 (a1/mag) (a2/mag) (a3/mag))
+abssignum (BV a23 a31 a12) = let mag = sqrt $ a23^2 + a31^2 + a12^2 in ((R mag),BV (a23/mag) (a31/mag) (a12/mag))
+abssignum (I a123) = (R (abs a123),I (signum a123))
+abssignum (PV a0 a1 a2 a3) = let mag = reimMag a0 a1 a2 a3 in (R (mag),PV (a0/mag) (a1/mag) (a2/mag) (a3/mag))
+abssignum (H a0 a23 a31 a12) = let mag = sqrt $ a0^2 + a23^2 + a31^2 + a12^2 in ((R mag),H (a0/mag) (a23/mag) (a31/mag) (a12/mag))
+abssignum (C a0 a123) = let mag = sqrt $ a0^2 + a123^2 in ((R mag),C (a0/mag) (a123/mag))
+abssignum (BPV a1 a2 a3 a23 a31 a12) =
+  let mag0 = sqrt $ (a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2
+      mag = sqrt $ a1^2 + a23^2 + a2^2 + mag0 + a31^2 + a3^2 + a12^2 + mag0 
+  in (R (mag),BPV (a1/mag) (a2/mag) (a3/mag) (a23/mag) (a31/mag) (a12/mag))
+abssignum (ODD a1 a2 a3 a123) = let mag = sqrt $ a1^2 + a2^2 + a3^2 + a123^2 in (R (mag),ODD (a1/mag) (a2/mag) (a3/mag) (a123/mag))
+abssignum (TPV a23 a31 a12 a123) = let mag = reimMag a123 a23 a31 a12 in (R (mag),TPV (a23/mag) (a31/mag) (a12/mag) (a123/mag))
+abssignum (APS a0 a1 a2 a3 a23 a31 a12 a123) =
+  let mag0 = sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2
+      mag = sqrt $ a0^2 + a1^2 + a2^2 + a3^2 + mag0 + a23^2 + a31^2 + a12^2 + a123^2 + mag0
+  in (R (mag), APS (a0/mag) (a1/mag) (a2/mag) (a3/mag) (a23/mag) (a31/mag) (a12/mag) (a123/mag))
+-}
+abssignum :: Cl3 -> (Cl3,Cl3)
+abssignum cl3 =
+  let (R m0) = absolute cl3
+  in if m0 == 0
+     then (R 0, R 0) -- (abs 0 == 0, signum 0 == 0)
+     else (R m0, cl3/(R m0))
+
+absolute :: Cl3 -> Cl3
+absolute (R a0) = R (abs a0)
+absolute (V3 a1 a2 a3) = let m = rss3 a1 a2 a3 in R m
+absolute (BV a23 a31 a12) = let m = rss3 a23 a31 a12 in R m
+absolute (I a123) = R (abs a123)
+absolute (PV a0 a1 a2 a3) = let m = reimMag a0 a1 a2 a3 in R m
+absolute (H a0 a23 a31 a12) = let m = rss4 a0 a23 a31 a12 in R m
+absolute (C a0 a123) = let m = rss2 a0 a123 in R m
+absolute (BPV a1 a2 a3 a23 a31 a12) = let mag0 = rss3 (a1*a31 - a2*a23) (a1*a12 - a3*a23) (a2*a12 - a3*a31)
+                                          m = sqrt $ a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + 2*mag0 in R m
+absolute (ODD a1 a2 a3 a123) = let m = rss4 a1 a2 a3 a123 in R m
+absolute (TPV a23 a31 a12 a123) = let m = reimMag a123 a23 a31 a12 in R m
+absolute (APS a0 a1 a2 a3 a23 a31 a12 a123) = let mag0 = sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2
+                                                  m = sqrt $ a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + 2*mag0 in R m
+
+rss2 :: Double -> Double -> Double
+rss2 a0 a123 = sqrt $ a0^2 + a123^2
+
+rss3 :: Double -> Double -> Double -> Double
+rss3 x y z = sqrt $ x^2 + y^2 + z^2
+
+rss4 :: Double -> Double -> Double -> Double -> Double
+rss4 t x y z = sqrt $ t^2 + x^2 + y^2 + z^2
+
+
+
 #ifdef O_LIQUID
 tol :: Cl3
 tol = R 0
@@ -2232,6 +2308,7 @@ atanh' :: Cl3 -> Cl3
 atanh' = recip.(1-).(^2)  -- pole at +/-1
 
 
+#ifndef O_NO_STORABLE
 -------------------------------------------------------------------
 -- 
 -- Instance of Cl3 types with the "Foreign.Storable" library.
@@ -2281,7 +2358,7 @@ data Cl3_R where
 
 toCl3_R :: Cl3 -> Cl3_R
 toCl3_R (R a0) = Cl3_R a0
-toCl3_R (_) = error "Please don't try and cast something that's not R to Cl3_R"
+toCl3_R err = error $ "Please don't try and cast something that's not R to Cl3_R, Got: " ++ show err
 
 fromCl3_R :: Cl3_R -> Cl3
 fromCl3_R (Cl3_R a0) = R a0
@@ -2306,7 +2383,7 @@ data Cl3_V3 where
 
 toCl3_V3 :: Cl3 -> Cl3_V3
 toCl3_V3 (V3 a1 a2 a3) = Cl3_V3 a1 a2 a3
-toCl3_V3 (_) = error "Please don't try and cast something that's not V3 to Cl3_V3"
+toCl3_V3 err = error $ "Please don't try and cast something that's not V3 to Cl3_V3, Got: " ++ show err
 
 fromCl3_V3 :: Cl3_V3 -> Cl3
 fromCl3_V3 (Cl3_V3 a1 a2 a3) = V3 a1 a2 a3
@@ -2335,7 +2412,7 @@ data Cl3_BV where
 
 toCl3_BV :: Cl3 -> Cl3_BV
 toCl3_BV (BV a23 a31 a12) = Cl3_BV a23 a31 a12
-toCl3_BV (_) = error "Please don't try and cast something that's not BV to Cl3_BV"
+toCl3_BV err = error $ "Please don't try and cast something that's not BV to Cl3_BV, Got: " ++ show err
 
 fromCl3_BV :: Cl3_BV -> Cl3
 fromCl3_BV (Cl3_BV a23 a31 a12) = BV a23 a31 a12
@@ -2364,7 +2441,7 @@ data Cl3_I where
 
 toCl3_I :: Cl3 -> Cl3_I
 toCl3_I (I a123) = Cl3_I a123
-toCl3_I (_) = error "Please don't try and cast something that's not R to Cl3_R"
+toCl3_I err = error $ "Please don't try and cast something that's not R to Cl3_R, Got: " ++ show err
 
 fromCl3_I :: Cl3_I -> Cl3
 fromCl3_I (Cl3_I a123) = I a123
@@ -2389,7 +2466,7 @@ data Cl3_PV where
 
 toCl3_PV :: Cl3 -> Cl3_PV
 toCl3_PV (PV a0 a1 a2 a3) = Cl3_PV a0 a1 a2 a3
-toCl3_PV (_) = error "Please don't try and cast something that's not PV to Cl3_PV"
+toCl3_PV err = error $ "Please don't try and cast something that's not PV to Cl3_PV, Got: " ++ show err
 
 fromCl3_PV :: Cl3_PV -> Cl3
 fromCl3_PV (Cl3_PV a0 a1 a2 a3) = PV a0 a1 a2 a3
@@ -2420,7 +2497,7 @@ data Cl3_H where
 
 toCl3_H :: Cl3 -> Cl3_H
 toCl3_H (H a0 a23 a31 a12) = Cl3_H a0 a23 a31 a12
-toCl3_H (_) = error "Please don't try and cast something that's not H to Cl3_H"
+toCl3_H err = error $ "Please don't try and cast something that's not H to Cl3_H, Got: " ++ show err
 
 fromCl3_H :: Cl3_H -> Cl3
 fromCl3_H (Cl3_H a0 a23 a31 a12) = H a0 a23 a31 a12
@@ -2451,7 +2528,7 @@ data Cl3_C where
 
 toCl3_C :: Cl3 -> Cl3_C
 toCl3_C (C a0 a123) = Cl3_C a0 a123
-toCl3_C (_) = error "Please don't try and cast something that's not C to Cl3_C"
+toCl3_C err = error $ "Please don't try and cast something that's not C to Cl3_C, Got: " ++ show err
 
 fromCl3_C :: Cl3_C -> Cl3
 fromCl3_C (Cl3_C a0 a123) = C a0 a123
@@ -2478,7 +2555,7 @@ data Cl3_BPV where
 
 toCl3_BPV :: Cl3 -> Cl3_BPV
 toCl3_BPV (BPV a1 a2 a3 a23 a31 a12) = Cl3_BPV a1 a2 a3 a23 a31 a12
-toCl3_BPV (_) = error "Please don't try and cast something that's not BPV to Cl3_BPV"
+toCl3_BPV err = error $ "Please don't try and cast something that's not BPV to Cl3_BPV, Got: " ++ show err
 
 fromCl3_BPV :: Cl3_BPV -> Cl3
 fromCl3_BPV (Cl3_BPV a1 a2 a3 a23 a31 a12) = BPV a1 a2 a3 a23 a31 a12
@@ -2513,7 +2590,7 @@ data Cl3_ODD where
 
 toCl3_ODD :: Cl3 -> Cl3_ODD
 toCl3_ODD (ODD a1 a2 a3 a123) = Cl3_ODD a1 a2 a3 a123
-toCl3_ODD (_) = error "Please don't try and cast something that's not ODD to Cl3_ODD"
+toCl3_ODD err = error $ "Please don't try and cast something that's not ODD to Cl3_ODD, Got: " ++ show err
 
 fromCl3_ODD :: Cl3_ODD -> Cl3
 fromCl3_ODD (Cl3_ODD a1 a2 a3 a123) = ODD a1 a2 a3 a123
@@ -2544,7 +2621,7 @@ data Cl3_TPV where
 
 toCl3_TPV :: Cl3 -> Cl3_TPV
 toCl3_TPV (TPV a23 a31 a12 a123) = Cl3_TPV a23 a31 a12 a123
-toCl3_TPV (_) = error "Please don't try and cast something that's not TPV to Cl3_TPV"
+toCl3_TPV err = error $ "Please don't try and cast something that's not TPV to Cl3_TPV, Got: " ++ show err
 
 fromCl3_TPV :: Cl3_TPV -> Cl3
 fromCl3_TPV (Cl3_TPV a23 a31 a12 a123) = TPV a23 a31 a12 a123
@@ -2570,6 +2647,46 @@ instance Storable Cl3_TPV where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+data Cl3_APS where
+  Cl3_APS :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3_APS
+
+toCl3_APS :: Cl3 -> Cl3_APS
+toCl3_APS (APS a0 a1 a2 a3 a23 a31 a12 a123) = Cl3_APS a0 a1 a2 a3 a23 a31 a12 a123
+toCl3_APS err = error $ "Please don't try and cast something that's not APS to Cl3_APS, Got: " ++ show err
+
+fromCl3_APS :: Cl3_APS -> Cl3
+fromCl3_APS (Cl3_APS a0 a1 a2 a3 a23 a31 a12 a123) = APS a0 a1 a2 a3 a23 a31 a12 a123
+
+instance Storable Cl3_APS where
+  sizeOf _ = 8 * sizeOf (undefined :: Double)
+  alignment _ = sizeOf (undefined :: Double)
+  peek ptr = do
+    a0 <- peek (offset 0)
+    a1 <- peek (offset 1)
+    a2 <- peek (offset 2)
+    a3 <- peek (offset 3)
+    a23 <- peek (offset 4)
+    a31 <- peek (offset 5)
+    a12 <- peek (offset 6)
+    a123 <- peek (offset 7)
+    return $ Cl3_APS a0 a1 a2 a3 a23 a31 a12 a123
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+  poke ptr (Cl3_APS a0 a1 a2 a3 a23 a31 a12 a123) = do
+    poke (offset 0) a0
+    poke (offset 1) a1
+    poke (offset 2) a2
+    poke (offset 3) a3
+    poke (offset 4) a23
+    poke (offset 5) a31
+    poke (offset 6) a12
+    poke (offset 7) a123
+      where
+        offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
+
+
+#endif
 
 
 
@@ -2798,8 +2915,8 @@ randUnitV3 :: RandomGen g => g -> (Cl3, g)
 randUnitV3 g =
   let (theta, g') = randomR (0,2*pi) g
       (u, g'') = randomR (-1,1) g'
-      simicircle = sqrt (1-u^2)
-  in (V3 (simicircle * cos theta) (simicircle * sin theta) u, g'')
+      semicircle = sqrt (1-u^2)
+  in (V3 (semicircle * cos theta) (semicircle * sin theta) u, g'')
 
 
 -- | 'randProjector' a projector with a random direction

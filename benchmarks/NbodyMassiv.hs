@@ -45,29 +45,30 @@ bitTwiddlingAlgorithm :: IO ()
 bitTwiddlingAlgorithm = 
   do tStart <- getPOSIXTime
      n <- return (50000000 :: Int)
-     solarSystem <- offsetMomentumϞ [sun,jupiter,saturn,uranus,neptune] -- returns a zero momentum solar system
-     printEnergyϞ solarSystem
-     replicateM_ n (advanceϞ solarSystem)
-     printEnergyϞ solarSystem
+     (solarSystem,sz) <- offsetMomentumϞ [sun,jupiter,saturn,uranus,neptune] -- returns a zero momentum solar system
+     printEnergyϞ solarSystem sz
+     replicateM_ n (advanceϞ solarSystem sz)
+     printEnergyϞ solarSystem sz
      tEnd <- getPOSIXTime
      print $ show (tEnd - tStart) ++ " (sec) for " ++ show n ++ " iterations." -- Relative time measurement
 
-offsetMomentumϞ :: [Body] -> IO (SolarSystem)
+offsetMomentumϞ :: [Body] -> IO (SolarSystem,Int) -- A SolarSystem and the Size : size: sz :: Int
 offsetMomentumϞ bodies = do
   initBodies :: Array S Ix1 Body <- A.fromListsM Seq bodies
   -- mutate the solar system so that the sun's velocity gives zero total momentum
   let velocity :: Array D Ix1 Cl3 = A.map (fromCl3_V3.vel) initBodies
       mass :: Array D Ix1 Cl3 = A.map (fromCl3_R.mas) initBodies
   ss :: SolarSystem <- thaw initBodies
+  let sz = totalElem.msize $ ss
   bs <- readM ss 0
   let sunV = fromCl3_V3.vel $ bs
       sunM = fromCl3_R.mas $ bs
   writeM ss 0 (bs{vel = toCl3_V3 (sunV - (velocity `dot_V3` mass) / sunM)})
-  return ss
+  return (ss,sz)
 
 
-printEnergyϞ :: SolarSystem -> IO ()
-printEnergyϞ ss = do
+printEnergyϞ :: SolarSystem -> Int -> IO ()
+printEnergyϞ ss sz = do
   acc :: IORef Cl3 <- newIORef (R 0)
   ssFroz <- freeze Seq ss
   iforIO_ ssFroz $ \idx bi ->
@@ -77,9 +78,10 @@ printEnergyϞ ss = do
            ke :: Cl3 = 0.5 * bi_mas * (toR $ bi_vel^(2::Int))
        modifyIORef' acc (+ ke)  -- accumulate the kenetic energy for each body
        -- now calcualate the potential energy
-       let sizessFroz = elemsCount ssFroz
-       when (idx < sizessFroz-1) $ do
-         brest <- extractM (idx+1) (Sz1 (sizessFroz-idx-1)) ssFroz
+       -- old let -- sizessFroz = elemsCount ssFroz, probably should be SolarSystem
+       let szMinus1 = sz-1
+       when (idx < szMinus1) $ do
+         brest <- extractM (idx+1) (Sz1 (szMinus1-idx)) ssFroz
          forIO_ brest $ \bj ->
            do let bj_pos :: Cl3 = fromCl3_V3.pos $ bj
                   bj_mas :: Cl3 = fromCl3_R.mas $ bj

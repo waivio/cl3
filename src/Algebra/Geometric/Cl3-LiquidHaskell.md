@@ -179,3 +179,7 @@ module spec Cl3 () where
 -- It is rather interesting that some of the unsafe parts of this function are irrational numbers, so they can't be represeneted by rational numbers.
 -- So, that kind of makes it a lot more safe.  I believe that LYG will be able to solve the issue with the refutable pattern match in a 'let' as seen on line 1735 | let (BPV a1 a2 a3 a23 a31 a12) = toBPV cliff
 -- I think we can make a special case for 'tan' and 'tanh' for zero.  ...'reduce' dare I say.  But when I placed 'reduce' in the View Pattern (the new LYG algorithm) should prove that (/m) where `m = 0` cannot occur.
+
+
+-- sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2
+-- sqrt $ (s*x + i*l)^2 + (s*y + i*m)^2 + (s*z + i*n)^2 + (y*n - z*m)^2 + (z*l - x*n)^2 + (x*m - y*l)^2 -- s : Scalar<:Cl3 -> , well maybe someday. 
