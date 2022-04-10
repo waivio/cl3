@@ -121,7 +121,11 @@ The grade specialized type constructors multiply with the following multiplicati
 
 # Performace Benchmarking
 A benchmark has been developed based on the Haskell entry for the N-Body Benchmark in the [The Computer Language Benchmarks Game](https://benchmarksgame-team.pages.debian.net/benchmarksgame/) with some modifications to run with [Criterion](https://hackage.haskell.org/package/criterion).
-On my machine the current fastest implementation completes 50M steps with a mean time of 13.35 seconds.  The benchmark uses a hand rolled implementation of vector math.  The Cl3 implementation completes 50M steps with a mean time of 15.73 seconds.  This 2.38 second difference amounts to a 23.8 ns difference in the inner loop.
+On my machine with GHC-8.10.7 the current fastest implementation completes 50M steps with a mean time of 4.014 seconds.  The benchmark uses a hand rolled implementation of vector math.  The Cl3 implementation completes 50M steps with a mean time of 5.691 seconds.  This 1.67 second difference amounts to a 33.5 ns difference in the inner loop.  This performance has been degraded with GHC regressions in GHC-9.0.2 and GHC-9.2.2 by ~5x.
+In the 3.0 release a [massiv](https://hackage.haskell.org/package/massiv) benchmark was added in addition to a [weigh](https://hackage.haskell.org/package/weigh) based benchmark.
+
+# Saftey and Correctness
+In the 3.0 release [Liquid Haskell](https://hackage.haskell.org/package/liquidhaskell) support was added, Liquid Haskell did prove its worth by finding a couple of bugs in the implementation.  So far it is an initial release and not much has been done to fully integrate Liquid Haskell to the library.
 
 # Design Philosophy
 The design space for Clifford Algebra libraries was explored quite a bit before the development of this library.  Initially the isomorphism of APS with 2x2 Complex Matrices was used, this had the draw back that multiplying the scalar 2 * 2 would incur all of the computational cost of multiplying two 2x2 complex matrices.

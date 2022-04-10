@@ -37,7 +37,7 @@ author:              Nathan Waivio
 maintainer:          Nathan Waivio <nathan.waivio@gmail.com>
 
 -- A copyright notice.
-copyright:           Copyright (C) 2017-2020 Nathan Waivio
+copyright:           Copyright (C) 2017-2022 Nathan Waivio
 
 category:            Math, Algebra
 
@@ -51,7 +51,11 @@ tested-with:         GHC == 7.8.4,
                      GHC == 8.4.4,
                      GHC == 8.6.5,
                      GHC == 8.8.3,
-                     GHC == 8.10.2
+                     GHC == 8.10.2,
+                     GHC == 8.10.4,
+                     GHC == 8.10.7,
+                     GHC == 9.0.2,
+                     GHC == 9.2.2
 
 -- Extra files to be distributed with the package, such as examples or a 
 -- README.
@@ -96,7 +100,7 @@ library
   ghc-options: -Wall -O2
   
   if flag(do-liquid)
-    ghc-options: -fplugin=LiquidHaskell -fplugin-opt=LiquidHaskell:--fast -fplugin-opt=LiquidHaskell:--max-case-expand=0 -fplugin-opt=LiquidHaskell:--no-termination
+    ghc-options: -fplugin=LiquidHaskell -fplugin-opt=LiquidHaskell:--fast -fplugin-opt=LiquidHaskell:--max-case-expand=0 -fplugin-opt=LiquidHaskell:--no-termination -fplugin-opt=LiquidHaskell:--short-names
   
   if flag(do-no-derived-instances)
     cpp-options: -DO_NO_DERIVED

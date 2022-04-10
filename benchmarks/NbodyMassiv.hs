@@ -4,6 +4,7 @@
 {-# LANGUAGE InstanceSigs #-}
 
 
+
 import Algebra.Geometric.Cl3
 import Data.Massiv.Array as A
 import Control.Monad (replicateM_,when)
@@ -59,11 +60,11 @@ offsetMomentumϞ bodies = do
   let velocity :: Array D Ix1 Cl3 = A.map (fromCl3_V3.vel) initBodies
       mass :: Array D Ix1 Cl3 = A.map (fromCl3_R.mas) initBodies
   ss :: SolarSystem <- thaw initBodies
-  let sz = totalElem.msize $ ss
+  let sz = totalElem.sizeOfMArray $ ss
   bs <- readM ss 0
   let sunV = fromCl3_V3.vel $ bs
       sunM = fromCl3_R.mas $ bs
-  writeM ss 0 (bs{vel = toCl3_V3 (sunV - (velocity `dot_V3` mass) / sunM)})
+  writeM ss 0 (bs{vel = toCl3_V3 (sunV - ((velocity `dot_V3` mass) / sunM))})
   return (ss,sz)
 
 
@@ -78,7 +79,6 @@ printEnergyϞ ss sz = do
            ke :: Cl3 = 0.5 * bi_mas * (toR $ bi_vel^(2::Int))
        modifyIORef' acc (+ ke)  -- accumulate the kenetic energy for each body
        -- now calcualate the potential energy
-       -- old let -- sizessFroz = elemsCount ssFroz, probably should be SolarSystem
        let szMinus1 = sz-1
        when (idx < szMinus1) $ do
          brest <- extractM (idx+1) (Sz1 (szMinus1-idx)) ssFroz
@@ -91,30 +91,33 @@ printEnergyϞ ss sz = do
   energy <- readIORef acc
   print energy
 
-advanceϞ :: SolarSystem -> IO ()
-advanceϞ ss = do
-  updateVelocityϞ ss
+advanceϞ :: SolarSystem -> Int -> IO ()
+advanceϞ ss sz = do
+  updateVelocityϞ ss sz
   updatePositionϞ ss
 
-updateVelocityϞ :: SolarSystem -> IO ()
-updateVelocityϞ ss = do
-  let sz = totalElem.msize $ ss
-  iforPrimM_ ss $ \idx bi ->
-    do let bi_pos :: Cl3 = fromCl3_V3.pos $ bi
-           bi_vel :: Cl3 = fromCl3_V3.vel $ bi
-           bi_mas :: Cl3 = fromCl3_R.mas $ bi
-       when (idx < sz-1) $ do
-         ssFroz <- freeze Seq ss
-         brest <- extractM (idx+1) (Sz1 (sz-idx-1)) ssFroz 
-         iforIO_ brest $ \jdx bj ->
-           do let bj_pos :: Cl3 = fromCl3_V3.pos $ bj
-                  bj_vel :: Cl3 = fromCl3_V3.vel $ bj
-                  bj_mas :: Cl3 = fromCl3_R.mas $ bj
-                  dpos = bi_pos - bj_pos
-                  mag = dt / (abs dpos)^(3::Int)
-              writeM ss idx bi{vel = toCl3_V3 (bi_vel - (dpos * bj_mas * mag))}
-              writeM ss (idx+jdx+1) bj{vel = toCl3_V3 (bj_vel + (dpos * bi_mas * mag))}
+updateVelocityϞ :: SolarSystem -> Int -> IO ()
+updateVelocityϞ ss sz = do
+  ssFroz <- freeze Seq ss
+  iforIO_ ssFroz $ \idx bi ->
+    when (idx < sz-1) $ do
+      let bi_pos :: Cl3 = fromCl3_V3.pos $ bi
+          bi_mas :: Cl3 = fromCl3_R.mas $ bi
+      brest <- extractM (idx+1) (Sz1 (sz-idx-1)) ssFroz
+      iforIO_ brest $ \jdx bj ->
+        do let bj_pos :: Cl3 = fromCl3_V3.pos $ bj
+               bj_mas :: Cl3 = fromCl3_R.mas $ bj
+               (absMag,dposUnit) = abssignum $ bi_pos - bj_pos
+               mag = dt / ((absMag)^(2::Int))
+               aij = negate $ dposUnit * bj_mas * mag
+               aji = dposUnit * bi_mas * mag
+           modify_ ss (modVel aij) idx
+           modify_ ss (modVel aji) (idx+jdx+1)
 
+modVel :: PrimMonad m => Cl3 -> Body -> m Body
+modVel a bod = do
+  let vbod = fromCl3_V3 $ vel bod
+  return bod{vel = toCl3_V3 $ vbod + a}
 
 updatePositionϞ :: SolarSystem -> IO ()
 updatePositionϞ ss = do
@@ -210,10 +213,10 @@ nChoose2With :: (Cl3 -> Cl3 -> Cl3) -> Array D Ix1 Cl3 -> Array D Ix1 Cl3
 nChoose2With f bs =
   let (Sz1 c) = size bs
       c' = (c^(2 :: Int) - c) `div` 2
-      bs' :: Array N Ix1 Cl3 = computeSource bs
+      bs' :: Array BN Ix1 Cl3 = computeSource bs
   in makeArray Seq (Sz1 c') (genElements f bs' c)
 
-genElements :: (Cl3 -> Cl3 -> Cl3) -> Array N Ix1 Cl3 -> Int -> Ix1 -> Cl3
+genElements :: (Cl3 -> Cl3 -> Cl3) -> Array BN Ix1 Cl3 -> Int -> Ix1 -> Cl3
 genElements f bs c idx =
   let (ix1,ix2) = splitIdx c idx
   in f (bs ! ix1) (bs ! ix2)
@@ -242,7 +245,7 @@ data Body = Body
 
 instance Storable Body where
   sizeOf _ = sizeOf (undefined :: Cl3_V3) + sizeOf (undefined :: Cl3_V3) + sizeOf (undefined :: Cl3_R)
-  alignment _ = 8 * sizeOf (undefined :: Double) -- alignment must be a 2^x in this case 64 bytes
+  alignment _ = sizeOf (undefined :: Double) -- alignment must be a 2^x
   peekElemOff ptr idx = peek (castPtr ptr `plusPtr` (idx * sizeOf (undefined :: Body)))
   pokeElemOff ptr idx e = poke (castPtr ptr `plusPtr` (idx * sizeOf (undefined :: Body))) e
   peek :: Ptr Body -> IO Body

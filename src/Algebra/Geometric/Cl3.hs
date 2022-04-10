@@ -23,7 +23,7 @@
 
 --------------------------------------------------------------------------------------------
 -- |
--- Copyright   :  (C) 2017-2020 Nathan Waivio
+-- Copyright   :  (C) 2017-2022 Nathan Waivio
 -- License     :  BSD3
 -- Maintainer  :  Nathan Waivio <nathan.waivio@gmail.com>
 -- Stability   :  Stable
@@ -92,6 +92,7 @@ module Algebra.Geometric.Cl3
 #ifndef O_NO_DERIVED
 import Data.Data (Typeable, Data)
 import GHC.Generics (Generic)
+import Text.Read (Read,readPrec)
 #endif
 
 import Control.DeepSeq (NFData,rnf)
@@ -159,7 +160,7 @@ instance Show Cl3 where
 #endif
 
 
-
+-- | Cl3 can be reduced to a normal form.
 instance NFData Cl3 where
   rnf !_ = ()
 
@@ -988,90 +989,12 @@ instance Num Cl3 where
   -- invertable, we can see here that R, C, V3, BV, and H are all invertable, and
   -- by implication R, C, and H are division algebras.
   abs cl3 = fst $ abssignum cl3
-  {-
-  abs (R a0) = R (abs a0) -- absolute value of a real number
-  abs (V3 a1 a2 a3) = R (sqrt $ a1^2 + a2^2 + a3^2) -- magnitude of a vector
-  abs (BV a23 a31 a12) = R (sqrt $ a23^2 + a31^2 + a12^2) -- magnitude of a bivector
-  abs (I a123) = R (abs a123) -- magnitude of a Imaginary number
-  abs (PV a0 a1 a2 a3) = R (reimMag a0 a1 a2 a3)
-  abs (TPV a23 a31 a12 a123) = R (reimMag a123 a23 a31 a12)
-  abs (H a0 a23 a31 a12) = R (sqrt $ a0^2 + a23^2 + a31^2 + a12^2) -- largest singular value
-  abs (C a0 a123) = R (sqrt $ a0^2 + a123^2) -- magnitude of a complex number
-  abs (BPV a1 a2 a3 a23 a31 a12) =
-    let mag = sqrt $ (a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2 -- core was duplicating this computation added let to hopefully reduce the duplication
-    in R (sqrt $ a1^2 + a23^2 + a2^2 + mag + a31^2 + a3^2 + a12^2 + mag)
-  abs (ODD a1 a2 a3 a123) = R (sqrt $ a1^2 + a2^2 + a3^2 + a123^2)
-  abs (APS a0 a1 a2 a3 a23 a31 a12 a123) =
-    let mag = sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2 -- core was duplicating this computation added let to hopefully reduce the duplication
-    in R (sqrt $ a0^2 + a1^2 + a2^2 + a3^2 + mag + a23^2 + a31^2 + a12^2 + a123^2 + mag)
-  -}
+
 
   -- |'signum' satisfies the Law "abs x * signum x == x"
   -- kind of cool: signum of a vector is it's unit vector.
   signum cl3 = snd $ abssignum cl3
-  {-
-  signum (R a0) = R (signum a0)
-  signum (V3 a1 a2 a3) =
-    let mag = sqrt (a1^2 + a2^2 + a3^2)
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else V3 (invMag * a1) (invMag * a2) (invMag * a3)
-  signum (BV a23 a31 a12) =
-    let mag = sqrt (a23^2 + a31^2 + a12^2)
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else BV (invMag * a23) (invMag * a31) (invMag * a12)
-  signum (I a123) =
-    if a123 == 0
-    then R 0
-    else I (signum a123)
-  signum (PV a0 a1 a2 a3) =
-    let mag = reimMag a0 a1 a2 a3
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else PV (invMag * a0) (invMag * a1) (invMag * a2) (invMag * a3)
-  signum (H a0 a23 a31 a12) =
-    let mag = sqrt (a0^2 + a23^2 + a31^2 + a12^2)
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else H (invMag * a0) (invMag * a23) (invMag * a31) (invMag * a12)
-  signum (C a0 a123) =
-    let mag = sqrt (a0^2 + a123^2)
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else C (invMag * a0) (invMag * a123)
-  signum (BPV a1 a2 a3 a23 a31 a12) =
-    let x = sqrt ((a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2)
-        mag = sqrt (a1^2 + a23^2 + a2^2 + a31^2 + a3^2 + a12^2 + x + x)
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else BPV (invMag * a1) (invMag * a2) (invMag * a3) (invMag * a23) (invMag * a31) (invMag * a12)
-  signum (ODD a1 a2 a3 a123) =
-    let mag = sqrt (a1^2 + a2^2 + a3^2 + a123^2)
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else ODD (invMag * a1) (invMag * a2) (invMag * a3) (invMag * a123)
-  signum (TPV a23 a31 a12 a123) =
-    let mag = reimMag a123 a23 a31 a12
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else TPV (invMag * a23) (invMag * a31) (invMag * a12) (invMag * a123)
-  signum (APS a0 a1 a2 a3 a23 a31 a12 a123) =
-    let x = sqrt ((a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2)
-        mag = sqrt (a0^2 + a1^2 + a2^2 + a3^2 + a23^2 + a31^2 + a12^2 + a123^2 + x + x)
-        invMag = recip mag
-    in if mag == 0
-       then R 0
-       else APS (invMag * a0) (invMag * a1) (invMag * a2) (invMag * a3) (invMag * a23) (invMag * a31) (invMag * a12) (invMag * a123)
-  -}
+
 
   -- |'fromInteger'
   fromInteger int = R (fromInteger int)
@@ -2003,26 +1926,6 @@ timesI (APS a0 a1 a2 a3 a23 a31 a12 a123) = APS (negate a123) (negate a23) (nega
 -- | 'abssignum' is a more effecient '\cl3 -> (abs cl3, signum cl3)'
 -- So 'abs' is always R and 'signum' is the same type of constructor as the input
 -- 'signum' is the element divided by its largest singular value 'abs'
-{-
-abssignum :: Cl3 -> (Cl3,Cl3)
-abssignum (R a0) = (R (abs a0),R (signum a0))
-abssignum (V3 a1 a2 a3) = let mag = sqrt $ a1^2 + a2^2 + a3^2 in ((R mag),V3 (a1/mag) (a2/mag) (a3/mag))
-abssignum (BV a23 a31 a12) = let mag = sqrt $ a23^2 + a31^2 + a12^2 in ((R mag),BV (a23/mag) (a31/mag) (a12/mag))
-abssignum (I a123) = (R (abs a123),I (signum a123))
-abssignum (PV a0 a1 a2 a3) = let mag = reimMag a0 a1 a2 a3 in (R (mag),PV (a0/mag) (a1/mag) (a2/mag) (a3/mag))
-abssignum (H a0 a23 a31 a12) = let mag = sqrt $ a0^2 + a23^2 + a31^2 + a12^2 in ((R mag),H (a0/mag) (a23/mag) (a31/mag) (a12/mag))
-abssignum (C a0 a123) = let mag = sqrt $ a0^2 + a123^2 in ((R mag),C (a0/mag) (a123/mag))
-abssignum (BPV a1 a2 a3 a23 a31 a12) =
-  let mag0 = sqrt $ (a1*a31 - a2*a23)^2 + (a1*a12 - a3*a23)^2 + (a2*a12 - a3*a31)^2
-      mag = sqrt $ a1^2 + a23^2 + a2^2 + mag0 + a31^2 + a3^2 + a12^2 + mag0 
-  in (R (mag),BPV (a1/mag) (a2/mag) (a3/mag) (a23/mag) (a31/mag) (a12/mag))
-abssignum (ODD a1 a2 a3 a123) = let mag = sqrt $ a1^2 + a2^2 + a3^2 + a123^2 in (R (mag),ODD (a1/mag) (a2/mag) (a3/mag) (a123/mag))
-abssignum (TPV a23 a31 a12 a123) = let mag = reimMag a123 a23 a31 a12 in (R (mag),TPV (a23/mag) (a31/mag) (a12/mag) (a123/mag))
-abssignum (APS a0 a1 a2 a3 a23 a31 a12 a123) =
-  let mag0 = sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2
-      mag = sqrt $ a0^2 + a1^2 + a2^2 + a3^2 + mag0 + a23^2 + a31^2 + a12^2 + a123^2 + mag0
-  in (R (mag), APS (a0/mag) (a1/mag) (a2/mag) (a3/mag) (a23/mag) (a31/mag) (a12/mag) (a123/mag))
--}
 abssignum :: Cl3 -> (Cl3,Cl3)
 abssignum cl3 =
   let (R m0) = absolute cl3
@@ -2353,15 +2256,26 @@ instance Storable Cl3 where
   poke _ _ = error "Serious Issues with poke in Cl3.Storable"
 
 
+-- | 'Cl3_R' a compact storable data type for R.
 data Cl3_R where
   Cl3_R :: !Double -> Cl3_R
 
+-- | 'toCl3_R' converts a Cl3 value constructed with R to its compact form.
 toCl3_R :: Cl3 -> Cl3_R
 toCl3_R (R a0) = Cl3_R a0
 toCl3_R err = error $ "Please don't try and cast something that's not R to Cl3_R, Got: " ++ show err
 
+-- | 'fromCl3_R' converts the compact Cl3_R type back to a Cl3 type.
 fromCl3_R :: Cl3_R -> Cl3
 fromCl3_R (Cl3_R a0) = R a0
+
+instance Show Cl3_R where
+  show = show.fromCl3_R
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_R where
+  readPrec = toCl3_R <$> readPrec
+#endif
 
 instance Storable Cl3_R where
   sizeOf _ = sizeOf (undefined :: Double)
@@ -2378,15 +2292,26 @@ instance Storable Cl3_R where
         offset = (castPtr ptr :: Ptr Double)
 
 
+-- | 'Cl3_V3' a compact storable data type for V3.
 data Cl3_V3 where
   Cl3_V3 :: !Double -> !Double -> !Double -> Cl3_V3
 
+-- | 'toCl3_V3' converts a Cl3 value constructed with V3 to its compact form.
 toCl3_V3 :: Cl3 -> Cl3_V3
 toCl3_V3 (V3 a1 a2 a3) = Cl3_V3 a1 a2 a3
 toCl3_V3 err = error $ "Please don't try and cast something that's not V3 to Cl3_V3, Got: " ++ show err
 
+-- | 'fromCl3_V3' converts the compact Cl3_V3 type back to a Cl3 type.
 fromCl3_V3 :: Cl3_V3 -> Cl3
 fromCl3_V3 (Cl3_V3 a1 a2 a3) = V3 a1 a2 a3
+
+instance Show Cl3_V3 where
+  show = show.fromCl3_V3
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_V3 where
+  readPrec = toCl3_V3 <$> readPrec
+#endif
 
 instance Storable Cl3_V3 where
   sizeOf _ = 3 * sizeOf (undefined :: Double)
@@ -2407,15 +2332,26 @@ instance Storable Cl3_V3 where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+-- | 'Cl3_BV' a compact storable data type for BV.
 data Cl3_BV where
   Cl3_BV :: !Double -> !Double -> !Double -> Cl3_BV
 
+-- | 'toCl3_BV' converts a Cl3 value constructed with BV to its compact form.
 toCl3_BV :: Cl3 -> Cl3_BV
 toCl3_BV (BV a23 a31 a12) = Cl3_BV a23 a31 a12
 toCl3_BV err = error $ "Please don't try and cast something that's not BV to Cl3_BV, Got: " ++ show err
 
+-- | 'fromCl3_BV' converts the compact Cl3_BV type back to a Cl3 type.
 fromCl3_BV :: Cl3_BV -> Cl3
 fromCl3_BV (Cl3_BV a23 a31 a12) = BV a23 a31 a12
+
+instance Show Cl3_BV where
+  show = show.fromCl3_BV
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_BV where
+  readPrec = toCl3_BV <$> readPrec
+#endif
 
 instance Storable Cl3_BV where
   sizeOf _ = 3 * sizeOf (undefined :: Double)
@@ -2436,15 +2372,26 @@ instance Storable Cl3_BV where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+-- | 'Cl3_I' a compact storable data type for I.
 data Cl3_I where
   Cl3_I :: !Double -> Cl3_I
 
+-- | 'toCl3_I' converts a Cl3 value constructed with I to its compact form.
 toCl3_I :: Cl3 -> Cl3_I
 toCl3_I (I a123) = Cl3_I a123
 toCl3_I err = error $ "Please don't try and cast something that's not R to Cl3_R, Got: " ++ show err
 
+-- | 'fromCl3_I' converts the compact Cl3_I type back to a Cl3 type.
 fromCl3_I :: Cl3_I -> Cl3
 fromCl3_I (Cl3_I a123) = I a123
+
+instance Show Cl3_I where
+  show = show.fromCl3_I
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_I where
+  readPrec = toCl3_I <$> readPrec
+#endif
 
 instance Storable Cl3_I where
   sizeOf _ = sizeOf (undefined :: Double)
@@ -2461,15 +2408,26 @@ instance Storable Cl3_I where
         offset = (castPtr ptr :: Ptr Double)
 
 
+-- | 'Cl3_PV' a compact storable data type for PV.
 data Cl3_PV where
   Cl3_PV :: !Double -> !Double -> !Double -> !Double -> Cl3_PV
 
+-- | 'toCl3_PV' converts a Cl3 value constructed with PV to its compact form.
 toCl3_PV :: Cl3 -> Cl3_PV
 toCl3_PV (PV a0 a1 a2 a3) = Cl3_PV a0 a1 a2 a3
 toCl3_PV err = error $ "Please don't try and cast something that's not PV to Cl3_PV, Got: " ++ show err
 
+-- | 'fromCl3_PV' converts the compact Cl3_PV type back to a Cl3 type.
 fromCl3_PV :: Cl3_PV -> Cl3
 fromCl3_PV (Cl3_PV a0 a1 a2 a3) = PV a0 a1 a2 a3
+
+instance Show Cl3_PV where
+  show = show.fromCl3_PV
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_PV where
+  readPrec = toCl3_PV <$> readPrec
+#endif
 
 instance Storable Cl3_PV where
   sizeOf _ = 4 * sizeOf (undefined :: Double)
@@ -2492,15 +2450,26 @@ instance Storable Cl3_PV where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+-- | 'Cl3_H' a compact storable data type for H.
 data Cl3_H where
   Cl3_H :: !Double -> !Double -> !Double -> !Double -> Cl3_H
 
+-- | 'toCl3_H' converts a Cl3 value constructed with H to its compact form.
 toCl3_H :: Cl3 -> Cl3_H
 toCl3_H (H a0 a23 a31 a12) = Cl3_H a0 a23 a31 a12
 toCl3_H err = error $ "Please don't try and cast something that's not H to Cl3_H, Got: " ++ show err
 
+-- | 'fromCl3_H' converts the compact Cl3_H type back to a Cl3 type.
 fromCl3_H :: Cl3_H -> Cl3
 fromCl3_H (Cl3_H a0 a23 a31 a12) = H a0 a23 a31 a12
+
+instance Show Cl3_H where
+  show = show.fromCl3_H
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_H where
+  readPrec = toCl3_H <$> readPrec
+#endif
 
 instance Storable Cl3_H where
   sizeOf _ = 4 * sizeOf (undefined :: Double)
@@ -2523,15 +2492,26 @@ instance Storable Cl3_H where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+-- | 'Cl3_C' a compact storable data type for C.
 data Cl3_C where
   Cl3_C :: !Double -> !Double -> Cl3_C
 
+-- | 'toCl3_C' converts a Cl3 value constructed with C to its compact form.
 toCl3_C :: Cl3 -> Cl3_C
 toCl3_C (C a0 a123) = Cl3_C a0 a123
 toCl3_C err = error $ "Please don't try and cast something that's not C to Cl3_C, Got: " ++ show err
 
+-- | 'fromCl3_C' converts the compact Cl3_C type back to a Cl3 type.
 fromCl3_C :: Cl3_C -> Cl3
 fromCl3_C (Cl3_C a0 a123) = C a0 a123
+
+instance Show Cl3_C where
+  show = show.fromCl3_C
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_C where
+  readPrec = toCl3_C <$> readPrec
+#endif
 
 instance Storable Cl3_C where
   sizeOf _ = 2 * sizeOf (undefined :: Double)
@@ -2550,15 +2530,26 @@ instance Storable Cl3_C where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+-- | 'Cl3_BPV' a compact storable data type for BPV.
 data Cl3_BPV where
   Cl3_BPV :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3_BPV
 
+-- | 'toCl3_BPV' converts a Cl3 value constructed with BPV to its compact form.
 toCl3_BPV :: Cl3 -> Cl3_BPV
 toCl3_BPV (BPV a1 a2 a3 a23 a31 a12) = Cl3_BPV a1 a2 a3 a23 a31 a12
 toCl3_BPV err = error $ "Please don't try and cast something that's not BPV to Cl3_BPV, Got: " ++ show err
 
+-- | 'fromCl3_BPV' converts the compact Cl3_BPV type back to a Cl3 type.
 fromCl3_BPV :: Cl3_BPV -> Cl3
 fromCl3_BPV (Cl3_BPV a1 a2 a3 a23 a31 a12) = BPV a1 a2 a3 a23 a31 a12
+
+instance Show Cl3_BPV where
+  show = show.fromCl3_BPV
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_BPV where
+  readPrec = toCl3_BPV <$> readPrec
+#endif
 
 instance Storable Cl3_BPV where
   sizeOf _ = 6 * sizeOf (undefined :: Double)
@@ -2585,15 +2576,26 @@ instance Storable Cl3_BPV where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+-- | 'Cl3_ODD' a compact storable data type for ODD.
 data Cl3_ODD where
   Cl3_ODD :: !Double -> !Double -> !Double -> !Double -> Cl3_ODD
 
+-- | 'toCl3_ODD' converts a Cl3 value constructed with ODD to its compact form.
 toCl3_ODD :: Cl3 -> Cl3_ODD
 toCl3_ODD (ODD a1 a2 a3 a123) = Cl3_ODD a1 a2 a3 a123
 toCl3_ODD err = error $ "Please don't try and cast something that's not ODD to Cl3_ODD, Got: " ++ show err
 
+-- | 'fromCl3_ODD' converts the compact Cl3_ODD type back to a Cl3 type.
 fromCl3_ODD :: Cl3_ODD -> Cl3
 fromCl3_ODD (Cl3_ODD a1 a2 a3 a123) = ODD a1 a2 a3 a123
+
+instance Show Cl3_ODD where
+  show = show.fromCl3_ODD
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_ODD where
+  readPrec = toCl3_ODD <$> readPrec
+#endif
 
 instance Storable Cl3_ODD where
   sizeOf _ = 4 * sizeOf (undefined :: Double)
@@ -2616,15 +2618,26 @@ instance Storable Cl3_ODD where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+-- | 'Cl3_TPV' a compact storable data type for TPV.
 data Cl3_TPV where
   Cl3_TPV :: !Double -> !Double -> !Double -> !Double -> Cl3_TPV
 
+-- | 'toCl3_TPV' converts a Cl3 value constructed with TPV to its compact form.
 toCl3_TPV :: Cl3 -> Cl3_TPV
 toCl3_TPV (TPV a23 a31 a12 a123) = Cl3_TPV a23 a31 a12 a123
 toCl3_TPV err = error $ "Please don't try and cast something that's not TPV to Cl3_TPV, Got: " ++ show err
 
+-- | 'fromCl3_TPV' converts the compact Cl3_TPV type back to a Cl3 type.
 fromCl3_TPV :: Cl3_TPV -> Cl3
 fromCl3_TPV (Cl3_TPV a23 a31 a12 a123) = TPV a23 a31 a12 a123
+
+instance Show Cl3_TPV where
+  show = show.fromCl3_TPV
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_TPV where
+  readPrec = toCl3_TPV <$> readPrec
+#endif
 
 instance Storable Cl3_TPV where
   sizeOf _ = 4 * sizeOf (undefined :: Double)
@@ -2647,15 +2660,26 @@ instance Storable Cl3_TPV where
         offset i = (castPtr ptr :: Ptr Double) `plusPtr` (i*8)
 
 
+-- | 'Cl3_APS' a compact storable data type for APS.
 data Cl3_APS where
   Cl3_APS :: !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> !Double -> Cl3_APS
 
+-- | 'toCl3_APS' converts a Cl3 value constructed with APS to its compact form.
 toCl3_APS :: Cl3 -> Cl3_APS
 toCl3_APS (APS a0 a1 a2 a3 a23 a31 a12 a123) = Cl3_APS a0 a1 a2 a3 a23 a31 a12 a123
 toCl3_APS err = error $ "Please don't try and cast something that's not APS to Cl3_APS, Got: " ++ show err
 
+-- | 'fromCl3_APS' converts the compact Cl3_APS type back to a Cl3 type.
 fromCl3_APS :: Cl3_APS -> Cl3
 fromCl3_APS (Cl3_APS a0 a1 a2 a3 a23 a31 a12 a123) = APS a0 a1 a2 a3 a23 a31 a12 a123
+
+instance Show Cl3_APS where
+  show = show.fromCl3_APS
+
+#ifndef O_NO_DERIVED
+instance Read Cl3_APS where
+  readPrec = toCl3_APS <$> readPrec
+#endif
 
 instance Storable Cl3_APS where
   sizeOf _ = 8 * sizeOf (undefined :: Double)

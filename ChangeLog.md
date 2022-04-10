@@ -1,11 +1,11 @@
 # Revision history for cl3
 
-## 3.0.0.0  -- 2021-01-12
+## 3.0.0.0  -- 2022-04-01
 
 * Added LiquidHaskell support
 * Added more memory efficient subtypes for R, V3, BV, I, PV, H, C, BPV, ODD, TPV
 * Added LiquidHaskell support: liquidhaskell >= 0.8.10
-* Sucessfully tested with: liquidhaskell-0.8.10.2
+* Sucessfully tested with: liquidhaskell-0.8.10.2 and Stackage lts-18.6
 * Added a LiquidHaskell flag to build: stack build --flag cl3:do-liquid
 * LiquidHaskell requires CPP Options: -DO_LIQUID -DO_NO_RANDOM -DO_NO_DERIVED -DO_NO_STORABLE
 * LiquidHaskell _|_ when: Random, Storable, or Derived instances are enabled

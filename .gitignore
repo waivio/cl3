@@ -19,3 +19,4 @@ cabal.sandbox.config
 cabal.project.local
 .HTF/
 stack.yaml.lock
+.src/Algebra/Geometric/.liquid
