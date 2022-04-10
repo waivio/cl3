@@ -183,7 +183,7 @@ benchmark bench-cl3-weigh
     cl3,
     base >=4.7 && <5,
     vector,
-    massiv,
+    massiv >= 1.0,
     weigh
   default-language: Haskell2010
 
@@ -197,5 +197,5 @@ benchmark bench-cl3-massiv-nbody
     cl3,
     base >=4.7 && <5,
     time,
-    massiv
+    massiv >= 1.0
   default-language: Haskell2010
