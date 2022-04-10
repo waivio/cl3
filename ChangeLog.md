@@ -1,5 +1,29 @@
 # Revision history for cl3
 
+## 3.0.0.0  -- 2022-04-01
+
+* Added LiquidHaskell support
+* Added more memory efficient subtypes for R, V3, BV, I, PV, H, C, BPV, ODD, TPV
+* Added LiquidHaskell support: liquidhaskell >= 0.8.10
+* Sucessfully tested with: liquidhaskell-0.8.10.2 and Stackage lts-18.6
+* Added a LiquidHaskell flag to build: stack build --flag cl3:do-liquid
+* LiquidHaskell requires CPP Options: -DO_LIQUID -DO_NO_RANDOM -DO_NO_DERIVED -DO_NO_STORABLE
+* LiquidHaskell _|_ when: Random, Storable, or Derived instances are enabled
+* LiquidHaskell _|_ when: There is any number n.nn*e^-x see [Issue#1762](https://github.com/ucsd-progsys/liquidhaskell/issues/1762) for my 128*eps threshold, eventhough rationals are supposed to be supported
+* Added more memory efficient subtypes for R, V3, BV, I, PV, H, C, BPV, ODD, TPV, and APS
+* Namely: Cl3_R, Cl3_V3, Cl3_BV, Cl3_I, Cl3_PV, Cl3_H, Cl3_C, Cl3_BPV, Cl3_ODD, Cl3_TPV, and Cl3_APS
+* Added smart constructors to covert to/from the more memory efficient subtypes
+* Added a "weigh" based benchmark to verify that the more memory efficient subtypes are actually more memory efficent
+* Added a WeighStorableCl3 benchmark; command to run: stack bench cl3:bench-cl3-weigh
+* Added a NbodyMassiv benchmark; command to run: stack bench cl3:bench-cl3-massiv-nbody
+* Modified existing NbodyGameCl3 benchmark; command to run: stack bench cl3:bench-cl3-nbody
+* LiquidHaskell found some interesting unsaftey in the definition of 'tan' and 'tanh'
+* Hopefully it's solved with a judicious use of 'reduce' for instances above R and I, in the affected 'tan' and 'tanh' calls
+* Corrected spelling error sp: simi to semi, in the definition of a random unit vector
+* 'abssignum' why not calculate 'abs' once and use it twice
+* 'absolute' only constructs an R
+
+
 ## 2.0.0.0  -- 2020-06-20
 
 * Added work around for GHC 8.10 regression of Issue #15304 reproducing code changes from GHC MR 2608 in the source files

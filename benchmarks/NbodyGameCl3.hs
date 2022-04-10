@@ -1,6 +1,8 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE InstanceSigs #-}
 
 #if __GLASGOW_HASKELL__ == 810
 -- Work around to fix GHC Issue #15304, issue popped up again in GHC 8.10, it should be fixed in GHC 8.12
@@ -25,7 +27,7 @@
 module Main (main) where
 
 import Criterion.Main (defaultMain, bgroup, bench, nfIO)  -- To add Criterion to the benchmark
-import Algebra.Geometric.Cl3 (Cl3(..), toR, toV3) -- To add Cl3
+import Algebra.Geometric.Cl3 (Cl3(..), toR, toV3, toCl3_V3, toCl3_R, fromCl3_V3, fromCl3_R, Cl3_V3(), Cl3_R()) -- To add Cl3
 
 
 import Foreign.Ptr (Ptr, castPtr, plusPtr)
@@ -205,10 +207,11 @@ import Text.Printf (printf)
 
 main :: IO ()
 main = do n <- return (50000000 :: Int)
-          defaultMain [bgroup "nbodyBaseline" [ bench (show n) $ nfIO (nbodyBaseline n)],
-                       bgroup "nbodyCl3" [ bench (show n) $ nfIO (nbodyCl3 n)],
-                       bgroup "nbodyAPS" [ bench (show n) $ nfIO (nbodyAPS n)]
-                       ]
+          defaultMain [bgroup "nbodyBaseline" [ bench (show n) $ nfIO (nbodyBaseline n)]
+                      ,bgroup "nbodyCl3" [ bench (show n) $ nfIO (nbodyCl3 n)]
+                      ,bgroup "nbodyAPS" [ bench (show n) $ nfIO (nbodyAPS n)]
+                      ,bgroup "nbodyCl3_V3" [ bench (show n) $ nfIO (nbodyCl3_V3 n)]
+                      ]
 
 
 
@@ -216,9 +219,9 @@ nbodyBaseline :: (Num t, Eq t) => t -> IO ()
 nbodyBaseline n = do
   pPlanets <- fromList planets          -- load planets into a stack
   nbodyInit pPlanets                    -- initialize the system momentum
-  energy pPlanets >>= printf "%.9f\n"   -- calculate and print out the initial energy of the system
+  energy pPlanets >>= print -- printf "%.9f\n"   -- calculate and print out the initial energy of the system
   run n pPlanets                        -- solve the initial value problem, increment the system 'n' times
-  energy pPlanets >>= printf "%.9f\n"   -- calculate and print out the final energy of the system
+  energy pPlanets >>= print -- printf "%.9f\n"   -- calculate and print out the final energy of the system
 
 
 nbodyCl3 :: (Eq t, Num t) => t -> IO ()
@@ -238,6 +241,14 @@ nbodyAPS n = do
   runAPS n pPlanetsAPS
   energyAPS pPlanetsAPS >>= print.toR -- printf "%0.9f\n"
 
+
+nbodyCl3_V3 :: (Eq t, Num t) => t -> IO ()
+nbodyCl3_V3 n = do
+  pPlanetsCl3_V3 <- fromListCl3_V3 planetsCl3_V3
+  nbodyInitCl3_V3 pPlanetsCl3_V3
+  energyCl3_V3 pPlanetsCl3_V3 >>= print
+  runCl3_V3 n pPlanetsCl3_V3
+  energyCl3_V3 pPlanetsCl3_V3 >>= print
 
 -- | 'run' advances the system 'n' times by recursively calling 'run'
 run :: (Eq t, Num t) => t -> Ptr Planet -> IO ()
@@ -261,6 +272,14 @@ runAPS i p = do
   runAPS (i-1) p
 
 
+-- runCl3_V3 is a tail recursive action to advance the system
+runCl3_V3 :: (Eq t, Num t) => t -> Ptr PlanetCl3_V3 -> IO ()
+runCl3_V3 0 _ = return ()
+runCl3_V3 i p = do
+  advanceCl3_V3 p
+  runCl3_V3 (i-1) p
+
+
 -- | 'offsetMomentum' is used to update the sun's momentum
 -- so that the total momentum will be zero for the whole
 -- system at initialization.
@@ -277,6 +296,10 @@ offsetMomentumCl3 (PlanetCl3 (pos') _ (mass')) (momentum) = PlanetCl3 pos' (toV3
 
 offsetMomentumAPS :: PlanetCl3 -> Cl3 -> PlanetCl3
 offsetMomentumAPS p momCl3 = p{velCl3 = negate momCl3 / massCl3 p}
+
+
+offsetMomentumCl3_V3 :: PlanetCl3_V3 -> Cl3 -> PlanetCl3_V3
+offsetMomentumCl3_V3 p momCl3 = p{velCl3_V3 = toCl3_V3 (negate momCl3 / (fromCl3_R.massCl3_R $ p))}
 
 
 
@@ -324,6 +347,20 @@ nbodyInitAPS pPlanetsCl3 = do
   sun0 <- peek pPlanetsCl3
   poke pPlanetsCl3 $ offsetMomentumAPS sun0 totalMomentum
 -- end of nbodyInitAPS
+
+
+nbodyInitCl3_V3 :: Ptr PlanetCl3_V3 -> IO ()
+nbodyInitCl3_V3 pPlanetsCl3_V3 = do
+  let initCl3_V3 !pCl3_V3 i = -- initCl3_V3 takes a momentum accumulator and an iteration count
+        if i < length planetsCl3_V3  -- if the iteration count is less than the length of the list of bodies; add more momentum
+        then do
+            p <- peekElemOff pPlanetsCl3_V3 i  -- pull off a body at the current iteration count
+            initCl3_V3 (pCl3_V3 + (fromCl3_V3.velCl3_V3 $ p) * (fromCl3_R.massCl3_R $ p)) (i+1)  -- accumulate the momentum in the accumulator, increase the iteration count and recursively call the function again
+        else return pCl3_V3  -- no more body's momentum left to accumulate, so return the total momentum of all of the bodies
+ 
+  totalMomentum <- initCl3_V3 (V3 0 0 0) 0  -- calculate the total momentum, start with a zero momentum vector in the accumulator, and an iteration count of zero, returns a Cl3
+  sun0 <- peek pPlanetsCl3_V3 -- grab the Sun, don't get burned
+  poke pPlanetsCl3_V3 $ offsetMomentumCl3_V3 sun0 totalMomentum  -- update the Sun's velocity with the total momentum, such that the system has zero total momentum
 
 
 
@@ -407,6 +444,30 @@ energyAPS pPlanetsCl3 = do
  
   energy' (APS 0 0 0 0 0 0 0 0) 0  -- starts off the recursive calculation of energy
 -- end of energyAPS
+
+
+energyCl3_V3 :: Ptr PlanetCl3_V3 -> IO Cl3
+energyCl3_V3 pPlanetsCl3_V3 = do
+  let energy' e i =
+        if i < length planetsCl3_V3
+        then do
+          p <- peekElemOff pPlanetsCl3_V3 i
+          e1 <- energy'' p (i+1) e
+          e2 <- energy' e (i+1)
+          return $! e + 0.5 * (fromCl3_R.massCl3_R $ p) * (toR $ (fromCl3_V3.velCl3_V3 $ p)^(2 :: Int)) + e1 + e2 -- the Kenitic Energy and other accumulated energies
+        else return e  -- all of the bodies energies have been calculated, return the total energy
+     
+      energy'' p j e = -- a Potential Energy calculation
+        if j < length planetsCl3_V3
+        then do
+          pj <- peekElemOff pPlanetsCl3_V3 j
+          let !distance = abs dpos
+              !dpos = (fromCl3_V3.posCl3_V3 $ pj) - (fromCl3_V3.posCl3_V3 $ p)
+          e1 <- energy'' p (j+1) e
+          return $! e - (((fromCl3_R.massCl3_R $ p) * (fromCl3_R.massCl3_R $ pj)) / distance) + e1
+        else return e
+ 
+  energy' (R 0) 0  -- starts off the recursive calculation of energy, returns the total energy as a Cl3
 
 
 
@@ -506,6 +567,32 @@ advanceAPS pPlanetsCl3 = do
 -- end of advanceAPS
 
 
+advanceCl3_V3 :: Ptr PlanetCl3_V3 -> IO ()
+advanceCl3_V3 pPlanetsCl3_V3 = do
+  let advance' i = when (i < length planetsCl3_V3) $ do  -- loops through all the planets and updates the velocity
+                            let loop j = when (j < length planetsCl3_V3) $ do
+                                      ii <- peekElemOff pPlanetsCl3_V3 i
+                                      jj <- peekElemOff pPlanetsCl3_V3 j
+                                      let -- !mag = R dt / (toR dSquared * abs dpos)
+                                          -- !dSquared = dpos * dpos
+                                          !dpos = (fromCl3_V3.posCl3_V3 $ ii) - (fromCl3_V3.posCl3_V3 $ jj)
+                                          !(R !dMag) = abs dpos
+                                          !mag = R (dt / (dMag^(3 :: Int)))
+                                      pokeVCl3_V3 pPlanetsCl3_V3 i ii{velCl3_V3 = toCl3_V3 $ (fromCl3_V3.velCl3_V3 $ ii) - dpos * (fromCl3_R.massCl3_R $ jj) * mag}
+                                      pokeVCl3_V3 pPlanetsCl3_V3 j jj{velCl3_V3 = toCl3_V3 $ (fromCl3_V3.velCl3_V3 $ jj) + dpos * (fromCl3_R.massCl3_R $ ii) * mag}
+                                      loop (j+1)
+                            loop (i+1)
+                            advance' (i+1)
+     
+      advance'' i = when (i < length planetsCl3_V3) $ do  -- loops through all of the planets and updates the position
+                      p <- peekElemOff pPlanetsCl3_V3 i
+                      pokeCCl3_V3 pPlanetsCl3_V3 i p{posCl3_V3 = toCl3_V3 $ (fromCl3_V3.posCl3_V3 $ p) + R dt * (fromCl3_V3.velCl3_V3 $ p)}
+                      advance'' (i+1)
+ 
+  advance' 0   -- update all of the planets velocities
+  advance'' 0  -- update all of the planets positions
+
+
 
 
 data Planet = Planet {x :: !Double,
@@ -525,6 +612,7 @@ data PlanetCl3 = PlanetCl3 {posCl3 :: !Cl3,
                             velCl3 :: !Cl3,
                             massCl3 :: !Cl3} deriving (Show)
 
+
 planetsCl3 :: [PlanetCl3]
 planetsCl3 = [PlanetCl3 sunPos sunVel sunMass,
               PlanetCl3 jupiterPos jupiterVel jupiterMass,
@@ -532,6 +620,20 @@ planetsCl3 = [PlanetCl3 sunPos sunVel sunMass,
               PlanetCl3 uranusPos uranusVel uranusMass,
               PlanetCl3 neptunePos neptuneVel neptuneMass]
 
+
+data PlanetCl3_V3 = PlanetCl3_V3 {posCl3_V3 :: !Cl3_V3
+                                 ,velCl3_V3 :: !Cl3_V3
+                                 ,massCl3_R :: !Cl3_R}
+
+instance Show PlanetCl3_V3 where
+  show p = "PlanetCl3_V3 " ++ show (show.fromCl3_V3.posCl3_V3 $ p) ++ show (show.fromCl3_V3.velCl3_V3 $ p) ++ show (show.fromCl3_R.massCl3_R $ p)
+
+planetsCl3_V3 :: [PlanetCl3_V3]
+planetsCl3_V3 = [PlanetCl3_V3 (toCl3_V3 sunPos) (toCl3_V3 sunVel) (toCl3_R sunMass)
+                ,PlanetCl3_V3 (toCl3_V3 jupiterPos) (toCl3_V3 jupiterVel) (toCl3_R jupiterMass)
+                ,PlanetCl3_V3 (toCl3_V3 saturnPos) (toCl3_V3 saturnVel) (toCl3_R saturnMass)
+                ,PlanetCl3_V3 (toCl3_V3 uranusPos) (toCl3_V3 uranusVel) (toCl3_R uranusMass)
+                ,PlanetCl3_V3 (toCl3_V3 neptunePos) (toCl3_V3 neptuneVel) (toCl3_R neptuneMass)]
 
 
 sun :: Planet
@@ -630,6 +732,7 @@ instance Storable Planet where
   alignment _ = dblSz
   peekElemOff p i = peek (plusPtr p (i * sizeOf (undefined :: Planet)))
   pokeElemOff p i e = poke (plusPtr p (i * sizeOf e)) e
+  peek :: Ptr Planet -> IO Planet
   peek p = do
     x' <- peek (offset 0)
     y' <- peek (offset 1)
@@ -641,6 +744,7 @@ instance Storable Planet where
     return Planet {x=x',y=y',z=z',vx=vx',vy=vy',vz=vz',mass=mass'}
       where
         offset i = plusPtr (castPtr p :: Ptr Double) (i*8)
+  poke :: Ptr Planet -> Planet -> IO ()
   poke p e = do
     poke (offset 0) $ x e
     poke (offset 1) $ y e
@@ -662,6 +766,7 @@ instance Storable PlanetCl3 where
   alignment _ = cl3Sz
   peekElemOff p i = peek ( p `plusPtr` (i * sizeOf (undefined :: PlanetCl3)))
   pokeElemOff p i e = poke (p `plusPtr` (i * sizeOf e)) e
+  peek :: Ptr PlanetCl3 -> IO PlanetCl3
   peek p = do
     pos' <- peek (offset 0)
     vel' <- peek (offset 1)
@@ -669,6 +774,7 @@ instance Storable PlanetCl3 where
     return $ PlanetCl3 pos' vel' mass'
       where
         offset i = (castPtr p :: Ptr Cl3) `plusPtr` (i * cl3Sz)
+  poke :: Ptr PlanetCl3 -> PlanetCl3 -> IO ()
   poke p e = do
     poke (offset 0) $! posCl3 e
     poke (offset 1) $! velCl3 e
@@ -678,6 +784,27 @@ instance Storable PlanetCl3 where
 
 cl3Sz :: Int
 cl3Sz = sizeOf (undefined :: Cl3)
+
+
+-- | 'Storable' instance of PlanetCl3_V3
+instance Storable PlanetCl3_V3 where
+  sizeOf _ = sizeOf (undefined :: Cl3_V3) + sizeOf (undefined :: Cl3_V3) + sizeOf (undefined :: Cl3_R)
+  alignment _ = undefined  -- perhaps this should be some integer power of 2, sizeOf PlanetCl3_V3 is 54bytes, should I pick 64bytes? Does Haskell even support a mov64?, or should it be 8 because everything at the core is a Double?
+  peekElemOff ptr idx = peek (castPtr ptr `plusPtr` (idx * sizeOf (undefined :: PlanetCl3_V3)))
+  pokeElemOff ptr idx e = poke (castPtr ptr `plusPtr` (idx * sizeOf (undefined :: PlanetCl3_V3))) e
+  peek :: Ptr PlanetCl3_V3 -> IO PlanetCl3_V3 
+  peek ptr = do
+    pos :: Cl3_V3 <- peek (castPtr ptr `plusPtr` 0)
+    vel :: Cl3_V3 <- peek (castPtr ptr `plusPtr` (sizeOf pos))
+    m :: Cl3_R <- peek (castPtr ptr `plusPtr` (sizeOf pos) `plusPtr` (sizeOf vel))
+    return (PlanetCl3_V3 pos vel m)
+  poke :: Ptr PlanetCl3_V3 -> PlanetCl3_V3 -> IO ()
+  poke ptr (PlanetCl3_V3 pos vel m) = do
+    poke (castPtr ptr `plusPtr` 0) pos
+    poke (castPtr ptr `plusPtr` (sizeOf pos)) vel
+    poke (castPtr ptr `plusPtr` (sizeOf pos) `plusPtr` (sizeOf vel)) m
+
+
 
 
 -- | 'pokeC' update the position
@@ -694,6 +821,11 @@ pokeCCl3 :: Ptr PlanetCl3 -> Int -> PlanetCl3 -> IO ()
 pokeCCl3 p !i !e =
   poke ((castPtr p :: Ptr Cl3) `plusPtr` (i * sizeOf (undefined :: PlanetCl3))) $! posCl3 e
 
+-- Update the position of a planet at an index in the array of planets
+pokeCCl3_V3 :: Ptr PlanetCl3_V3 -> Int -> PlanetCl3_V3 -> IO ()
+pokeCCl3_V3 p idx e =
+  poke ((castPtr p) `plusPtr` (idx * sizeOf (undefined :: PlanetCl3_V3))) (posCl3_V3 e)
+
 
 -- | 'pokeV' update the velocity
 pokeV :: Ptr Planet -> Int -> Planet -> IO ()
@@ -708,6 +840,11 @@ pokeV p i e = do
 pokeVCl3 :: Ptr PlanetCl3 -> Int -> PlanetCl3 -> IO ()
 pokeVCl3 p !i !e =
   poke ((castPtr p :: Ptr Cl3) `plusPtr` (cl3Sz + i * sizeOf (undefined :: PlanetCl3))) $! velCl3 e
+
+-- Update the velocity of a planet at an index in the array of planets
+pokeVCl3_V3 :: Ptr PlanetCl3_V3 -> Int -> PlanetCl3_V3 -> IO ()
+pokeVCl3_V3 p idx e =
+  poke ((castPtr p) `plusPtr` (idx * sizeOf (undefined :: PlanetCl3_V3)) `plusPtr` (sizeOf (undefined :: Cl3_V3))) (velCl3_V3 e)
 
 
 -- | 'fromList' initialize the planets in the stack
@@ -731,6 +868,18 @@ fromListCl3 l = do
       loop (q:qs) i = do
         poke (pa `plusPtr` (i * sizeOf (undefined :: PlanetCl3))) q
         loop qs (i+1)
+  loop l 0
+  return pa
+
+
+fromListCl3_V3 :: [PlanetCl3_V3] -> IO (Ptr PlanetCl3_V3)
+fromListCl3_V3 l = do
+  let len = length l
+  pa <- mallocBytes (len * sizeOf (undefined :: PlanetCl3_V3))
+  let loop [] _ = return ()
+      loop (q:qs) idx = do
+        poke (pa `plusPtr` (idx * sizeOf (undefined :: PlanetCl3_V3))) q
+        loop qs (idx+1)
   loop l 0
   return pa
 

@@ -1,7 +1,10 @@
-{-# LANGUAGE Safe #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE CPP #-}
+
+#ifndef O_LIQUID
+{-# LANGUAGE Safe #-}
+#endif
 
 #if __GLASGOW_HASKELL__ == 810
 -- Work around to fix GHC Issue #15304, issue popped up again in GHC 8.10, it should be fixed in GHC 8.12

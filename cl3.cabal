@@ -10,7 +10,7 @@ name:                cl3
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             2.0.0.0
+version:             3.0.0.0
 
 -- A short (one-line) description of the package.
 synopsis:            Clifford Algebra of three dimensional space.
@@ -37,7 +37,7 @@ author:              Nathan Waivio
 maintainer:          Nathan Waivio <nathan.waivio@gmail.com>
 
 -- A copyright notice.
-copyright:           Copyright (C) 2017-2020 Nathan Waivio
+copyright:           Copyright (C) 2017-2022 Nathan Waivio
 
 category:            Math, Algebra
 
@@ -50,7 +50,12 @@ tested-with:         GHC == 7.8.4,
                      GHC == 8.4.2,
                      GHC == 8.4.4,
                      GHC == 8.6.5,
-                     GHC == 8.8.3
+                     GHC == 8.8.3,
+                     GHC == 8.10.2,
+                     GHC == 8.10.4,
+                     GHC == 8.10.7,
+                     GHC == 9.0.2,
+                     GHC == 9.2.2
 
 -- Extra files to be distributed with the package, such as examples or a 
 -- README.
@@ -75,6 +80,16 @@ flag do-no-random
   manual:      True
   default:     False
 
+flag do-no-storable
+  description: Build without Storable Class support
+  manual:      True
+  default:     False
+
+flag do-liquid
+  description: Build with Liquid Haskell checking
+  manual:      True
+  default:     False
+
 library
   -- Modules exported by the library.
   exposed-modules:
@@ -84,11 +99,20 @@ library
   -- Compiler options
   ghc-options: -Wall -O2
   
+  if flag(do-liquid)
+    ghc-options: -fplugin=LiquidHaskell -fplugin-opt=LiquidHaskell:--fast -fplugin-opt=LiquidHaskell:--max-case-expand=0 -fplugin-opt=LiquidHaskell:--no-termination -fplugin-opt=LiquidHaskell:--short-names
+  
   if flag(do-no-derived-instances)
     cpp-options: -DO_NO_DERIVED
   
   if flag(do-no-random)
     cpp-options: -DO_NO_RANDOM
+  
+  if flag(do-no-storable)
+    cpp-options: -DO_NO_STORABLE
+  
+  if flag(do-liquid)
+    cpp-options: -DO_LIQUID -DO_NO_RANDOM -DO_NO_DERIVED -DO_NO_STORABLE
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:
@@ -102,13 +126,21 @@ library
     MultiWayIf
   
   -- Other library packages from which modules are imported.
-  build-depends:       
-    base >=4.7 && <5,
+  build-depends:
     deepseq >=1.1 && <2
   
   if !flag(do-no-random)
     build-depends:
       random >=1.0 && <2
+  
+  if !flag(do-liquid)
+    build-depends:
+      base >=4.7 && <5
+  
+  if flag(do-liquid)
+    build-depends:
+      liquid-base,
+      liquidhaskell >= 0.8.10
   
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -129,7 +161,7 @@ test-suite test-cl3
     random >=1.0 && <2
   default-language: Haskell2010
 
--- Criterion based benchmark
+-- Criterion based benchmark -threaded -rtsopts "-with-rtsopts=-N"
 benchmark bench-cl3-nbody
   type: exitcode-stdio-1.0
   hs-source-dirs: benchmarks
@@ -139,4 +171,31 @@ benchmark bench-cl3-nbody
     cl3,
     base >=4.7 && <5,
     criterion >=1.1 && <2
+  default-language: Haskell2010
+
+-- Weigh based benchmark for Vector and Massiv
+benchmark bench-cl3-weigh
+  type: exitcode-stdio-1.0
+  hs-source-dirs: benchmarks
+  main-is: WeighStorableCl3.hs
+  ghc-options: -Wall -O2
+  build-depends:
+    cl3,
+    base >=4.7 && <5,
+    vector,
+    massiv,
+    weigh
+  default-language: Haskell2010
+
+-- Cl3/Massiv N-body benchmark -threaded -rtsopts "-with-rtsopts=-N"
+benchmark bench-cl3-massiv-nbody
+  type: exitcode-stdio-1.0
+  hs-source-dirs: benchmarks
+  main-is: NbodyMassiv.hs
+  ghc-options: -Wall -O2
+  build-depends:
+    cl3,
+    base >=4.7 && <5,
+    time,
+    massiv
   default-language: Haskell2010

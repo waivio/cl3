@@ -1,0 +1,185 @@
+module spec Cl3 () where
+
+-- {-
+-- ```Haskell
+-- ~/.local/bin/stack build --flag cl3:do-liquid
+-- cl3-3.0.0.0: unregistering (dependencies changed)
+-- cl3> configure (lib)
+-- Configuring cl3-3.0.0.0...
+-- cl3> build (lib)
+-- Preprocessing library for cl3-3.0.0.0..
+-- Building library for cl3-3.0.0.0..
+-- [1 of 2] Compiling Algebra.Geometric.Cl3
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1771:12-13
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1771:15-16
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1771:18-19
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1771:21-23
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1771:25-27
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1771:29-31
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1772:22-23
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1772:29-30
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1772:36-37
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1775:22-24
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1775:30-32
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1775:38-40
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1778:17-18
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1778:20-22
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1778:28-29
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1778:31-33
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1778:39-40
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1778:42-44
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1779:12-13
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1779:17-19
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1780:12-13
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1780:17-19
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1781:12-13
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1781:17-19
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1783:12-13
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1783:17-19
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1784:12-13
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1784:17-19
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1785:12-13
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1785:17-19
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1788:48-49
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1788:68-69
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1788:88-89
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1789:48-50
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1789:69-71
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1789:90-92
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1796:10-11
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1796:13-14
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1796:16-17
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1797:20-21
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1797:27-28
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1797:34-35
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1801:32-33
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1801:50-51
+-- WARNING: Found false in src/Algebra/Geometric/Cl3.hs:1801:68-69
+-- 
+-- **** LIQUID: UNSAFE ************************************************************
+-- 
+-- ~/cl3/src/Algebra/Geometric/Cl3.hs:1202:27: error:
+--     Liquid Type Mismatch
+--     .
+--     The inferred type
+--       VV : {v : GHC.Types.Double | v == ?a + ?b}
+--     .
+--     is not a subtype of the required type
+--       VV : {VV : GHC.Types.Double | VV /= 0}
+--     .
+--     in the context
+--       cosx : GHC.Types.Double
+--        
+--       ?b : {?b : GHC.Types.Double | ?b == 0 <=> y2 == 0}
+--        
+--       y2 : GHC.Types.Double
+--        
+--       coshy : GHC.Types.Double
+--        
+--       ?a : {?a : GHC.Types.Double | ?a == 0 <=> cosx * coshy == 0}
+--      |
+-- 1202 |     in C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
+--      |                           ^
+-- 
+-- ~/cl3/src/Algebra/Geometric/Cl3.hs:1202:47: error:
+--     Liquid Type Mismatch
+--     .
+--     The inferred type
+--       VV : {v : GHC.Types.Double | v == ?a + ?b}
+--     .
+--     is not a subtype of the required type
+--       VV : {VV : GHC.Types.Double | VV /= 0}
+--     .
+--     in the context
+--       cosx : GHC.Types.Double
+--        
+--       ?b : {?b : GHC.Types.Double | ?b == 0 <=> y2 == 0}
+--        
+--       y2 : GHC.Types.Double
+--        
+--       coshy : GHC.Types.Double
+--        
+--       ?a : {?a : GHC.Types.Double | ?a == 0 <=> cosx * coshy == 0}
+--      |
+-- 1202 |     in C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
+--      |                                               ^
+-- 
+-- ~/cl3/src/Algebra/Geometric/Cl3.hs:1384:27: error:
+--     Liquid Type Mismatch
+--     .
+--     The inferred type
+--       VV : {v : GHC.Types.Double | v == ?b + ?a}
+--     .
+--     is not a subtype of the required type
+--       VV : {VV : GHC.Types.Double | VV /= 0}
+--     .
+--     in the context
+--       sinhx : GHC.Types.Double
+--        
+--       coshx : GHC.Types.Double
+--        
+--       ?b : {?b : GHC.Types.Double | ?b == 0 <=> cosy * coshx == 0}
+--        
+--       siny : GHC.Types.Double
+--        
+--       cosy : GHC.Types.Double
+--        
+--       ?a : {?a : GHC.Types.Double | ?a == 0 <=> siny * sinhx == 0}
+--      |
+-- 1384 |     in C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
+--      |                           ^
+-- 
+-- ~/cl3/src/Algebra/Geometric/Cl3.hs:1384:47: error:
+--     Liquid Type Mismatch
+--     .
+--     The inferred type
+--       VV : {v : GHC.Types.Double | v == ?b + ?a}
+--     .
+--     is not a subtype of the required type
+--       VV : {VV : GHC.Types.Double | VV /= 0}
+--     .
+--     in the context
+--       sinhx : GHC.Types.Double
+--        
+--       coshx : GHC.Types.Double
+--        
+--       ?b : {?b : GHC.Types.Double | ?b == 0 <=> cosy * coshx == 0}
+--        
+--       siny : GHC.Types.Double
+--        
+--       cosy : GHC.Types.Double
+--        
+--       ?a : {?a : GHC.Types.Double | ?a == 0 <=> siny * sinhx == 0}
+--      |
+-- 1384 |     in C ((x1*x2 + y1*y2)/m) ((x2*y1 - x1*y2)/m)
+--      |                                               ^
+-- 
+-- ~/cl3/src/Algebra/Geometric/Cl3.hs:1735:11: error:
+--     Liquid Type Mismatch
+--     .
+--     The inferred type
+--       VV : {v : GHC.Prim.Addr# | v == "src/Algebra/Geometric/Cl3.hs:1735:15-54|BPV a1 a2 a3 a23 a31 a12"}
+--     .
+--     is not a subtype of the required type
+--       VV : {VV : GHC.Prim.Addr# | 5 < 4}
+--     .
+--      |
+-- 1735 |           let (BPV a1 a2 a3 a23 a31 a12) = toBPV cliff
+--      |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+-- 
+-- 
+-- 
+--  While building package cl3-3.0.0.0 (scroll up to its section to see the error) using:
+--       ~/.stack/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_mPHDZzAJ_3.2.1.0_ghc-8.10.3 --builddir=.stack-work/dist/x86_64-linux-tinfo6/Cabal-3.2.1.0 build lib:cl3 --ghc-options " -fdiagnostics-color=always"
+--     Process exited with code: ExitFailure 1
+-- ```
+-- -}
+
+-- | Indeed, 'tan' and 'tanh' are unsafe.  (/m) causes problems in the definetion of Complex the 'C' constructor.
+-- It is rather interesting that some of the unsafe parts of this function are irrational numbers, so they can't be represeneted by rational numbers.
+-- So, that kind of makes it a lot more safe.  I believe that LYG will be able to solve the issue with the refutable pattern match in a 'let' as seen on line 1735 | let (BPV a1 a2 a3 a23 a31 a12) = toBPV cliff
+-- I think we can make a special case for 'tan' and 'tanh' for zero.  ...'reduce' dare I say.  But when I placed 'reduce' in the View Pattern (the new LYG algorithm) should prove that (/m) where `m = 0` cannot occur.
+
+
+-- sqrt $ (a0*a1 + a123*a23)^2 + (a0*a2 + a123*a31)^2 + (a0*a3 + a123*a12)^2 + (a2*a12 - a3*a31)^2 + (a3*a23 - a1*a12)^2 + (a1*a31 - a2*a23)^2
+-- sqrt $ (s*x + i*l)^2 + (s*y + i*m)^2 + (s*z + i*n)^2 + (y*n - z*m)^2 + (z*l - x*n)^2 + (x*m - y*l)^2 -- s : Scalar<:Cl3 -> , well maybe someday. 
